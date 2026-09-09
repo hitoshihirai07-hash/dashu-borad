@@ -1,0 +1,15 @@
+import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+const shell=await readFile('src/shell.html','utf8');
+const css=await readFile('src/style.css','utf8');
+const model=(await readFile('src/model.js','utf8')).replace(/^export /gm,'');
+const app=(await readFile('src/app.js','utf8')).replace(/^import .*?;\n/,'');
+const html=shell.replace('/* STYLES */',()=>css).replace('/* SCRIPT */',()=>`(()=>{\n${model}\n${app}\n})();`);
+await mkdir('dist',{recursive:true});await writeFile('dist/index.html',html);await writeFile('ときの記録.html',html);
+for(const file of ['manifest.webmanifest','icon.svg','_headers'])await copyFile('public/'+file,'dist/'+file);
+const swSource=await readFile('public/sw.js','utf8');
+const hash=createHash('sha256');
+hash.update(html);hash.update(swSource);
+for(const file of ['manifest.webmanifest','icon.svg'])hash.update(await readFile('public/'+file));
+await writeFile('dist/sw.js',swSource.replace('__BUILD_ID__',hash.digest('hex').slice(0,16)));
+console.log('Built dist/index.html and ときの記録.html (self-contained, no external dependencies)');
