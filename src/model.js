@@ -66,8 +66,9 @@ export function groups(records,key='activity'){const map=new Map();for(const r o
 
 // Candidates are suggestions; saved custom project/activity names are also offered by the UI.
 export const FIELD_PRESETS = {
-  'プロ野球': {projects:['プロ野球観戦メモ','PlayerLens','SNS','ベンチからの一手','データ整理・分析','その他'],activities:['記事作成','サイト更新','データ更新','分析','SNS投稿','調査','不具合修正','企画']},
-  'Python': {projects:['Python学習','CSV処理','データ分析','自動化','その他'],activities:['学習','実践','デバッグ','復習']},
+  'プロ野球': {projects:['プロ野球観戦メモ','PlayerLens','SNS','ベンチからの一手','スプレッドシート・自動化','データ分析','運営管理','その他'],activities:['記事作成','サイト更新','データ更新','分析','SNS投稿','調査','不具合修正','企画']},
   'その他': {projects:['未分類','その他'],activities:['ブログ更新','動画編集','SNS更新','リサーチ','学習']}
 };
 export const byField=(records,field)=>field==='all'?records:records.filter(r=>r.field===field);
+
+export const projectCount=records=>new Set(records.map(r=>r.project?.trim()).filter(Boolean)).size;
