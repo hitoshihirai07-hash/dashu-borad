@@ -1,10 +1,12 @@
 import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const shell=await readFile('src/shell.html','utf8');
-const css=await readFile('src/style.css','utf8');
+const css=await readFile('src/style.css','utf8')+'\n'+await readFile('src/life-log.css','utf8');
 const model=(await readFile('src/model.js','utf8')).replace(/^export /gm,'');
-const app=(await readFile('src/app.js','utf8')).replace(/^import .*?;\n/,'');
-const html=shell.replace('/* STYLES */',()=>css).replace('/* SCRIPT */',()=>`(()=>{\n${model}\n${app}\n})();`);
+const life=[];
+for(const file of ['life-model.js','life-store.js','life-log.js'])life.push((await readFile('src/'+file,'utf8')).replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,''));
+const app=(await readFile('src/app.js','utf8')).replace(/^import .*?;\r?\n/gm,'');
+const html=shell.replace('/* STYLES */',()=>css).replace('/* SCRIPT */',()=>`(()=>{\n${model}\n${life.join('\n')}\n${app}\n})();`);
 await mkdir('dist',{recursive:true});await writeFile('dist/index.html',html);await writeFile('ときの記録.html',html);
 for(const file of ['manifest.webmanifest','icon.svg','_headers'])await copyFile('public/'+file,'dist/'+file);
 const swSource=await readFile('public/sw.js','utf8');

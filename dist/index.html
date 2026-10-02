@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#24634b"><meta name="description" content="30分単位で時間を記録。端末内に保存し、ファイルで共有できる自分のためのダッシュボード。"><title>ときの記録 | 時間ダッシュボード</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%2324634b'/%3E%3Ccircle cx='20' cy='20' r='13' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M20 11v10l6 4' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E"><style>:root{font-family:"Yu Gothic UI","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif;color:#173d32;background:#f6f8f7;font-synthesis:none;--green:#24634b;--muted:#697a75;--line:#e3ebe6;--surface:#fff;--soft:#edf4f0}*{box-sizing:border-box}body{margin:0;font-size:14px;line-height:1.65}button,input,select,textarea{font:inherit}button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}button,a{touch-action:manipulation}button{cursor:pointer}a{color:var(--green);text-decoration:none}a:hover{text-decoration:underline}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #80b99a;outline-offset:3px}svg{width:21px;height:21px;display:block;flex:none}h1,h2,h3,p{margin:0}h1{font-size:clamp(25px,2.7vw,38px);letter-spacing:.02em;line-height:1.35;font-weight:750}h2{font-size:18px;line-height:1.5;letter-spacing:.015em}h3{font-size:16px}small{font-size:12px}.muted{color:var(--muted)}.skip{position:fixed;top:-80px;left:12px;z-index:100;background:white;padding:12px}.skip:focus{top:12px}.sidebar{position:fixed;width:216px;inset:0 auto 0 0;background:#f0f6f3;border-right:1px solid var(--line);padding:32px 18px;display:flex;flex-direction:column;z-index:10}.brand{display:flex;gap:12px;align-items:center;font-size:21px;font-weight:750;white-space:nowrap;letter-spacing:.03em;padding:0 8px}.brand:hover{text-decoration:none}.brand svg{width:34px;height:34px;stroke-width:1.7}.sidebar nav{display:grid;gap:8px;margin-top:42px}.sidebar nav a{display:flex;gap:13px;align-items:center;padding:14px 15px;font-size:13px;font-weight:600;border-radius:8px;position:relative;color:#425c51}.sidebar nav a:hover{background:#e5eee8;text-decoration:none}.sidebar nav a.active{color:#19573e;background:#dfede5}.sidebar nav a.active:before{content:"";width:3px;height:24px;position:absolute;left:0;background:var(--green);border-radius:4px}.sidebar-foot{margin-top:auto;border-top:1px solid var(--line);padding:22px 6px 0;display:flex;gap:10px;color:#547164;font-size:12px}.sidebar-foot small{display:block;font-size:10px;margin-top:5px;color:var(--muted)}.workspace{margin-left:216px}.topbar{height:66px;padding:0 36px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#fff;font-size:12px;color:var(--muted)}#save-status{display:flex;align-items:center;gap:7px}#save-status i{width:6px;height:6px;border-radius:50%;background:#47956b}main{max-width:1260px;margin:0 auto;padding:34px 36px 20px;min-height:calc(100dvh - 125px)}.page-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}.page-heading p{color:var(--muted);margin-top:8px}.button{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:44px;padding:10px 20px;border:1px solid transparent;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap}.button:hover{text-decoration:none;filter:brightness(.97)}.primary{color:#fff;background:var(--green);box-shadow:0 3px 8px #1c573112}.secondary{background:#fff;border-color:#d5e1da;color:var(--green)}.danger{background:#9f413c;color:white}.text-button{border:0;background:none;color:var(--green);font-size:12px;padding:7px}.text-button:hover{text-decoration:underline}.icon-button{border:0;border-radius:6px;background:transparent;color:#547164;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px}.icon-button:hover{background:var(--soft)}.toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:22px}.segmented{display:flex;border:1px solid var(--line);border-radius:9px;padding:3px;background:#fff}.segmented button{border:0;background:none;border-radius:6px;color:#526b60;padding:7px 29px;font-size:13px;min-height:34px}.segmented button.active{background:var(--green);color:white}.date-control{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:9px;padding:3px;background:white;min-height:42px}.date-input-wrap{position:relative;display:flex;gap:8px;align-items:center;padding:0 9px;min-width:177px;justify-content:center;font-size:13px;font-weight:600}.date-input-wrap input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}.date-input-wrap:focus-within{outline:2px solid #80b99a;border-radius:4px}.date-input-wrap svg{width:18px;height:18px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:20px}.stat{padding:20px 24px;display:flex;gap:20px;align-items:flex-start;background:#fff;border-radius:12px;border:1px solid #edf1ee;box-shadow:0 2px 5px #123d291f0}.stat>svg{width:28px;height:28px;color:#327655;margin-top:4px}.stat-label{color:var(--muted);font-size:12px}.stat-value{display:flex;align-items:baseline;gap:6px;font-size:16px;margin-top:2px}.stat-value strong{font-size:35px;letter-spacing:-.02em;line-height:1.4;font-variant-numeric:tabular-nums}.charts{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(240px,1fr);gap:20px;margin-bottom:20px}.panel{background:#fff;border:1px solid #ebf0ec;border-radius:12px;padding:23px;box-shadow:0 2px 5px #143a2404;min-width:0}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.panel-heading small{color:var(--muted)}.trend{position:relative;min-height:240px}.trend svg{width:100%;height:240px;overflow:visible}.trend svg text{font-family:inherit;font-size:11px;fill:#728078}.trend .chart-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13px;pointer-events:none}.chart-empty span{background:#ffffffd9;padding:9px 12px}.chart-scroll{overflow-x:auto}.chart-label{font-size:11px;color:var(--muted);margin:4px 0}.donut-wrap{position:relative;width:176px;height:176px;margin:6px auto 18px}.donut-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;line-height:1.6}.donut-center strong{font-size:28px;font-weight:700;color:#173d32;line-height:1.3}.breakdown-empty{text-align:center;color:var(--muted);font-size:12px}.legend{display:grid;gap:9px;max-height:160px;overflow:auto;padding:0 1px}.legend-row{display:flex;align-items:center;gap:8px;font-size:12px}.legend-row i{height:8px;width:8px;flex:none;border-radius:2px}.legend-row .activity-name{flex:1;overflow-wrap:anywhere}.legend-row strong{font-weight:600;white-space:nowrap}.legend-row small{width:34px;text-align:right;color:var(--muted);font-size:11px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;text-align:left;font-size:13px}th{background:#f5f8f6;color:#64776d;font-size:12px;font-weight:500;padding:10px 13px}td{padding:14px 13px;border-bottom:1px solid #edf1ee;vertical-align:middle}tbody tr:last-child td{border-bottom:0}.record-activity{font-weight:600;display:flex;align-items:center;gap:8px;overflow-wrap:anywhere;min-width:100px}.record-activity i{height:7px;width:7px;border-radius:50%;background:#509373;flex:none}.record-date{white-space:nowrap;color:#667a6e;font-variant-numeric:tabular-nums}.record-time{white-space:nowrap;font-weight:650}.record-note{color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-width:320px}.record-actions{white-space:nowrap;text-align:right}.record-actions button{width:32px;height:34px}.record-actions svg{height:16px;width:16px}.empty-state{text-align:center;padding:32px 15px;color:var(--muted)}.empty-state svg{margin:0 auto 10px;width:28px;height:28px;color:#9eafa5}.empty-state p{font-size:13px}.empty-state small{display:block;margin-top:5px}.empty-state .button{margin-top:18px}.list-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.list-tools .search{flex:1;min-width:160px}.list-tools input,.list-tools select{min-height:42px;padding:9px 12px;border:1px solid #dbe5df;border-radius:8px;background:white;max-width:100%;color:#234b39;font-size:13px}.list-tools label{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.list-tools input[type=checkbox]{width:17px;min-height:17px;accent-color:var(--green)}.search{position:relative}.search svg{position:absolute;top:12px;left:12px;height:18px;width:18px;color:var(--muted)}.search input{width:100%;padding-left:39px}.pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin-top:10px;padding-top:14px;font-size:12px;color:var(--muted)}footer{max-width:1260px;margin:0 auto;padding:12px 36px 24px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:15px}.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}.share-panel{padding:28px;display:flex;flex-direction:column;align-items:flex-start}.share-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:12px;background:var(--soft);color:var(--green);margin-bottom:20px}.share-panel h2{margin-bottom:9px}.share-panel p{color:var(--muted);font-size:13px;margin-bottom:20px;flex:1}.share-panel small{color:var(--muted);margin-top:12px;display:block}.help{padding:26px 30px}.help h2{margin-bottom:12px}.help ol{padding-left:22px;color:#50695c;font-size:13px}.help li{padding:4px 0}.help p{font-size:13px;color:var(--muted);margin:10px 0}.help summary{cursor:pointer;font-size:14px;font-weight:600;padding:12px 0}.help details{border-top:1px solid var(--line);margin-top:16px}.notice{border:1px solid #decfa9;background:#fffbef;color:#725b25;padding:14px 18px;border-radius:8px;margin-bottom:20px;font-size:13px}.error{color:#a53d35;font-size:13px;margin-top:10px}.empty-list-note{font-size:12px;color:var(--muted);margin-bottom:12px}dialog{border:1px solid #e3ebe6;border-radius:16px;padding:28px;width:min(480px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto;color:#173d32;box-shadow:0 24px 90px #13382430}dialog::backdrop{background:#15342760;backdrop-filter:blur(3px)}dialog p.muted{font-size:13px;margin:9px 0 19px}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.dialog-heading h2{font-size:21px}form>label{display:block;font-size:13px;font-weight:600;margin-top:17px}form input,form select,form textarea{display:block;width:100%;margin-top:7px;border:1px solid #d5e1da;border-radius:7px;padding:11px 12px;min-height:45px;font-size:14px;background:white;color:#234b39}form textarea{resize:vertical}form label .muted{font-weight:400}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}.dialog-actions .button{flex:1}.toast{position:fixed;bottom:25px;left:calc(50% + 90px);transform:translateX(-50%);padding:13px 22px;max-width:90vw;width:max-content;border-radius:9px;background:#1b4734;color:#fff;box-shadow:0 5px 25px #183d3429;z-index:60;font-size:13px}.toast[hidden]{display:none}#merge-dialog{width:min(680px,calc(100% - 28px))}.merge-summary{display:flex;flex-wrap:wrap;gap:12px;padding:15px 0;font-size:13px}.merge-summary strong{color:var(--green)}.conflict{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}.conflict h3{font-size:14px;margin-bottom:10px}.conflict-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.conflict-options label{border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;cursor:pointer;overflow-wrap:anywhere}.conflict-options label:has(input:checked){border-color:#589879;background:#eff6f1}.conflict-options label span{display:block;margin-top:5px;white-space:pre-wrap}.conflict-options input{accent-color:var(--green)}.conflict-options strong{margin-left:5px}.status-chip{font-size:10px;color:#946157;background:#faf1ed;border-radius:4px;padding:2px 6px}.download-row{display:flex;flex-wrap:wrap;gap:10px}.mobile-logo{display:none}.storage-alert{margin-top:0}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(min-width:1450px){main{padding-top:43px}.page-heading{margin-bottom:33px}.trend{min-height:260px}.trend svg{height:260px}.panel{padding:26px}.stat{padding:24px}.charts{margin-top:24px}}@media(max-width:1100px){.sidebar{width:190px;padding:28px 12px}.brand{font-size:19px;gap:8px}.workspace{margin-left:190px}main{padding:28px 24px 20px}.topbar{padding:0 24px}.charts{grid-template-columns:minmax(0,1.5fr) minmax(220px,1fr);gap:16px}.stat{gap:12px;padding:18px}.stat-value strong{font-size:30px}.panel{padding:20px}.segmented button{padding:7px 22px}footer{padding-left:24px;padding-right:24px}.toast{left:calc(50% + 80px)}}@media(max-width:820px){.sidebar{width:170px;padding:24px 9px}.brand{font-size:17px}.brand svg{width:29px}.sidebar nav a{padding:13px 9px;gap:8px;font-size:12px}.workspace{margin-left:170px}.page-heading{align-items:flex-start;flex-direction:column;gap:16px}h1{font-size:29px}.charts{grid-template-columns:1fr}.breakdown-body{display:flex;gap:22px;align-items:center}.donut-wrap{flex:none;margin:5px 0;width:150px;height:150px}.legend,.breakdown-empty{flex:1}.stat{gap:10px;padding:16px 12px}.stat>svg{width:22px;height:22px}.share-grid{grid-template-columns:1fr}.share-panel{padding:23px}.topbar{font-size:11px}}@media(max-width:600px){body{font-size:13px}.sidebar{inset:0 0 auto;width:100%;height:66px;border-right:0;border-bottom:1px solid var(--line);padding:15px 20px;background:#fff;position:relative}.brand{font-size:19px;gap:10px;padding:0}.brand svg{width:32px;height:32px}.sidebar nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;gap:0;margin:0;background:#fff;border-top:1px solid var(--line);padding:7px 8px calc(7px + env(safe-area-inset-bottom));z-index:20}.sidebar nav a{flex:1;display:flex;flex-direction:column;gap:3px;font-size:10px;line-height:1.4;padding:7px 4px;border-radius:7px}.sidebar nav a svg{height:20px;width:20px}.sidebar nav a.active{background:transparent;color:#24634b}.sidebar nav a.active:before{display:none}.sidebar-foot,.topbar{display:none}.workspace{margin-left:0}main{padding:25px 16px 16px;min-height:calc(100dvh - 190px)}h1{font-size:26px;letter-spacing:0}.page-heading{gap:18px;margin-bottom:22px}.page-heading p{font-size:12px;margin-top:7px}.page-heading>.button{width:100%;min-height:46px}.page-heading h1{font-size:26px}.toolbar{gap:10px;margin-bottom:16px}.segmented{flex:1;width:100%;order:0}.segmented button{flex:1;padding:6px 16px}.date-control{flex:1;justify-content:space-between;order:1}.date-input-wrap{min-width:150px}.toolbar>.text-button{order:2;padding:10px}.stats{gap:8px;margin-bottom:16px}.stat{padding:13px 7px;display:block;text-align:center;border-radius:10px}.stat>svg{display:none}.stat-label{font-size:10px}.stat-value{justify-content:center;font-size:12px;gap:3px}.stat-value strong{font-size:27px}.charts{gap:16px;margin-bottom:16px}.panel{padding:18px 15px;border-radius:11px}h2{font-size:16px}.panel-heading{margin-bottom:12px}.trend{min-height:210px}.trend svg{height:210px}.trend .chart-empty{font-size:11px;padding:30px}.breakdown-body{gap:16px}.donut-wrap{width:130px;height:130px}.donut-center strong{font-size:24px}.donut-center{font-size:11px}.legend-row{font-size:11px}.legend-row small{font-size:10px}.breakdown-empty{font-size:11px}.empty-state{padding:25px 10px}.empty-state p{font-size:12px}.empty-state small{font-size:10px}th,td{padding:11px 8px;font-size:11px}.record-note{display:none}.note-heading{display:none}.record-activity{min-width:70px;max-width:135px;gap:5px}.record-date{font-size:10px}.record-time{font-size:11px}.record-actions button{width:28px}.record-actions svg{width:15px;height:15px}.record-actions{padding-left:0;padding-right:0}.table-wrap{margin:0 -3px}.list-tools{gap:9px}.search{flex-basis:100%!important}.list-tools select{max-width:180px}.list-tools input,.list-tools select{font-size:14px}footer{padding:8px 18px calc(97px + env(safe-area-inset-bottom));display:block;font-size:10px;line-height:1.8}footer a{display:block}.toast{bottom:90px;left:50%;font-size:12px;white-space:normal;width:calc(100% - 32px);text-align:center}dialog{padding:22px 20px;border-radius:13px}form input,form select,form textarea{font-size:16px}dialog .dialog-heading h2{font-size:20px}.share-grid{gap:16px}.share-panel{padding:23px}.help{padding:21px}.help p,.help ol{font-size:12px}.conflict-options{grid-template-columns:1fr}.download-row{width:100%}.download-row .button{flex:1}.notice{font-size:12px;padding:12px}.panel-heading .text-button{font-size:11px;padding:5px}.pagination{font-size:11px}.pagination .button{padding:7px 11px;min-height:37px}}@media(prefers-reduced-motion:no-preference){.button,.sidebar nav a{transition:background .15s,filter .15s}dialog[open]{animation:appear .15s ease-out}@keyframes appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}}
+.trend{overflow-x:auto}.stat{box-shadow:0 2px 5px #123d2904}@media(max-width:600px){.stat-label{font-size:11px}}
+
+.field-tabs{width:fit-content;margin-bottom:18px}.breakdown-tabs{margin-bottom:12px}.breakdown-tabs button{padding:5px 12px;flex:1;font-size:12px}.record-classification{font-size:11px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere;max-width:240px}.classification-fields{display:grid;grid-template-columns:1fr 1.5fr;gap:12px;margin-top:14px}.classification-fields label{font-size:13px;font-weight:600;min-width:0}.classification-fields select{padding-left:8px;padding-right:4px}#custom-project-label[hidden]{display:none}.panel-heading h2{overflow-wrap:anywhere}
+@media(max-width:600px){.field-tabs{width:100%}.field-tabs button{padding:7px 12px}.record-classification{font-size:10px;max-width:130px}.classification-fields{gap:8px;grid-template-columns:1fr 1.5fr}.breakdown-body{gap:10px}.donut-wrap{width:110px;height:110px}.legend-row{flex-wrap:wrap;gap:4px}.legend-row .activity-name{min-width:55px}.legend-row small{width:auto}.record-activity{min-width:55px}th,td{padding-left:5px;padding-right:5px}}
+
+.life-page .page-heading{margin-bottom:20px}.life-page .toolbar{gap:10px;margin-bottom:16px}.life-row{display:flex;align-items:center;gap:5px}.life-row .text-button{display:inline-flex;align-items:center;gap:5px}.life-row svg{width:16px;height:16px}.life-tabs{margin-bottom:0}.life-tabs button{padding:7px 18px}.life-day .life-tabs{margin-bottom:15px}.life-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.life-stats .stat,.life-day-stats .stat{padding:16px 20px}.life-stats .stat-value strong{font-size:30px}.life-stats .stat small{color:var(--muted);font-size:10px}.life-day-stats{margin-bottom:16px}.life-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 15px}.life-values>div{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafcfb;min-width:0}.life-values dt{font-size:11px;color:var(--muted)}.life-values dt small{display:block;font-size:10px}.life-values dd{margin:3px 0 0;font-size:18px;font-weight:600;white-space:pre-wrap;overflow-wrap:anywhere}.life-values .life-text-value dd{font-size:13px;font-weight:500}.life-analysis{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:16px;margin-bottom:14px}.life-analysis select{max-width:130px;font-size:12px;border:1px solid var(--line);border-radius:7px;padding:7px;background:white;color:var(--green)}.life-chart svg{width:100%;height:180px}.life-chart text{font-family:inherit;font-size:11px;fill:var(--muted)}.life-chart-empty{font-size:12px;color:var(--muted);text-align:center}.life-totals{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.life-totals strong{color:var(--green)}.life-averages{margin:0;display:grid;gap:7px}.life-averages>div{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px}.life-averages dt{color:var(--muted)}.life-averages dd{margin:0;white-space:nowrap}.life-averages dd small{display:inline-block;margin-left:10px;color:var(--muted);font-size:10px;min-width:25px;text-align:right}.life-habits,.life-data-tools{padding:13px 20px;margin-top:14px}.life-habits summary,.life-data-tools summary{cursor:pointer;font-weight:600;font-size:13px}.life-data-tools summary small{float:right;color:var(--muted);font-size:11px;font-weight:400}.life-data-tools .download-row{margin-top:16px}.life-data-tools p,.life-habits p{font-size:11px;color:var(--muted);margin-top:10px}.life-habit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.life-habit-grid>div{display:grid;gap:3px;font-size:12px}.life-habit-grid small{color:var(--muted);font-size:10px}.life-history article{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);min-width:0}.life-history article:last-child{border:0}.life-history article>div:first-child{min-width:0}.life-history strong{display:block;font-size:13px}.life-history span{font-size:11px;color:var(--muted)}.life-history p{font-size:12px;color:#50695c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(650px,60vw)}#life-dialog{width:min(850px,calc(100% - 28px));padding:24px}#life-form>label{margin:12px 0;max-width:200px}#life-form>label input{min-height:38px;padding:7px 10px}#life-form-tabs{margin:14px 0}#life-form-tabs .life-tabs{width:fit-content}.life-input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.life-input-grid label{font-size:12px;font-weight:600;min-width:0}.life-input-grid input,.life-input-grid select,.life-input-grid textarea{margin-top:4px;padding:8px 10px;min-height:39px}.life-input-grid label small{font-size:10px;font-weight:400;color:var(--muted);display:block}.life-input-grid .life-input-text{grid-column:span 1}.life-input-grid textarea{resize:vertical}#life-form .dialog-actions{margin-top:15px;padding-top:15px}#life-import-dialog{width:min(620px,calc(100% - 28px))}.life-import-dates{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0}.life-import-dates span{font-size:11px;padding:4px 8px;border-radius:5px;background:var(--soft)}#life-import-dialog label{display:block;font-size:13px;margin-top:14px}#life-import-policy{display:block;width:100%;margin-top:7px;padding:9px;border:1px solid var(--line);border-radius:7px;background:white;color:var(--green)}[data-life-form-section][hidden]{display:none}
+@media(max-width:1000px){.life-analysis{grid-template-columns:1fr 1fr}.life-stats .stat{padding:12px}.life-stats .stat-value strong{font-size:26px}.life-values{grid-template-columns:repeat(2,minmax(0,1fr))}.life-stats{gap:8px}.life-day-stats .stat{padding:12px}}
+@media(max-width:700px){.life-analysis{grid-template-columns:1fr}.life-averages{grid-template-columns:1fr 1fr;gap:9px 20px}.life-averages>div{flex-wrap:wrap;gap:2px}.life-averages dd small{margin-left:5px}.life-input-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#life-dialog{padding:20px}}
+@media(max-width:600px){.life-page .page-heading{flex-direction:row;align-items:center;gap:10px;margin-bottom:16px}.life-page .page-heading p{max-width:180px;font-size:11px;margin-top:5px}.life-page .page-heading>.button{width:auto;padding:8px 10px;font-size:11px;min-height:42px}.life-page .page-heading>.button svg{width:16px}.life-tabs button{padding:6px 7px;font-size:12px}.life-page .toolbar .life-tabs{flex-basis:100%}.life-page .date-control{min-width:0}.life-page .date-input-wrap{min-width:130px;font-size:11px;padding:0 3px}.life-page .toolbar>.text-button{font-size:11px;padding:6px}.life-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.life-stats .stat{padding:10px}.life-stats .stat-value strong{font-size:25px}.life-day-stats .stat{padding:10px 6px}.life-day-stats .stat-value strong{font-size:25px}.life-values{gap:8px}.life-values>div{padding:8px}.life-values dd{font-size:16px}.life-values dt small{font-size:9px}.life-day>small{font-size:10px;display:block}.life-day .life-row .text-button{font-size:11px;padding:5px}.life-analysis .panel{padding:14px}.life-chart svg{height:150px}.life-totals{margin-top:12px;font-size:11px;gap:10px}.life-habit-grid{grid-template-columns:1fr 1fr}.life-data-tools,.life-habits{padding:12px 14px}.life-data-tools summary small{font-size:10px}.life-data-tools .download-row{gap:8px}.life-data-tools .button{font-size:11px;padding:8px}.life-history p{max-width:62vw}.life-history .icon-button{width:30px}.life-input-grid{gap:9px}.life-input-grid input,.life-input-grid textarea,.life-input-grid select{font-size:16px}.life-input-grid label{font-size:11px}.life-input-grid label small{font-size:9px}#life-dialog{max-height:calc(100dvh - 20px);padding:16px}#life-form .dialog-heading h2{font-size:19px}#life-form-tabs .life-tabs{width:100%}.life-input-grid .life-input-text{grid-column:span 2}.life-input-grid .life-input-text textarea{min-height:45px}.life-input-grid .life-input-text:has(textarea[name=reflection]),.life-input-grid .life-input-text:has(textarea[name=good]),.life-input-grid .life-input-text:has(textarea[name=concern]),.life-input-grid .life-input-text:has(textarea[name=tomorrow]),.life-input-grid .life-input-text:has(textarea[name=oneLine]){grid-column:span 1}#life-form .dialog-actions{position:sticky;bottom:-16px;background:white;padding:12px 0;margin-top:14px;z-index:1}}
+[id=life-import-unescape-label][hidden]{display:none}#life-import-unescape{accent-color:var(--green)}.life-import-conflict{margin-top:8px;padding:8px 0;border-top:1px solid var(--line);font-size:12px}.life-import-conflict summary{cursor:pointer;color:var(--green)}.life-import-conflict dl{margin:8px 0;display:grid;gap:8px;max-height:180px;overflow:auto}.life-import-conflict dt{color:var(--muted)}.life-import-conflict dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+</style></head>
+<body><a href="#main" class="skip">本文へ移動</a><aside class="sidebar"><a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a><nav aria-label="メインナビゲーション"><a href="#dashboard" data-nav="dashboard"><span data-icon="home"></span><span>ダッシュボード</span></a><a href="#records" data-nav="records"><span data-icon="list"></span><span>記録一覧</span></a><a href="#life-log" data-nav="life-log"><span data-icon="calendar"></span><span>生活ログ</span></a><a href="#share" data-nav="share"><span data-icon="share"></span><span>データ共有</span></a></nav><div class="sidebar-foot"><span data-icon="save"></span><span>この端末に保存<small>あなたの時間を、あなたの手元に。</small></span></div></aside><div class="workspace"><div class="topbar"><span>自分のペースで、積み重ねる。</span><span id="save-status"><i></i>ローカル保存</span></div><main id="main" tabindex="-1"></main><footer>記録はこのブラウザー内に保存されます。<a href="#share">ファイルでバックアップ・共有</a></footer></div><dialog id="record-dialog" aria-labelledby="record-title"><form id="record-form"><div class="dialog-heading"><h2 id="record-title">時間を記録</h2><button type="button" class="icon-button" data-close="record-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><p class="muted">今日の積み重ねを、30分単位で。</p><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div class="classification-fields"><label>分野<select name="field" required></select></label><label>プロジェクト<select name="project" required></select></label></div><label id="custom-project-label" hidden>新しいプロジェクト名<input name="customProject" maxlength="80" placeholder="プロジェクト名を入力" autocomplete="off"></label><label>活動名<input name="activity" list="activities" placeholder="例：記事作成、実践" maxlength="80" required autocomplete="off"></label><datalist id="activities"></datalist><label>時間<select name="minutes"></select></label><label>メモ <span class="muted">（任意）</span><textarea name="note" rows="3" maxlength="2000" placeholder="取り組んだこと、気づいたことなど"></textarea></label><p id="form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="record-dialog">キャンセル</button><button class="button primary" type="submit">保存する</button></div></form></dialog><dialog id="merge-dialog" aria-labelledby="merge-title"><div class="dialog-heading"><h2 id="merge-title">読み込む記録を確認</h2><button class="icon-button" data-close="merge-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><div id="merge-content"></div><p id="merge-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="merge-dialog">キャンセル</button><button class="button primary" id="merge-apply">統合して保存</button></div></dialog><dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-heading"><h2 id="delete-title">この記録を削除しますか？</h2></div><p id="delete-description"></p><p class="muted">削除済みの一覧から元に戻せます。削除状態も共有ファイルに含まれます。</p><div class="dialog-actions"><button class="button secondary" data-close="delete-dialog">キャンセル</button><button class="button danger" id="delete-apply">削除する</button></div></dialog><dialog id="life-dialog" aria-labelledby="life-title"><form id="life-form"><div class="dialog-heading"><h2 id="life-title">生活ログを記録</h2><button type="button" class="icon-button" data-close="life-dialog" aria-label="生活ログの入力を閉じる"><span data-icon="close"></span></button></div><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div id="life-form-tabs"></div><div id="life-form-fields"></div><p id="life-form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="life-dialog">キャンセル</button><button class="button primary" type="submit">生活ログを保存</button></div></form></dialog><dialog id="life-delete-dialog" aria-labelledby="life-delete-title"><h2 id="life-delete-title">生活ログを削除しますか？</h2><p id="life-delete-description"></p><p class="muted">履歴の「削除済みを表示」から復元できます。</p><p id="life-delete-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-delete-dialog">キャンセル</button><button class="button danger" id="life-delete-apply">生活ログを削除</button></div></dialog><dialog id="life-import-dialog" aria-labelledby="life-import-title"><div class="dialog-heading"><h2 id="life-import-title">生活ログの読み込みを確認</h2><button class="icon-button" data-close="life-import-dialog" aria-label="読み込み確認を閉じる"><span data-icon="close"></span></button></div><div id="life-import-content"></div><label id="life-import-unescape-label"><input id="life-import-unescape" type="checkbox"> このアプリから出力したCSV（数式保護の引用符を解除）</label><label>同じ日付で内容が異なる場合<select id="life-import-policy"><option value="keep">この端末の記録を残す（追加のみ）</option><option value="replace">読み込むファイルの内容で置き換える</option></select></label><p class="muted">置き換えると、この端末の内容や削除状態がファイルの内容に変わります。先にJSONバックアップを保存してください。</p><p id="life-import-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-import-dialog">キャンセル</button><button class="button primary" id="life-import-apply">取り込んで保存</button></div></dialog><input id="life-import-file" type="file" accept=".csv,.json,text/csv,application/json" hidden><input id="import-file" type="file" accept=".json,application/json" hidden><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><noscript>このサイトを使うには、ブラウザーのJavaScriptを有効にしてください。</noscript><script>(()=>{
+const KEY = 'toki-records-v1';
+const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const uid = () => globalThis.crypto?.randomUUID?.() || `t-${Date.now().toString(36)}-${Array.from(globalThis.crypto.getRandomValues(new Uint32Array(4)),x=>x.toString(36)).join('')}`;
+const fresh = () => ({format:'toki-records',version:2,records:[]});
+function validDate(value) {
+  if(typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value+'T12:00:00');
+  return !Number.isNaN(+d) && localDate(d) === value && value >= '1900-01-01' && value <= '2200-12-31';
+}
+function validate(data) {
+  if(!data || data.format!=='toki-records' || ![1,2].includes(data.version) || !Array.isArray(data.records) || data.records.length>50000) throw Error('「ときの記録」の共有ファイル（バージョン1・2）を選んでください。');
+  const ids=new Set();
+  const records=data.records.map(r=>{
+    if(!r || typeof r.id!=='string' || !r.id || r.id.length>160 || ids.has(r.id) || typeof r.rev!=='string' || !r.rev || r.rev.length>160 || !Array.isArray(r.parents) || r.parents.length>10000 || r.parents.some(x=>typeof x!=='string'||x.length>160) || !validDate(r.date) || typeof r.activity!=='string' || !r.activity.trim() || r.activity.length>80 || !Number.isInteger(r.minutes) || r.minutes<30 || r.minutes>1440 || r.minutes%30!==0 || typeof r.note!=='string' || r.note.length>2000 || typeof r.deleted!=='boolean' || typeof r.updatedAt!=='string' || !Number.isFinite(Date.parse(r.updatedAt))) throw Error('記録の形式が正しくありません。元の共有ファイルを確認してください。');
+    const field=data.version===1&&r.field===undefined?'その他':r.field;
+    const project=data.version===1&&r.project===undefined?'未分類':r.project;
+    if([field,project].some(v=>typeof v!=='string'||!v.trim()||v.length>80)) throw Error('分野・プロジェクトは1〜80文字で指定してください。');
+    ids.add(r.id);
+    return {field:field.trim(),project:project.trim(),id:r.id,rev:r.rev,parents:[...new Set(r.parents)],date:r.date,activity:r.activity.trim(),minutes:r.minutes,note:r.note,deleted:r.deleted,updatedAt:r.updatedAt};
+  });
+  return {format:'toki-records',version:2,records};
+}
+function revise(old, values) {
+  return {field:old?.field||'その他',project:old?.project||'未分類',...values,id:old?.id||uid(),rev:uid(),parents:old?[...new Set([...old.parents,old.rev])]:[],updatedAt:new Date().toISOString(),deleted:values.deleted??false};
+}
+const samePayload=(a,b)=>a.date===b.date&&a.activity===b.activity&&a.minutes===b.minutes&&a.note===b.note&&a.deleted===b.deleted&&a.field===b.field&&a.project===b.project;
+function planMerge(local, incoming) {
+  local=validate(local);incoming=validate(incoming);
+  const map=new Map(local.records.map(r=>[r.id,r]));
+  const conflicts=[]; let added=0,updated=0,unchanged=0;
+  for(const remote of incoming.records){
+    const here=map.get(remote.id);
+    if(!here){map.set(remote.id,remote);added++;}
+    else if(here.rev===remote.rev){if(!samePayload(here,remote))throw Error('同じ版の記録に異なる内容があります。ファイルが変更されていないか確認してください。');unchanged++;}
+    else if(here.parents.includes(remote.rev)){unchanged++;}
+    else if(remote.parents.includes(here.rev)){map.set(remote.id,remote);updated++;}
+    else if(samePayload(here,remote)){map.set(here.id,{...here,rev:uid(),parents:[...new Set([...here.parents,here.rev,...remote.parents,remote.rev])],updatedAt:new Date().toISOString()});updated++;}
+    else conflicts.push({local:here,incoming:remote});
+  }
+  return {records:[...map.values()],conflicts,added,updated,unchanged};
+}
+function resolveMerge(plan, choices) {
+  const map=new Map(plan.records.map(r=>[r.id,r]));
+  for(const c of plan.conflicts){
+    const choice=choices[c.local.id];
+    if(!['local','incoming'].includes(choice)) throw Error('内容が異なる記録について、残す方を選んでください。');
+    const selected=c[choice];
+    map.set(selected.id,{...selected,rev:uid(),parents:[...new Set([...c.local.parents,c.local.rev,...c.incoming.parents,c.incoming.rev])],updatedAt:new Date().toISOString()});
+  }
+  return validate({format:'toki-records',version:2,records:[...map.values()]});
+}
+function periodRange(mode, date) {
+  const start=new Date(date+'T12:00:00'),end=new Date(start);
+  if(mode==='week'){start.setDate(start.getDate()-(start.getDay()+6)%7);end.setTime(+start);end.setDate(end.getDate()+6);}
+  if(mode==='month'){start.setDate(1);end.setMonth(end.getMonth()+1,0);}
+  return {start:localDate(start),end:localDate(end)};
+}
+function shiftDate(mode,date,dir){
+  const d=new Date(date+'T12:00:00');
+  if(mode==='month'){d.setDate(1);d.setMonth(d.getMonth()+dir);} else d.setDate(d.getDate()+dir*(mode==='week'?7:1));
+  return localDate(d);
+}
+const activeRecords = data => data.records.filter(r=>!r.deleted);
+const inRange = (records,range) => records.filter(r=>r.date>=range.start&&r.date<=range.end);
+function groups(records,key='activity'){const map=new Map();for(const r of records)map.set(r[key],(map.get(r[key])||0)+r.minutes);return [...map].sort((a,b)=>b[1]-a[1]);}
+
+// Candidates are suggestions; saved custom project/activity names are also offered by the UI.
+const FIELD_PRESETS = {
+  'プロ野球': {projects:['プロ野球観戦メモ','PlayerLens','SNS','ベンチからの一手','スプレッドシート・自動化','データ分析','運営管理','その他'],activities:['記事作成','サイト更新','データ更新','分析','SNS投稿','調査','不具合修正','企画']},
+  'その他': {projects:['未分類','その他'],activities:['ブログ更新','動画編集','SNS更新','リサーチ','学習']}
+};
+const byField=(records,field)=>field==='all'?records:records.filter(r=>r.field===field);
+
+const projectCount=records=>new Set(records.map(r=>r.project?.trim()).filter(Boolean)).size;
+
+
+const LIFE_KEY = 'toki-life-log-v1';
+// Column definitions only. Personal records are loaded exclusively from user-selected files.
+const LIFE_FIELDS = [
+  {key:'sleep',label:'睡眠時間',type:'number',unit:'時間',min:0,max:24,step:0.1,group:0},
+  {key:'condition',label:'体調',type:'number',min:1,max:5,step:1,group:0,hint:'1 悪い → 5 良い'},
+  {key:'fatigue',label:'疲労感',type:'number',min:1,max:5,step:1,group:0,hint:'1 疲れていない → 5 疲れている'},
+  {key:'mood',label:'気分',type:'number',min:1,max:5,step:1,group:0,hint:'1 悪い → 5 良い'},
+  {key:'water',label:'水分',type:'number',min:1,max:5,step:1,group:0,hint:'1 飲んでいない → 5 よく飲む'},
+  {key:'walk',label:'歩いた時間',type:'number',unit:'分',min:0,max:1440,step:1,group:0},
+  {key:'exercise',label:'運動時間',type:'number',unit:'分',min:0,max:1440,step:1,group:0},
+  {key:'wake',label:'起床時間',type:'time',group:0},
+  {key:'bed',label:'前日の就寝時間',type:'time',group:0},
+  {key:'temperature',label:'体温',type:'number',unit:'℃',min:0,max:100,step:0.1,group:0},
+  {key:'temperatureTime',label:'体温計測時刻',type:'time',group:0},
+  {key:'breakfast',label:'朝食',type:'text',group:1},
+  {key:'lunch',label:'昼食',type:'text',group:1},
+  {key:'dinner',label:'夕食',type:'text',group:1},
+  {key:'lateMeal',label:'遅い時間の食事',type:'choice',options:['なし','あり'],group:1},
+  {key:'out',label:'外出',type:'choice',options:['なし','あり'],group:1},
+  {key:'bath',label:'入浴',type:'choice',options:['なし','あり'],group:1},
+  {key:'screen',label:'PC・スマホみすぎ（仕事除く）',type:'choice',options:['いいえ','はい'],group:1},
+  {key:'rest',label:'休憩できた',type:'choice',options:['いいえ','はい'],group:1},
+  {key:'reflection',label:'今日の振り返り',type:'text',group:2},
+  {key:'good',label:'よかったこと',type:'text',group:2},
+  {key:'concern',label:'気になったこと',type:'text',group:2},
+  {key:'tomorrow',label:'明日にひとつだけ意識すること',type:'text',group:2},
+  {key:'oneLine',label:'今日のひとこと',type:'text',group:2},
+  {key:'plannedBed',label:'就寝予定',type:'time',group:2}
+];
+const lifeFresh = () => ({format:'toki-life-log',version:1,records:[]});
+const lifeWeekday = date => ['日','月','火','水','木','金','土'][new Date(date+'T12:00:00').getDay()];
+
+function lifeValue(field,value){
+  if(field.type==='number'){
+    if(value===''||value===null||value===undefined)return null;
+    if(typeof value!=='number'&&(typeof value!=='string'||!/^\d+(?:\.\d+)?$/.test(value.trim())))throw Error(`${field.label}は数値で入力してください。`);
+    const n=Number(value);
+    if(!Number.isFinite(n)||n<field.min||n>field.max||(field.step===1&&!Number.isInteger(n)))throw Error(`${field.label}は${field.min}〜${field.max}${field.unit||''}で入力してください。`);
+    return n;
+  }
+  if(value===undefined||value===null)return '';
+  if(typeof value!=='string'||value.length>4000)throw Error(`${field.label}は4000文字以内で入力してください。`);
+  if(field.type==='choice'&&value!==''&&!field.options.includes(value))throw Error(`${field.label}の選択肢が正しくありません。`);
+  if(field.type==='time'&&value!==''){
+    const match=value.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if(!match||+match[1]>23||+match[2]>59||+(match[3]||0)>59)throw Error(`${field.label}の時刻が正しくありません。`);
+    return `${match[1].padStart(2,'0')}:${match[2]}:${match[3]||'00'}`;
+  }
+  return value;
+}
+function lifeRecord(date,values={}){
+  if(!validDate(date))throw Error('生活ログの日付が正しくありません。');
+  return {date,timestamp:values.timestamp??new Date().toLocaleString('sv-SE').replaceAll('-','/'),weekday:values.weekday??lifeWeekday(date),...Object.fromEntries(LIFE_FIELDS.map(f=>[f.key,lifeValue(f,values[f.key])])),deleted:values.deleted??false,updatedAt:values.updatedAt??new Date().toISOString()};
+}
+function lifeValidate(data){
+  if(!data||data.format!=='toki-life-log'||data.version!==1||!Array.isArray(data.records)||data.records.length>50000)throw Error('生活ログのJSONバックアップを選んでください。時間記録のファイルは使えません。');
+  const dates=new Set();
+  const records=data.records.map(r=>{
+    if(!r||!validDate(r.date)||dates.has(r.date)||typeof r.timestamp!=='string'||r.timestamp.length>80||typeof r.weekday!=='string'||!['日','月','火','水','木','金','土'].includes(r.weekday)||typeof r.deleted!=='boolean'||typeof r.updatedAt!=='string'||!Number.isFinite(Date.parse(r.updatedAt)))throw Error('生活ログの形式が正しくありません（日付重複や無効な項目）。');
+    for(const f of LIFE_FIELDS){if(!Object.hasOwn(r,f.key)||(f.type==='number'?r[f.key]!==null&&typeof r[f.key]!=='number':typeof r[f.key]!=='string'))throw Error(`${f.label}の保存形式が正しくありません。`);}
+    dates.add(r.date);return lifeRecord(r.date,r);
+  });
+  return {...lifeFresh(),records};
+}
+
+function lifeCSVRows(text){
+  if(typeof text!=='string'||text.length>10*1024*1024)throw Error('CSVは10MB以下にしてください。');
+  const rows=[];let row=[],cell='',quoted=false,closed=false;
+  text=text.replace(/^\uFEFF/,'');
+  const finishRow=()=>{row.push(cell);if(row.some(v=>v!==''))rows.push(row);row=[];cell='';closed=false;};
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(quoted){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else{quoted=false;closed=true;}}else cell+=c;continue;}
+    if(c===','){row.push(cell);cell='';closed=false;}
+    else if(c==='\r'||c==='\n'){if(c==='\r'&&text[i+1]==='\n')i++;finishRow();}
+    else if(c==='"'&&cell===''&&!closed)quoted=true;
+    else{if(closed||c==='"')throw Error('CSVの引用符・列区切りが正しくありません。');cell+=c;}
+  }
+  if(quoted)throw Error('CSVの引用符が閉じられていません。');
+  if(cell!==''||row.length||closed)finishRow();
+  return rows;
+}
+// Prefix formula-like strings for spreadsheet safety; the matching importer reverses it.
+const lifeCSVSafe=v=>/^[=+\-@\t\r\n']/.test(v)?"'"+v:v;
+const lifeCSVUnsafe=v=>/^'[=+\-@\t\r\n']/.test(v)?v.slice(1):v;
+function lifeParseCSV(text,{decodeEscapes=false}={}){
+  const rows=lifeCSVRows(text);if(rows.length<2)throw Error('見出しと記録が入った生活ログCSVを選んでください。');
+  const headers=rows.shift().map(v=>v.trim()),expected=['タイムスタンプ','日付','曜日',...LIFE_FIELDS.map(f=>f.label)];
+  if(headers.length!==expected.length||new Set(headers).size!==headers.length||expected.some(h=>!headers.includes(h)))throw Error('CSVの28列の見出しが一致しません。元の生活ログと同じ列名を使ってください。');
+  const read=(row,label)=>decodeEscapes?lifeCSVUnsafe(row[headers.indexOf(label)]):row[headers.indexOf(label)];
+  const records=rows.map((row,i)=>{
+    try{
+      if(row.length!==headers.length)throw Error('列数が28列ではありません。');
+      const rawDate=read(row,'日付').trim(),match=rawDate.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+      const date=match?`${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}`:rawDate;
+      return lifeRecord(date,{timestamp:read(row,'タイムスタンプ'),weekday:read(row,'曜日'),...Object.fromEntries(LIFE_FIELDS.map(f=>[f.key,read(row,f.label)]))});
+    }catch(error){throw Error(`CSVの${i+2}行目：${error.message}`);}
+  });
+  return lifeValidate({...lifeFresh(),records});
+}
+function lifeExportCSV(data){
+  const checked=lifeValidate(data),quote=v=>'"'+String(v??'').replaceAll('"','""')+'"';
+  const rows=[['タイムスタンプ','日付','曜日',...LIFE_FIELDS.map(f=>f.label)],...checked.records.filter(r=>!r.deleted).sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[lifeCSVSafe(r.timestamp),r.date.replaceAll('-','/'),r.weekday,...LIFE_FIELDS.map(f=>f.type==='number'?r[f.key]:lifeCSVSafe(r[f.key]))])];
+  return '\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\r\n');
+}
+const lifePayload=r=>JSON.stringify([r.date,r.timestamp,r.weekday,r.deleted,...LIFE_FIELDS.map(f=>r[f.key])]);
+function lifeMerge(local,incoming,policy='keep'){
+  local=lifeValidate(local);incoming=lifeValidate(incoming);
+  if(!['keep','replace'].includes(policy))throw Error('重複時の処理を選んでください。');
+  const map=new Map(local.records.map(r=>[r.date,r]));let added=0,conflicts=0,unchanged=0;
+  for(const r of incoming.records){const here=map.get(r.date);if(!here){map.set(r.date,r);added++;}else if(lifePayload(here)===lifePayload(r))unchanged++;else{conflicts++;if(policy==='replace')map.set(r.date,r);}}
+  return {data:lifeValidate({...lifeFresh(),records:[...map.values()]}),added,conflicts,unchanged};
+}
+const lifeRange=(mode,date)=>periodRange(mode==='today'?'day':mode,date);
+function lifeSummary(records){
+  records=records.filter(r=>!r.deleted);
+  const metrics=Object.fromEntries(LIFE_FIELDS.filter(f=>f.type==='number').map(f=>{const values=records.map(r=>r[f.key]).filter(v=>typeof v==='number'&&Number.isFinite(v)),total=values.reduce((s,n)=>s+n,0);return [f.key,{average:values.length?total/values.length:null,total,count:values.length}];}));
+  const habits=Object.fromEntries(LIFE_FIELDS.filter(f=>f.type==='choice').map(f=>{const values=records.map(r=>r[f.key]).filter(Boolean);return [f.key,{count:values.length,yes:values.filter(v=>v===f.options[1]).length}];}));
+  return {days:new Set(records.map(r=>r.date)).size,metrics,habits};
+}
+
+
+function createLifeStore(storage){
+  let data=lifeFresh(),snapshot=JSON.stringify(data),failure='';
+  const read=()=>{const raw=storage.getItem(LIFE_KEY);return raw?lifeValidate(JSON.parse(raw)):lifeFresh();};
+  function reload(){
+    try{data=read();snapshot=JSON.stringify(data);failure='';}
+    catch{failure='生活ログを読み込めません。既存データを保護するため保存を停止しています。「保存データを救出」から元のデータを書き出してください。';}
+  }
+  reload();
+  return {
+    get:()=>data,error:()=>failure,reload,
+    raw:()=>storage.getItem(LIFE_KEY)||'',
+    save(next){
+      if(failure)throw Error(failure);
+      const checked=lifeValidate(next);let current;
+      try{current=read();}catch{reload();throw Error(failure);}
+      if(JSON.stringify(current)!==snapshot){data=current;snapshot=JSON.stringify(data);throw Error('別のタブで生活ログが更新されました。閉じて内容を確認し、もう一度操作してください。');}
+      try{storage.setItem(LIFE_KEY,JSON.stringify(checked));}catch{throw Error('生活ログを端末に保存できません。空き容量や保存設定を確認してください。入力内容は残しています。');}
+      data=checked;snapshot=JSON.stringify(data);return data;
+    }
+  };
+}
+
+
+function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc}){
+  const store=createLifeStore(storage),$life=s=>document.querySelector(s);
+  let mode='today',anchor=localDate(),detail=0,metric='sleep',page=1,query='',deleted=false,editing=null,editSnapshot='',pendingDelete=null,importData=null,importSnapshot='',importCSVText=null;
+  const fmt=n=>n===null||n===undefined?'—':String(Number(n.toFixed(2)));
+  const fieldFor=key=>LIFE_FIELDS.find(f=>f.key===key);
+  const showValue=(f,r)=>f.type==='number'?`${fmt(r[f.key])}${r[f.key]!==null&&f.unit?' '+f.unit:''}`:esc(r[f.key]||'—');
+  const tabs=(attribute,selected,items,label)=>`<div class="segmented life-tabs" role="group" aria-label="${label}">${items.map(([key,name])=>`<button type="button" data-${attribute}="${key}" class="${String(key)===String(selected)?'active':''}" aria-pressed="${String(key)===String(selected)}">${name}</button>`).join('')}</div>`;
+  const sections=[[0,'からだ・睡眠'],[1,'食事・習慣'],[2,'振り返り']];
+  const currentRecords=()=>store.get().records.filter(r=>!r.deleted);
+  const card=(label,value,unit='',small='')=>`<div class="stat"><div><div class="stat-label">${label}</div><div class="stat-value"><strong>${value}</strong>${unit}</div>${small?`<small>${small}</small>`:''}</div></div>`;
+  function summaryCards(records,previous){
+    const s=lifeSummary(records),p=lifeSummary(previous),delta=key=>{const a=s.metrics[key].average,b=p.metrics[key].average;if(a===null||b===null)return '前期間との比較なし';const diff=a-b;return `前期間比 ${diff>0?'+':''}${fmt(diff)}${fieldFor(key).unit||''}`;};
+    return `<section class="stats life-stats" aria-label="生活ログの集計">${card('記録した日数',s.days,'日')}${card('平均睡眠',fmt(s.metrics.sleep.average),'時間',delta('sleep'))}${card('平均体調',fmt(s.metrics.condition.average),'/ 5',delta('condition'))}${card('平均疲労感',fmt(s.metrics.fatigue.average),'/ 5',delta('fatigue'))}</section>`;
+  }
+  function dayPanel(){
+    const r=currentRecords().find(r=>r.date===anchor);
+    if(!r)return `<section class="panel life-day"><div class="empty-state">${icon('calendar')}<h2>${anchor===localDate()?'今日':'この日'}はまだ記録がありません</h2><p>からだの調子も、日々のひとことも。<br>空欄のままでも保存できます。</p><button class="button primary" data-life="add-date">${icon('plus')}この日の生活を記録</button><button class="text-button" data-life="import">CSVからはじめる</button></div></section>`;
+    return `<section class="stats life-day-stats" aria-label="この日の状態">${card('睡眠時間',fmt(r.sleep),'時間')}${card('体調',fmt(r.condition),'/ 5')}${card('気分',fmt(r.mood),'/ 5')}</section><section class="panel life-day"><div class="panel-heading"><h2>${anchor===localDate()?'今日':'この日'}の記録</h2><div class="life-row"><button class="text-button" data-life-edit="${r.date}">${icon('edit')}編集</button><button class="text-button" data-life-delete="${r.date}">${icon('trash')}削除</button></div></div>${tabs('life-detail',detail,sections,'記録の項目')}<dl class="life-values">${LIFE_FIELDS.filter(f=>f.group===detail&&!['sleep','condition','mood'].includes(f.key)).map(f=>`<div class="${f.type==='text'?'life-text-value':''}"><dt>${f.label}${f.hint?`<small>${f.hint}</small>`:''}</dt><dd>${showValue(f,r)}</dd></div>`).join('')}</dl><small class="muted">日付 ${r.date.replaceAll('-','/')}（${esc(r.weekday)}） · タイムスタンプ ${esc(r.timestamp||'—')}</small></section>`;
+  }
+  function trend(records,range){
+    const f=fieldFor(metric),byDate=new Map(records.map(r=>[r.date,r])),bins=[];
+    for(let d=new Date(range.start+'T12:00:00');localDate(d)<=range.end;d.setDate(d.getDate()+1))bins.push([localDate(d),byDate.get(localDate(d))?.[metric]??null]);
+    const values=bins.map(b=>b[1]).filter(v=>v!==null),maximum=f.max===5?5:Math.max(1,...values)*1.15;
+    const w=540,h=180,left=35,right=14,top=12,bottom=28,plotH=h-top-bottom,plotW=w-left-right;
+    const x=i=>left+(bins.length===1?plotW/2:i*plotW/(bins.length-1)),y=n=>top+plotH-n/maximum*plotH;
+    let svg=`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${f.label}の日別推移"><title>${f.label}：${esc(bins.map(([date,n])=>`${date} ${n===null?'未記録':fmt(n)+(f.unit||'')}`).join('、'))}</title>`;
+    for(let i=0;i<=4;i++){const yy=top+i*plotH/4;svg+=`<line x1="${left}" x2="${w-right}" y1="${yy}" y2="${yy}" stroke="#e3ebe6"/><text x="${left-7}" y="${yy+4}" text-anchor="end">${fmt(maximum*(1-i/4))}</text>`;}
+    let points=[];const flush=()=>{if(points.length)svg+=`<polyline points="${points.join(' ')}" fill="none" stroke="#327655" stroke-width="2.5"/>`;points=[];};
+    bins.forEach(([date,n],i)=>{if(n===null)flush();else points.push(`${x(i)},${y(n)}`);if(i%Math.max(1,Math.ceil(bins.length/7))===0||i===bins.length-1)svg+=`<text x="${x(i)}" y="${h-6}" text-anchor="middle">${date.slice(5).replace('-','/')}</text>`;});flush();
+    bins.forEach(([date,n],i)=>{if(n!==null)svg+=`<circle cx="${x(i)}" cy="${y(n)}" r="3.5" fill="#24634b"><title>${date}：${fmt(n)}${f.unit||''}</title></circle>`;});
+    return `<div class="life-chart">${svg}</svg>${!values.length?'<p class="life-chart-empty">この期間の記録はまだありません</p>':''}<small class="muted">${f.hint||f.unit||''} · 空欄は未記録として表示</small>`;
+  }
+  function aggregate(records,range){
+    const s=lifeSummary(records);
+    return `<div class="life-analysis"><section class="panel"><div class="panel-heading"><h2>日々の推移</h2><select id="life-metric" aria-label="推移の項目">${LIFE_FIELDS.filter(f=>f.type==='number').map(f=>`<option value="${f.key}" ${metric===f.key?'selected':''}>${f.label}</option>`).join('')}</select></div>${trend(records,range)}<div class="life-totals"><span>歩いた時間 <strong>${fmt(s.metrics.walk.total)}分</strong></span><span>運動時間 <strong>${fmt(s.metrics.exercise.total)}分</strong></span></div></section><section class="panel"><div class="panel-heading"><h2>期間の平均</h2><small>入力した日だけで集計</small></div><dl class="life-averages">${LIFE_FIELDS.filter(f=>f.type==='number').map(f=>`<div><dt>${f.label}</dt><dd><strong>${fmt(s.metrics[f.key].average)}</strong> ${f.unit||'/ 5'}<small>${s.metrics[f.key].count}日</small></dd></div>`).join('')}</dl></section></div><details class="panel life-habits"><summary>食事・習慣の集計</summary><div class="life-habit-grid">${LIFE_FIELDS.filter(f=>f.type==='choice').map(f=>`<div><span>${f.label}</span><strong>${s.habits[f.key].yes} / ${s.habits[f.key].count}日</strong><small>「${f.options[1]}」の日数 / 入力日数</small></div>`).join('')}</div><p class="muted">食事の内容や振り返りは「履歴」から各日の記録を開いて確認できます。</p></details>`;
+  }
+  function history(){
+    const records=[...store.get().records].filter(r=>r.deleted===deleted&&(!query||[r.date,...LIFE_FIELDS.filter(f=>f.type==='text').map(f=>r[f.key])].join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase()))).sort((a,b)=>b.date.localeCompare(a.date));
+    const pages=Math.max(1,Math.ceil(records.length/8));page=Math.min(Math.max(page,1),pages);
+    return `<div class="list-tools"><div class="search">${icon('search')}<input id="life-search" type="search" aria-label="生活ログを検索" placeholder="日付・食事・ひとことで検索" value="${esc(query)}"></div><label><input id="life-deleted" type="checkbox" ${deleted?'checked':''}>削除済みを表示</label></div><section class="panel"><div class="panel-heading"><h2>${deleted?'削除済み':'生活の履歴'}</h2><small>${records.length}日分</small></div><div class="life-history">${records.slice((page-1)*8,page*8).map(r=>`<article><div><strong>${r.date.replaceAll('-','/')} <small>(${esc(r.weekday)})</small></strong><span>睡眠 ${fmt(r.sleep)}h · 体調 ${fmt(r.condition)} · 気分 ${fmt(r.mood)}</span><p>${esc(r.oneLine||r.reflection||'ひとことは未入力')}</p></div><div class="life-row">${deleted?`<button class="icon-button" data-life-restore="${r.date}" aria-label="${r.date}を復元">${icon('restore')}</button>`:`<button class="icon-button" data-life-edit="${r.date}" aria-label="${r.date}を編集">${icon('edit')}</button><button class="icon-button" data-life-delete="${r.date}" aria-label="${r.date}を削除">${icon('trash')}</button>`}</div></article>`).join('')||'<p class="empty-state">条件に合う生活ログはありません。</p>'}</div>${pages>1?`<div class="pagination"><button class="button secondary" data-life-page="-1" ${page===1?'disabled':''}>前へ</button><span>${page} / ${pages}</span><button class="button secondary" data-life-page="1" ${page===pages?'disabled':''}>次へ</button></div>`:''}</section>`;
+  }
+  function pageHTML(){
+    const range=lifeRange(mode,anchor),records=currentRecords().filter(r=>r.date>=range.start&&r.date<=range.end),prev=lifeRange(mode,shiftDate(mode==='today'?'day':mode,anchor,-1)),previous=currentRecords().filter(r=>r.date>=prev.start&&r.date<=prev.end);
+    const dateLabel=mode==='week'?`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`:mode==='month'?`${anchor.slice(0,4)}年${+anchor.slice(5,7)}月`:`${anchor.replaceAll('-','/')}（${lifeWeekday(anchor)}）`;
+    return `<div class="life-page"><header class="page-heading"><div><h1>生活ログ</h1><p>日々の調子を、ひと目で。振り返りは自動で。</p></div><button class="button primary" data-life="today-edit">${icon('plus')}${currentRecords().some(r=>r.date===localDate())?'今日の記録を編集':'今日を記録'}</button></header>${store.error()?`<div class="notice" role="alert">${esc(store.error())}<button class="text-button" data-life="rescue">保存データを救出</button></div>`:''}<div class="toolbar">${tabs('life-mode',mode,[['today','今日'],['week','週'],['month','月'],['history','履歴']],'生活ログの表示')}${mode!=='history'?`<div class="date-control"><button class="icon-button" data-life-shift="-1" aria-label="生活ログの前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${dateLabel}</span><input id="life-anchor" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="生活ログの表示日付"></div><button class="icon-button" data-life-shift="1" aria-label="生活ログの次の期間">${icon('right')}</button></div><button class="text-button" data-life="today">今日に戻る</button>`:''}</div>${mode==='history'?history():mode==='today'?dayPanel():summaryCards(records,previous)+aggregate(records,range)}<details class="panel life-data-tools"><summary>CSV移行・バックアップ <small>この端末に保存</small></summary><div class="download-row"><button class="button secondary" data-life="import">${icon('download')}CSV / JSONを読み込む</button><button class="button secondary" data-life="backup">JSONバックアップ</button><button class="button secondary" data-life="csv">CSV出力</button></div><p>生活ログは時間記録とは別に、このブラウザー内に保存します。自動同期はありません。端末間の移動にはJSONを使ってください。</p><p>ブラウザーのデータ削除で記録は失われます。定期的にバックアップしてください。CSVは削除済みを除く全記録、JSONは削除状態も含む全記録を書き出します。</p></details></div>`;
+  }
+  function formFields(){
+    return sections.map(([group])=>`<section data-life-form-section="${group}" ${group!==0?'hidden':''}><div class="life-input-grid">${LIFE_FIELDS.filter(f=>f.group===group).map(f=>`<label class="${f.type==='text'?'life-input-text':''}">${f.label}${f.unit?` <small>(${f.unit})</small>`:''}${f.type==='choice'?`<select name="${f.key}"><option value="">未入力</option>${f.options.map(v=>`<option>${v}</option>`).join('')}</select>`:f.type==='text'?`<textarea name="${f.key}" rows="${group===2?2:1}" maxlength="4000"></textarea>`:`<input name="${f.key}" type="${f.type}" ${f.type==='number'?`min="${f.min}" max="${f.max}" step="${f.step===1?1:'any'}"`:'step="1"'}>`}${f.hint?`<small>${f.hint}</small>`:''}</label>`).join('')}</div></section>`).join('');
+  }
+  function setFormTab(group){
+    $life('#life-form-tabs').innerHTML=tabs('life-form-tab',group,sections,'生活ログの入力項目');
+    document.querySelectorAll('[data-life-form-section]').forEach(el=>el.hidden=Number(el.dataset.lifeFormSection)!==group);
+  }
+  function openRecord(date){
+    editing=store.get().records.find(r=>r.date===date)||null;editSnapshot=JSON.stringify(editing);
+    const f=$life('#life-form');f.reset();$life('#life-form-fields').innerHTML=formFields();f.elements.date.value=date;f.elements.date.disabled=!!editing;
+    for(const field of LIFE_FIELDS)f.elements[field.key].value=editing?.[field.key]??'';
+    $life('#life-form-error').textContent='';$life('#life-title').textContent=editing?'生活ログを編集':'生活ログを記録';setFormTab(0);$life('#life-dialog').showModal();
+  }
+  function save(next){store.save(next);render();}
+  $life('#life-form').addEventListener('submit',event=>{
+    event.preventDefault();try{
+      const f=event.currentTarget,date=f.elements.date.value,here=store.get().records.find(r=>r.date===date)||null;
+      if(JSON.stringify(here)!==editSnapshot)throw Error('この日付の生活ログは更新されています。閉じてから開き直してください。');
+      const values=Object.fromEntries(LIFE_FIELDS.map(field=>[field.key,f.elements[field.key].value]));
+      const r=lifeRecord(date,{...values,...(editing?{timestamp:editing.timestamp,weekday:editing.weekday}:{})});save({...store.get(),records:[...store.get().records.filter(x=>x.date!==date),r]});anchor=date;$life('#life-dialog').close();render();toast('生活ログを保存しました。');
+    }catch(error){$life('#life-form-error').textContent=error.message;}
+  });
+  // Hidden tabs can contain invalid number inputs; surface their tab before browser validation.
+  $life('#life-form').addEventListener('invalid',event=>{const field=fieldFor(event.target.name);if(field)setFormTab(field.group);},true);
+  $life('#life-delete-apply').addEventListener('click',()=>{
+    try{const here=store.get().records.find(r=>r.date===pendingDelete?.date);if(JSON.stringify(here)!==JSON.stringify(pendingDelete))throw Error('記録が更新されています。閉じてから確認し直してください。');save({...store.get(),records:store.get().records.map(r=>r.date===here.date?{...r,deleted:true,updatedAt:new Date().toISOString()}:r)});$life('#life-delete-dialog').close();toast('生活ログを削除しました。履歴の「削除済み」から復元できます。');}catch(error){$life('#life-delete-error').textContent=error.message;}
+  });
+  function importPreview(){
+    const plan=lifeMerge(store.get(),importData),local=new Map(store.get().records.map(r=>[r.date,r]));
+    const conflicts=importData.records.filter(r=>{const here=local.get(r.date);return here&&JSON.stringify([here.timestamp,here.weekday,here.deleted,...LIFE_FIELDS.map(f=>here[f.key])])!==JSON.stringify([r.timestamp,r.weekday,r.deleted,...LIFE_FIELDS.map(f=>r[f.key])]);});
+    $life('#life-import-content').innerHTML=`<div class="merge-summary"><span>追加 <strong>${plan.added}日</strong></span><span>同じ内容 <strong>${plan.unchanged}日</strong></span><span>内容が異なる日 <strong>${plan.conflicts}日</strong></span></div><p class="muted">${importData.records.length}日分を確認しました。まだ保存されていません。</p><div class="life-import-dates">${importData.records.slice(0,8).map(r=>`<span>${r.date}${r.deleted?'（削除済み）':''}</span>`).join('')}${importData.records.length>8?'<span>ほか</span>':''}</div>${conflicts.slice(0,5).map(r=>{const here=local.get(r.date),fields=[{key:'timestamp',label:'タイムスタンプ'},{key:'weekday',label:'曜日'},{key:'deleted',label:'削除状態'},...LIFE_FIELDS];return `<details class="life-import-conflict"><summary>${r.date} の違いを確認</summary><dl>${fields.filter(f=>here[f.key]!==r[f.key]).map(f=>`<div><dt>${f.label}</dt><dd>この端末：${esc(here[f.key]??'未入力')}<br>ファイル：${esc(r[f.key]??'未入力')}</dd></div>`).join('')}</dl></details>`;}).join('')}${conflicts.length>5?`<p class="muted">ほか ${conflicts.length-5}日の相違があります。置き換えはすべての相違する日に適用されます。</p>`:''}`;
+  }
+  async function importFile(file){
+    if(!file)return;try{
+      if(file.size>10*1024*1024)throw Error('10MB以下のCSV / JSONを選んでください。');
+      let text;if(file.arrayBuffer){const bytes=await file.arrayBuffer();try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{text=new TextDecoder('shift_jis',{fatal:true}).decode(bytes);}}else text=await file.text();
+      importCSVText=/^\s*\{/.test(text)?null:text;
+      importData=importCSVText===null?lifeValidate(JSON.parse(text)):lifeParseCSV(text);
+      importSnapshot=JSON.stringify(store.get());
+      $life('#life-import-error').textContent='';$life('#life-import-policy').value='keep';
+      $life('#life-import-unescape').checked=false;$life('#life-import-unescape-label').hidden=importCSVText===null;importPreview();
+      $life('#life-import-dialog').showModal();
+    }catch(error){toast(error instanceof SyntaxError?'生活ログのJSONを読み込めません。ファイルの形式を確認してください。':error.message);}finally{$life('#life-import-file').value='';}
+  }
+  $life('#life-import-file').addEventListener('change',event=>importFile(event.target.files[0]));
+  $life('#life-import-apply').addEventListener('click',()=>{
+    try{if(JSON.stringify(store.get())!==importSnapshot)throw Error('確認中に生活ログが更新されました。ファイルを読み込み直してください。');const plan=lifeMerge(store.get(),importData,$life('#life-import-policy').value);save(plan.data);$life('#life-import-dialog').close();toast(`生活ログを取り込みました（追加 ${plan.added}日）。`);}catch(error){$life('#life-import-error').textContent=error.message;}
+  });
+  return {
+    page:pageHTML,
+    onStorage(event){if(event.key===LIFE_KEY||event.key===null){store.reload();render();}},
+    change(target){
+      if(target.id==='life-import-unescape'){try{importData=lifeParseCSV(importCSVText,{decodeEscapes:target.checked});importPreview();$life('#life-import-error').textContent='';}catch(error){$life('#life-import-error').textContent=error.message;}return true;}
+      if(target.id==='life-anchor'&&validDate(target.value)){anchor=target.value;render();return true;}
+      if(target.id==='life-metric'&&fieldFor(target.value)?.type==='number'){metric=target.value;render();return true;}
+      if(target.id==='life-deleted'){deleted=target.checked;page=1;render();return true;}
+      return false;
+    },
+    input(target){if(target.id!=='life-search')return false;query=target.value;page=1;const el=$life('.life-history');if(el){const temp=document.createElement('div');temp.innerHTML=history();el.closest('.panel').innerHTML=temp.querySelector('.panel').innerHTML;}return true;},
+    click(button){
+      const b=button.dataset;
+      if(b.lifeMode){mode=b.lifeMode;page=1;render();return true;}
+      if(b.lifeDetail!==undefined){detail=Number(b.lifeDetail);render();return true;}
+      if(b.lifeFormTab!==undefined){setFormTab(Number(b.lifeFormTab));return true;}
+      if(b.lifeShift){const next=shiftDate(mode==='today'?'day':mode,anchor,Number(b.lifeShift));if(validDate(next)){anchor=next;render();}return true;}
+      if(b.lifePage){page+=Number(b.lifePage);render();return true;}
+      if(b.lifeEdit){openRecord(b.lifeEdit);return true;}
+      if(b.lifeDelete){pendingDelete=store.get().records.find(r=>r.date===b.lifeDelete);$life('#life-delete-description').textContent=`${b.lifeDelete}の生活ログを削除します。`;$life('#life-delete-error').textContent='';$life('#life-delete-dialog').showModal();return true;}
+      if(b.lifeRestore){save({...store.get(),records:store.get().records.map(r=>r.date===b.lifeRestore?{...r,deleted:false,updatedAt:new Date().toISOString()}:r)});toast('生活ログを復元しました。');return true;}
+      if(!b.life)return false;
+      if(b.life==='today-edit')openRecord(localDate());
+      if(b.life==='add-date')openRecord(anchor);
+      if(b.life==='today'){anchor=localDate();render();}
+      if(b.life==='import')$life('#life-import-file').click();
+      if(b.life==='backup'){if(store.error())throw Error('保存データを救出してからバックアップを確認してください。');download(JSON.stringify({...store.get(),exportedAt:new Date().toISOString()},null,2),`生活ログ_${localDate()}_${Date.now()}.json`,'application/json');toast('生活ログのバックアップを保存します。');}
+      if(b.life==='csv'){if(store.error())throw Error('保存データを救出してからCSVを確認してください。');download(lifeExportCSV(store.get()),`生活ログ_${localDate()}.csv`,'text/csv;charset=utf-8');toast('生活ログのCSVを保存します。');}
+      if(b.life==='rescue')download(store.raw(),'生活ログ_救出.txt','text/plain;charset=utf-8');
+      return true;
+    }
+  };
+}
+
+const $=s=>document.querySelector(s);
+const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const paths={clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 3"/>',home:'<path d="m3 10 9-7 9 7v10H15v-6H9v6H3z"/>',list:'<path d="M8 5h12M8 12h12M8 19h12M3 5h.1M3 12h.1M3 19h.1"/>',share:'<circle cx="18" cy="5" r="3"/><circle cx="5" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8 10 7-4M8 14l7 4"/>',save:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v6h8V3M8 21v-7h8v7"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18M7 14h2m3 0h2m3 0h.1M7 17h2m3 0h2"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',plus:'<path d="M12 5v14M5 12h14"/>',left:'<path d="m14 6-6 6 6 6"/>',right:'<path d="m10 6 6 6-6 6"/>',close:'<path d="m6 6 12 12M6 18 18 6"/>',file:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',edit:'<path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-5L4 14z"/>',trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>',restore:'<path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',upload:'<path d="M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5"/>',search:'<circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/>'};
+const icon=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.file}</svg>`;
+const hydrateIcons=()=>document.querySelectorAll('[data-icon]').forEach(el=>{el.outerHTML=icon(el.dataset.icon)});
+const colors=['#327655','#76a68a','#aecbb3','#bb9d65','#709da0','#927fa2','#a77467','#78935f'];
+const timeText=m=>m%60?`${Math.floor(m/60)?Math.floor(m/60)+'時間':''}30分`:`${m/60}時間`;
+let storageError='',data=fresh(),mode='week',anchor=localDate(),view='dashboard',query='',activityFilter='',showDeleted=false,page=1,editing=null,deleting=null,mergePlan=null,mergeSnapshot='',toastTimer;
+try{const raw=localStorage.getItem(KEY);if(raw)data=validate(JSON.parse(raw));}catch{storageError='端末内の記録を読み込めません。既存データを保護するため保存を停止しています。データ共有から救出ファイルを書き出してください。';}
+let selectedField='all',breakdownKey='project',inputDefaults={field:'プロ野球',projects:{}};
+try{const stored=JSON.parse(localStorage.getItem('toki-input-defaults-v2'));if(stored&&Object.hasOwn(FIELD_PRESETS,stored.field)&&stored.projects&&typeof stored.projects==='object')inputDefaults=stored;}catch{}
+function fieldTabs(){return `<div class="segmented field-tabs" role="group" aria-label="分野で表示切替">${[['all','全体'],['プロ野球','プロ野球']].map(([value,label])=>`<button data-field="${value}" class="${selectedField===value?'active':''}" aria-pressed="${selectedField===value}">${label}</button>`).join('')}</div>`;}
+function updateCandidates(project){
+  const f=$('#record-form'),field=f.elements.field.value,preset=FIELD_PRESETS[field]||FIELD_PRESETS['その他'];
+  const records=byField(activeRecords(data),field);
+  const projects=[...new Set([...preset.projects,...records.map(r=>r.project),...(project?[project]:[])])];
+  f.elements.project.innerHTML=projects.map(p=>`<option value="${escapeHTML(p)}">${escapeHTML(p)}</option>`).join('')+'<option value="__custom__">＋ 新しいプロジェクト</option>';
+  f.elements.project.value=projects.includes(project)?project:projects[0];
+  $('#custom-project-label').hidden=true;f.elements.customProject.required=false;f.elements.customProject.value='';
+  $('#activities').innerHTML=[...new Set([...preset.activities,...records.map(r=>r.activity)])].map(a=>`<option value="${escapeHTML(a)}">`).join('');
+}
+function rememberInput(field,project){if(!Object.hasOwn(FIELD_PRESETS,field))return;inputDefaults={field,projects:{...inputDefaults.projects,[field]:project}};try{localStorage.setItem('toki-input-defaults-v2',JSON.stringify(inputDefaults));}catch{}}
+let savedSnapshot=JSON.stringify(data);
+const lifeLog=createLifeLog({storage:{getItem:key=>localStorage.getItem(key),setItem:(key,value)=>localStorage.setItem(key,value)},render,toast,download,icon,escapeHTML});
+function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,5000);}
+function persist(next){
+  if(storageError)throw Error(storageError);
+  const checked=validate(next);
+  try{const raw=localStorage.getItem(KEY);const current=raw?JSON.stringify(validate(JSON.parse(raw))):JSON.stringify(fresh());if(current!==savedSnapshot){data=raw?validate(JSON.parse(raw)):fresh();savedSnapshot=JSON.stringify(data);render();throw Error('別のタブで記録が更新されました。内容を確認して、もう一度操作してください。');}localStorage.setItem(KEY,JSON.stringify(checked));}catch(err){if(err.message.includes('別のタブ'))throw err;throw Error('端末に保存できません。空き容量やブラウザーの保存設定を確認してください。入力内容は閉じずに残しています。');}
+  data=checked;savedSnapshot=JSON.stringify(data);$('#save-status').innerHTML='<i></i>保存済み';render();
+}
+function heading(title,subtitle,add=true){return `<header class="page-heading"><div><h1>${title}</h1><p>${subtitle}</p></div>${add?`<button class="button primary" data-action="add">${icon('plus')}時間を記録</button>`:''}</header>`;}
+function emptyTable(message='まだ記録がありません'){return `<div class="empty-state">${icon('file')}<p>${message}</p><small>「時間を記録」から、はじめてみましょう。</small></div>`;}
+function recordTable(records){return `<div class="table-wrap"><table><thead><tr><th scope="col">日付</th><th scope="col">活動</th><th scope="col">時間</th><th scope="col" class="note-heading">メモ</th><th scope="col"><span class="visually-hidden">操作</span></th></tr></thead><tbody>${records.map(r=>`<tr><td class="record-date">${r.date.replaceAll('-','/')}</td><td><div class="record-activity"><i></i>${escapeHTML(r.activity)}${r.deleted?'<span class="status-chip">削除済み</span>':''}</div><div class="record-classification">${escapeHTML(r.field)} · ${escapeHTML(r.project)}</div></td><td class="record-time">${timeText(r.minutes)}</td><td class="record-note">${escapeHTML(r.note)||'—'}</td><td class="record-actions">${r.deleted?`<button class="icon-button" data-restore="${escapeHTML(r.id)}" aria-label="${escapeHTML(r.activity)}を復元">${icon('restore')}</button>`:`<button class="icon-button" data-edit="${escapeHTML(r.id)}" aria-label="${escapeHTML(r.activity)}を編集">${icon('edit')}</button><button class="icon-button" data-delete="${escapeHTML(r.id)}" aria-label="${escapeHTML(r.activity)}を削除">${icon('trash')}</button>`}</td></tr>`).join('')}</tbody></table></div>`;}
+function chart(records,range){
+  let bins=[];
+  if(mode==='day'){bins=groups(records);}else{let d=new Date(range.start+'T12:00:00');while(localDate(d)<=range.end){const date=localDate(d);bins.push([date,records.filter(r=>r.date===date).reduce((s,r)=>s+r.minutes,0)]);d.setDate(d.getDate()+1);}}
+  if(!bins.length)bins=[['',0]];
+  const baseWidth=window.innerWidth<=600?330:560;
+  const width=mode==='day'?Math.max(baseWidth,bins.length*65):baseWidth,height=230,left=35,right=12,top=12,bottom=34,plotH=height-top-bottom,plotW=width-left-right;
+  const max=Math.max(5,Math.ceil(Math.max(...bins.map(b=>b[1]/60))/5)*5);
+  const barSpace=plotW/bins.length;
+  let svg=`<svg viewBox="0 0 ${width} ${height}" ${width>baseWidth?`style="min-width:${width}px"`:''} role="img" aria-label="${escapeHTML(mode==='day'?'活動ごとの作業時間':'日付ごとの作業時間')}"><title>${escapeHTML(bins.map(([k,v])=>`${k}: ${timeText(v)}`).join('、'))}</title>`;
+  for(let i=0;i<=5;i++){const y=top+i*plotH/5;svg+=`<line x1="${left}" x2="${width-right}" y1="${y}" y2="${y}" stroke="#eaf0ec"/><text x="${left-9}" y="${y+4}" text-anchor="end">${Number((max-i*max/5).toFixed(1))}</text>`;}
+  bins.forEach(([label,minutes],i)=>{const x=left+i*barSpace,barH=minutes/60/max*plotH,bw=Math.min(34,barSpace*.54);const date=new Date(label+'T12:00:00');let tick=mode==='day'?(label.length>7?label.slice(0,6)+'…':label):mode==='week'?`${date.getDate()} ${['日','月','火','水','木','金','土'][date.getDay()]}`:`${date.getDate()}`;
+    svg+=`<g><title>${escapeHTML(label)}：${timeText(minutes)}</title><rect x="${x+(barSpace-bw)/2}" y="${top+plotH-barH}" width="${bw}" height="${Math.max(0,barH)}" rx="3" fill="${mode==='day'?colors[i%colors.length]:'#327655'}"/>${(mode!=='month'||i%(baseWidth<400?5:3)===0||i===bins.length-1)?`<text x="${x+barSpace/2}" y="${height-10}" text-anchor="middle">${escapeHTML(tick)}</text>`:''}</g>`;
+  });
+  svg+='</svg>';
+  return `<div class="chart-label">（時間）</div><div class="trend">${svg}${!records.length?'<div class="chart-empty"><span>最初の記録から、振り返りをはじめましょう</span></div>':''}</div>`;
+}
+function breakdown(records){const entries=groups(records,breakdownKey),total=entries.reduce((s,e)=>s+e[1],0);let offset=0;const circles=entries.map(([name,v],i)=>{const percent=v/total*100;const c=`<circle cx="50" cy="50" r="40" fill="none" stroke="${colors[i%colors.length]}" stroke-width="13" pathLength="100" stroke-dasharray="${percent} ${100-percent}" stroke-dashoffset="${-offset}"><title>${escapeHTML(name)}：${timeText(v)}</title></circle>`;offset+=percent;return c;}).join('');return `<div class="breakdown-body"><div class="donut-wrap"><svg viewBox="0 0 100 100" role="img" aria-label="${breakdownKey==='project'?'プロジェクト':'活動'}別の時間配分"><circle cx="50" cy="50" r="40" fill="none" stroke="#e6f0eb" stroke-width="13"/>${circles}</svg><div class="donut-center">${total?`<strong>${total/60}</strong>時間`:'まだ記録が<br>ありません'}</div></div>${total?`<div class="legend">${entries.map(([name,v],i)=>`<div class="legend-row"><i style="background:${colors[i%colors.length]}"></i><span class="activity-name">${escapeHTML(name)}</span><strong>${timeText(v)}</strong><small>${Math.round(v/total*100)}%</small></div>`).join('')}</div>`:'<p class="breakdown-empty">時間を記録すると、<br>ここに時間の内訳が表示されます。</p>'}</div>`;}
+function dashboard(){const range=periodRange(mode,anchor),records=inRange(byField(activeRecords(data),selectedField),range),total=records.reduce((s,r)=>s+r.minutes,0),days=new Set(records.map(r=>r.date)).size;let label=mode==='month'?`${anchor.slice(0,4)}年${Number(anchor.slice(5,7))}月`:mode==='day'?`${anchor.replaceAll('-','/')}（${['日','月','火','水','木','金','土'][new Date(anchor+'T12:00:00').getDay()]}）`:`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`;
+  return heading('時間を、見えるかたちに。','小さな積み重ねを、次の一歩へ。')+fieldTabs()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div><section class="panel"><div class="panel-heading"><h2>最近の記録</h2><a class="text-button" href="#records">すべての記録を見る</a></div>${recordTable(sortRecords(records).slice(0,5))}${!records.length?emptyTable():''}</section>`;
+}
+const sortRecords=records=>[...records].sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt)||a.id.localeCompare(b.id));
+function matchingRecords(){return sortRecords(byField(data.records,selectedField).filter(r=>r.deleted===showDeleted&&(!activityFilter||r.activity===activityFilter)&&(!query||`${r.field} ${r.project} ${r.activity} ${r.note} ${r.date}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))));}
+function listResults(){const records=matchingRecords();const pages=Math.max(1,Math.ceil(records.length/25));page=Math.min(page,pages);return `<div class="panel-heading"><h2>${showDeleted?'削除済みの記録':'すべての記録'}</h2><small>${records.length}件 ・ ${timeText(records.reduce((s,r)=>s+r.minutes,0))}</small></div>${recordTable(records.slice((page-1)*25,page*25))}${!records.length?emptyTable(query||activityFilter?'条件に合う記録がありません':showDeleted?'削除済みの記録はありません':'まだ記録がありません'):''}${records.length>25?`<div class="pagination"><button class="button secondary" data-page="-1" ${page<=1?'disabled':''}>前へ</button><span>${page} / ${pages} ページ</span><button class="button secondary" data-page="1" ${page>=pages?'disabled':''}>次へ</button></div>`:''}`;}
+function recordsPage(){return heading('記録一覧','積み重ねた時間を、いつでも振り返る。')+fieldTabs()+`<div class="list-tools"><div class="search">${icon('search')}<input id="record-search" aria-label="記録を検索" type="search" placeholder="プロジェクト・活動・メモなどで検索" value="${escapeHTML(query)}"></div><select id="activity-filter" aria-label="活動で絞り込み"><option value="">すべての活動</option>${[...new Set(byField(data.records,selectedField).map(r=>r.activity))].sort().map(a=>`<option value="${escapeHTML(a)}" ${a===activityFilter?'selected':''}>${escapeHTML(a)}</option>`).join('')}</select><label><input id="deleted-filter" type="checkbox" ${showDeleted?'checked':''}>削除済みを表示</label></div><section class="panel" id="list-results">${listResults()}</section>`;}
+function sharePage(){return heading('データ共有','端末が変わっても、あなたの積み重ねはひとつに。',false)+`<div class="share-grid"><section class="panel share-panel"><div class="share-icon">${icon('upload')}</div><h2>ファイルを書き出す</h2><p>この端末のすべての記録を、共有ファイルにまとめます。バックアップにも使えます。</p><div class="download-row"><button class="button primary" data-action="export">${icon('upload')}JSONを書き出す</button><button class="button secondary" data-action="csv">CSV</button></div><small>${activeRecords(data).length}件の記録 / 削除済み ${data.records.filter(r=>r.deleted).length}件${storageError?' / 読み取りエラーあり':''}</small></section><section class="panel share-panel"><div class="share-icon">${icon('download')}</div><h2>ファイルを読み込む</h2><p>もう一方の端末で書き出したJSONを選んでください。内容を確認してから、この端末の記録に統合します。</p><button class="button secondary" data-action="import">${icon('download')}JSONを選ぶ</button><small>同じ記録は重複しません。内容が異なる場合は選べます。</small></section></div><section class="panel help"><h2>PCとAndroidで共有するには</h2><ol><li>記録した端末で「JSONを書き出す」を押します。</li><li>USB・Quick Shareなどで、もう一方の端末にファイルを渡します。</li><li>受け取った端末で「JSONを選ぶ」から読み込み、内容を確認します。</li><li>「統合して保存」を押します。統合後のファイルを元の端末にも読み込むと、両方が揃います。</li></ol><p>共有する端末は両方とも今回の更新版をご利用ください。旧形式のJSONも読み込めます。分類のない旧記録は「その他・未分類」に入り、編集から分類できます。</p><p>自動同期ではありません。CSVは表計算ソフト用で、記録の統合にはJSONを使います。同じ活動を別々に新規登録した記録は別の記録として残ります。</p><details open><summary>Androidで外出先でも使う</summary><p>下の「持ち運び用サイト」を保存し、Androidへ転送してください。AndroidではHTMLファイルを開けるブラウザー（Chromeなど）を指定して開きます。サイト内の「時間を記録」が動き、再度開いて記録が残ることを確認してから使ってください。</p><p>HTMLファイル自体には個人の記録は含まれません。記録の移動には別途JSONが必要です。ファイルの名前・保存場所・使うブラウザーを変えると、別の保存場所になることがあります。</p><button class="button secondary" data-action="portable">${icon('download')}持ち運び用サイトを保存</button><p>Androidの機種やファイルアプリによってはHTMLをブラウザーで開けない場合があります。その場合はHTTPSでサイト本体を配信する方法に切り替えられます。Wi-Fi内のHTTP接続だけでは、外出先のオフライン利用はできません。</p></details><details><summary>保存とバックアップについて</summary><p>記録はこのブラウザー内に保存され、サーバーには送信されません。ブラウザーのデータ削除・シークレットモード・端末の故障で失われることがあります。定期的にJSONを書き出してください。JSONは暗号化されていないため、ご自身が管理できる場所に保存してください。</p><p>削除した記録も、他の端末で復活しないように削除状態を保持しています。「記録一覧」の「削除済みを表示」から復元できます。共有ファイルには削除済みの内容も含まれます。</p>${storageError?'<button class="button secondary" data-action="rescue">読み取れなかった保存データを救出</button>':''}</details></section>`;}
+function render(){view=['dashboard','records','share','life-log'].includes(location.hash.slice(1))?location.hash.slice(1):'dashboard';document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===view);if(el.dataset.nav===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});$('#main').innerHTML=(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+({dashboard,records:recordsPage,share:sharePage,'life-log':lifeLog.page}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();}
+function openRecord(id){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const field=editing?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||inputDefaults.projects[field]);$('#record-dialog').showModal();}
+function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+function exportJSON(){download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_${localDate()}_${Date.now()}.json`,'application/json');toast('共有ファイルの保存を開始しました。');}
+function exportCSV(){const cell=v=>'"'+String(v).replace(/^[=+\-@\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['日付','活動','時間（分）','メモ','分野','プロジェクト'],...sortRecords(activeRecords(data)).map(r=>[r.date,r.activity,r.minutes,r.note,r.field,r.project])];download('\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n'),`ときの記録_${localDate()}.csv`,'text/csv;charset=utf-8');toast('CSVの保存を開始しました。');}
+async function importFile(file){if(!file)return;try{if(file.size>10*1024*1024)throw Error('ファイルが大きすぎます。10MB以下のJSONを選んでください。');const incoming=validate(JSON.parse(await file.text()));mergePlan=planMerge(data,incoming);mergeSnapshot=JSON.stringify(data);$('#merge-error').textContent='';$('#merge-content').innerHTML=`<div class="merge-summary"><span>追加 <strong>${mergePlan.added}件</strong></span><span>更新 <strong>${mergePlan.updated}件</strong></span><span>変更なし <strong>${mergePlan.unchanged}件</strong></span><span>確認が必要 <strong>${mergePlan.conflicts.length}件</strong></span></div><p class="muted">現在の記録は、保存するまで変更されません。削除状態も統合されます。</p>${mergePlan.conflicts.map((c,i)=>`<section class="conflict"><h3>${i+1}. 同じ記録が両方の端末で変更されています</h3><div class="conflict-options">${[['local','この端末を残す'],['incoming','読み込む方を残す']].map(([key,title])=>{const r=c[key];return `<label><input type="radio" name="conflict-${i}" value="${key}" data-conflict-index="${i}"><strong>${title}</strong><span>${r.deleted?'【削除済み】 ':''}${escapeHTML(r.date)} / ${escapeHTML(r.activity)} / ${timeText(r.minutes)}</span><span>${escapeHTML(r.field)} / ${escapeHTML(r.project)}</span><span>${escapeHTML(r.note)||'メモなし'}</span></label>`;}).join('')}</div></section>`).join('')}`;$('#merge-dialog').showModal();}catch(error){toast(error instanceof SyntaxError?'JSONを読み込めません。書き出した共有ファイルを選んでください。':error.message);}finally{$('#import-file').value='';}}
+document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;
+  try{
+    if(button.dataset.close){$('#'+button.dataset.close).close();return;}
+    if(lifeLog.click(button))return;
+    if(button.dataset.field){selectedField=button.dataset.field;activityFilter='';page=1;breakdownKey='project';render();return;}
+    if(button.dataset.breakdown){breakdownKey=button.dataset.breakdown;render();return;}
+    if(button.dataset.mode){mode=button.dataset.mode;render();return;}
+    if(button.dataset.shift){const next=shiftDate(mode,anchor,Number(button.dataset.shift));if(validDate(next)){anchor=next;render();}return;}
+    if(button.dataset.page){page+=Number(button.dataset.page);$('#list-results').innerHTML=listResults();return;}
+    if(button.dataset.edit){openRecord(button.dataset.edit);return;}
+    if(button.dataset.delete){deleting=data.records.find(r=>r.id===button.dataset.delete);$('#delete-description').textContent=`${deleting.date} ・ ${deleting.activity} ・ ${timeText(deleting.minutes)}`;$('#delete-dialog').showModal();return;}
+    if(button.dataset.restore){const r=data.records.find(r=>r.id===button.dataset.restore);persist({...data,records:data.records.map(x=>x.id===r.id?revise(r,{...r,deleted:false}):x)});toast('記録を復元しました。');return;}
+    const action=button.dataset.action;
+    if(action==='add')openRecord();
+    if(action==='today'){anchor=localDate();render();}
+    if(action==='export')exportJSON();
+    if(action==='csv')exportCSV();
+    if(action==='import')$('#import-file').click();
+    if(action==='portable'){download(portableDocument,'ときの記録.html','text/html;charset=utf-8');toast('サイトの保存を開始しました。記録の移動にはJSONも保存してください。');}
+    if(action==='rescue'){download(localStorage.getItem(KEY)||'','ときの記録_救出.txt','text/plain');}
+  }catch(error){toast(error.message);}
+});
+document.addEventListener('change',event=>{if(lifeLog.change(event.target))return;if(event.target.name==='field'){updateCandidates(inputDefaults.projects[event.target.value]);}if(event.target.name==='project'){const custom=event.target.value==='__custom__';$('#custom-project-label').hidden= !custom;$('#record-form').elements.customProject.required=custom;if(custom)$('#record-form').elements.customProject.focus();}if(event.target.id==='anchor-date'&&validDate(event.target.value)){anchor=event.target.value;render();}if(event.target.id==='activity-filter'){activityFilter=event.target.value;page=1;$('#list-results').innerHTML=listResults();}if(event.target.id==='deleted-filter'){showDeleted=event.target.checked;page=1;$('#list-results').innerHTML=listResults();}});
+document.addEventListener('input',event=>{if(lifeLog.input(event.target))return;if(event.target.id==='record-search'){query=event.target.value;page=1;$('#list-results').innerHTML=listResults();}});
+$('#record-form').addEventListener('submit',event=>{event.preventDefault();try{if(editing&&data.records.find(r=>r.id===editing.id)?.rev!==editing.rev)throw Error('この記録は別のタブで更新されました。閉じてから開き直してください。');const f=event.currentTarget;const values={field:f.elements.field.value,project:(f.elements.project.value==='__custom__'?f.elements.customProject.value:f.elements.project.value).trim(),date:f.elements.date.value,activity:f.elements.activity.value.trim(),minutes:Number(f.elements.minutes.value),note:f.elements.note.value,deleted:false};if(!values.activity)throw Error('活動名を入力してください。');const r=revise(editing,values);persist({...data,records:editing?data.records.map(x=>x.id===editing.id?r:x):[...data.records,r]});rememberInput(r.field,r.project);anchor=r.date;render();$('#record-dialog').close();toast(editing?'記録を更新しました。':'時間を記録しました。');}catch(error){$('#form-error').textContent=error.message;}});
+$('#delete-apply').addEventListener('click',()=>{try{if(data.records.find(r=>r.id===deleting.id)?.rev!==deleting.rev)throw Error('この記録は更新されています。閉じてから確認し直してください。');persist({...data,records:data.records.map(r=>r.id===deleting.id?revise(r,{...r,deleted:true}):r)});$('#delete-dialog').close();toast('削除しました。削除済みの一覧から復元できます。');}catch(error){toast(error.message);}});
+$('#import-file').addEventListener('change',event=>importFile(event.target.files[0]));
+$('#merge-apply').addEventListener('click',()=>{try{if(JSON.stringify(data)!==mergeSnapshot)throw Error('確認中に記録が変更されました。閉じて、ファイルを読み込み直してください。');const choices={};$('#merge-content').querySelectorAll('input:checked').forEach(input=>{choices[mergePlan.conflicts[Number(input.dataset.conflictIndex)].local.id]=input.value;});persist(resolveMerge(mergePlan,choices));$('#merge-dialog').close();toast('記録を統合して保存しました。');}catch(error){$('#merge-error').textContent=error.message;}});
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);});
+let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(view==='dashboard')render();},150);});
+window.addEventListener('storage',event=>{lifeLog.onStorage(event);if(event.key!==KEY&&event.key!==null)return;try{data=event.newValue&&event.key===KEY?validate(JSON.parse(event.newValue)):fresh();savedSnapshot=JSON.stringify(data);render();toast('別のタブの変更を反映しました。');}catch{storageError='別のタブの保存データを読み込めません。バックアップを確認してください。';render();}});
+$('#record-form').elements.minutes.innerHTML=Array.from({length:48},(_,i)=>`<option value="${(i+1)*30}">${timeText((i+1)*30)}${(i+1)*30<60?'（0.5時間）':''}</option>`).join('');
+// Capture the unrendered document: portable downloads must never contain personal data.
+const portableDocument='<!doctype html>\n'+document.documentElement.outerHTML;
+hydrateIcons();render();
+if(['https:','http:'].includes(location.protocol)&&window.isSecureContext&&'serviceWorker' in navigator){const link=document.createElement('link');link.rel='manifest';link.href='./manifest.webmanifest';document.head.append(link);navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+
+})();</script></body></html>
