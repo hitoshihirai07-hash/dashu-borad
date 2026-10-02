@@ -1,6 +1,22 @@
-* text=auto
-*.js text eol=lf
-*.mjs text eol=lf
-*.html text eol=lf
-*.css text eol=lf
-*.md text eol=lf
+node_modules/
+dist/
+ときの記録.html
+.wrangler/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+# 個人のバックアップをコミットしない
+ときの記録_*.json
+ときの記録_*.csv
+ときの記録_救出.txt
+
+# 個人の生活ログ・作業補助ファイルは公開しない
+/local-data/
+/clean_data/
+/GitHubアップロード用/
+生活ログ_*.json
+生活ログ_*.csv
+生活ログ_救出.txt
