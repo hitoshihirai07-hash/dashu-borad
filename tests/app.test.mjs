@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {LIFE_KEY,LIFE_FIELDS,lifeFresh,lifeRecord} from '../src/life-model.js';
+import {localDate} from '../src/model.js';
 const script=['model.js','life-model.js','life-store.js','life-log.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
 const legacy={format:'toki-records',version:1,records:[{id:'legacy',rev:'r1',parents:[],date:'2026-09-18',activity:'旧記録',minutes:30,note:'旧メモ',deleted:false,updatedAt:'2026-09-18T00:00:00Z'}]};
 function harness(initial, defaults, blockedStorage=false){
@@ -12,6 +13,7 @@ function harness(initial, defaults, blockedStorage=false){
   const el=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,dataset:{},events:{},addEventListener(k,fn){this.events[k]=fn;},showModal(){this.open=true;},close(){this.open=false;},querySelectorAll(){return [];},focus(){},reset(){for(const e of Object.values(this.elements))e.value='';},append(){},remove(){},click(){},setAttribute(){},removeAttribute(){}});return elements.get(id);};
   el('#record-form').elements=Object.fromEntries(['field','project','customProject','date','activity','minutes','note'].map(n=>[n,el(n)]));
   el('#life-form').elements=Object.fromEntries(['date',...LIFE_FIELDS.map(f=>f.key)].map(n=>[n,el('life-'+n)]));
+  el('#sleep-preset-form').elements=Object.fromEntries(Array.from({length:7},(_,i)=>[`wake-${i}`,`bed-${i}`]).flat().map(n=>[n,el('sleep-'+n)]));
   const document={querySelector:el,querySelectorAll:()=>[],documentElement:{outerHTML:'<html>portable shell</html>'},addEventListener:(k,fn)=>docEvents[k]=fn,body:{append(){}},head:{append(){}},createElement:()=>({click(){},remove(){}})};
   const sandbox={document,window:{innerWidth:1365,addEventListener:(k,fn)=>winEvents[k]=fn,scrollTo(){}},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},location:{hash:'#dashboard',protocol:'file:'},navigator:{},crypto:webcrypto,Blob,URL:{createObjectURL:b=>{downloads.push(b);return 'blob:test';},revokeObjectURL(){}},setTimeout:()=>1,clearTimeout(){},console};
   if(defaults)storage.set('toki-input-defaults-v2',JSON.stringify(defaults));
@@ -102,4 +104,44 @@ test('life form retains entered values on stale-tab save errors',async()=>{
 
 test('blocked browser storage still renders time dashboard and protected life log page',()=>{
  const h=harness(undefined,undefined,true);assert.match(h.html(),/時間を、見えるかたちに/);h.nav('#life-log');assert.match(h.html(),/生活ログを読み込めません/);
+});
+
+
+test('dashboard reminds when today has no time record and recent activity can be logged in one click',async()=>{
+ const h=harness(),todayDate=localDate(),prior=new Date(`${todayDate}T12:00:00`);prior.setDate(prior.getDate()-2);
+ await h.add({...values,date:localDate(prior),activity:'記事作成',project:'プロ野球観戦メモ',minutes:'90'});
+ assert.match(h.html(),/今日はまだ時間記録がありません/);
+ assert.match(h.html(),/記事作成/);
+ await h.click({quickRecord:'0'});
+ const today=h.read().records.find(r=>r.date===todayDate);
+ assert.equal(today.activity,'記事作成');assert.equal(today.project,'プロ野球観戦メモ');assert.equal(today.minutes,90);assert.equal(today.note,'');
+ assert.doesNotMatch(h.html(),/今日はまだ時間記録がありません/);
+});
+
+test('life sleep presets save by weekday and apply previous-night bedtime; yesterday copy only fills sleep times',async()=>{
+ const h=harness();h.nav('#life-log');
+ await h.click({life:'sleep-presets'});assert.equal(h.el('#sleep-preset-dialog').open,true);
+ h.el('#sleep-preset-form').elements['wake-3'].value='07:00';h.el('#sleep-preset-form').elements['bed-3'].value='00:30';
+ h.el('#sleep-preset-form').elements['wake-4'].value='07:00';h.el('#sleep-preset-form').events.submit({preventDefault(){},currentTarget:h.el('#sleep-preset-form')});
+ assert.equal(JSON.parse(h.storage.get('toki-sleep-presets-v1')).weekdays['3'].bed,'00:30');
+ h.change('life-anchor','2026-10-15');await h.click({life:'add-date'});await h.click({life:'apply-preset'});
+ assert.equal(h.el('#life-form').elements.wake.value,'07:00');assert.equal(h.el('#life-form').elements.bed.value,'00:30');
+ h.el('#life-dialog').close();
+ await h.importLife({...lifeFresh(),records:[lifeRecord('2026-10-14',{wake:'07:20',bed:'23:40',mood:5})]});
+ h.change('life-anchor','2026-10-15');await h.click({life:'add-date'});await h.click({life:'copy-sleep'});
+ assert.equal(h.el('#life-form').elements.wake.value,'07:20:00');assert.equal(h.el('#life-form').elements.bed.value,'23:40:00');assert.equal(h.el('#life-form').elements.mood.value,'');
+});
+
+test('week view exports combined time and life summary as Obsidian markdown',async()=>{
+ const h=harness();await h.add({...values,date:'2026-10-12',activity:'記事作成',project:'プロ野球観戦メモ',minutes:'90'});
+ await h.importLife({...lifeFresh(),records:[lifeRecord('2026-10-12',{sleep:7.5,condition:4,mood:4,exercise:30,oneLine:'更新できた'})]});
+ h.nav('#life-log');h.change('life-anchor','2026-10-14');await h.click({lifeMode:'week'});assert.match(h.html(),/Obsidian用Markdown/);
+ await h.click({life:'weekly-md'});const md=await h.downloads.at(-1).text();
+ assert.match(md,/type: toki-weekly/);assert.match(md,/記事作成/);assert.match(md,/平均睡眠: 7.5時間/);assert.match(md,/更新できた/);
+});
+
+test('life log page reminds about missing time record and links back to dashboard',()=>{
+ const h=harness();h.nav('#life-log');
+ assert.match(h.html(),/今日の時間記録はまだありません/);
+ assert.match(h.html(),/href="#dashboard"/);
 });

@@ -120,3 +120,63 @@ export function lifeSummary(records){
   const habits=Object.fromEntries(LIFE_FIELDS.filter(f=>f.type==='choice').map(f=>{const values=records.map(r=>r[f.key]).filter(Boolean);return [f.key,{count:values.length,yes:values.filter(v=>v===f.options[1]).length}];}));
   return {days:new Set(records.map(r=>r.date)).size,metrics,habits};
 }
+
+export const SLEEP_PRESET_KEY='toki-sleep-presets-v1';
+export function sleepPresetDefaults(){
+  return {version:1,weekdays:Object.fromEntries(Array.from({length:7},(_,i)=>[String(i),{wake:'',bed:''}]))};
+}
+function presetTime(value){
+  if(value===undefined||value===null||value==='')return '';
+  if(typeof value!=='string')throw Error('睡眠プリセットの時刻が正しくありません。');
+  const match=value.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if(!match||+match[1]>23||+match[2]>59)throw Error('睡眠プリセットの時刻が正しくありません。');
+  return `${match[1].padStart(2,'0')}:${match[2]}`;
+}
+export function validateSleepPresets(value){
+  const base=sleepPresetDefaults();
+  if(!value||value.version!==1||!value.weekdays||typeof value.weekdays!=='object')return base;
+  for(let i=0;i<7;i++){
+    const row=value.weekdays[String(i)]||{};
+    base.weekdays[String(i)]={wake:presetTime(row.wake),bed:presetTime(row.bed)};
+  }
+  return base;
+}
+export function sleepPresetForDate(presets,date){
+  if(!validDate(date))throw Error('生活ログの日付が正しくありません。');
+  presets=validateSleepPresets(presets);
+  const day=new Date(date+'T12:00:00'),wakeDay=String(day.getDay());
+  day.setDate(day.getDate()-1);
+  const bedDay=String(day.getDay());
+  return {wake:presets.weekdays[wakeDay].wake,bed:presets.weekdays[bedDay].bed};
+}
+export function previousSleepValues(records,date){
+  if(!validDate(date))throw Error('生活ログの日付が正しくありません。');
+  const previous=new Date(date+'T12:00:00');previous.setDate(previous.getDate()-1);
+  const previousDate=localDate(previous),record=records.find(r=>!r.deleted&&r.date===previousDate);
+  return record?{wake:record.wake||'',bed:record.bed||''}:null;
+}
+const weeklyFmt=n=>n===null||n===undefined?'—':String(Number(n.toFixed(2)));
+const weeklyMinutes=minutes=>{
+  const h=Math.floor(minutes/60),m=minutes%60;
+  return `${h?h+'時間':''}${m?m+'分':h?'':'0分'}`;
+};
+const weeklyTop=(records,key,limit=3)=>{
+  const totals=new Map();
+  for(const r of records)totals.set(r[key],(totals.get(r[key])||0)+r.minutes);
+  return [...totals].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ja')).slice(0,limit);
+};
+export function weeklyMarkdown({range,timeRecords=[],lifeRecords=[]}){
+  if(!range||!validDate(range.start)||!validDate(range.end)||range.start>range.end)throw Error('週まとめの期間が正しくありません。');
+  const times=timeRecords.filter(r=>!r.deleted&&r.date>=range.start&&r.date<=range.end);
+  const lives=lifeRecords.filter(r=>!r.deleted&&r.date>=range.start&&r.date<=range.end);
+  const summary=lifeSummary(lives),totalMinutes=times.reduce((sum,r)=>sum+r.minutes,0),timeDays=new Set(times.map(r=>r.date)).size;
+  const projectTop=weeklyTop(times,'project'),activityTop=weeklyTop(times,'activity');
+  const oneLines=lives.filter(r=>r.oneLine||r.reflection).sort((a,b)=>a.date.localeCompare(b.date)).map(r=>`- ${r.date.slice(5).replace('-','/')}: ${String(r.oneLine||r.reflection).replace(/[\r\n]+/g,' ').trim()}`);
+  const sleep=summary.metrics.sleep.average,condition=summary.metrics.condition.average,mood=summary.metrics.mood.average;
+  const lines=[
+    '---','type: toki-weekly',`week_start: ${range.start}`,`week_end: ${range.end}`,`time_total_minutes: ${totalMinutes}`,`time_days: ${timeDays}`,`life_days: ${summary.days}`,`sleep_average: ${sleep===null?'null':weeklyFmt(sleep)}`,`condition_average: ${condition===null?'null':weeklyFmt(condition)}`,`mood_average: ${mood===null?'null':weeklyFmt(mood)}`,`exercise_minutes: ${summary.metrics.exercise.total}`,`walk_minutes: ${summary.metrics.walk.total}`,'---','',
+    `# ${range.start.replaceAll('-','/')}〜${range.end.replaceAll('-','/')} 週間まとめ`,'','## 時間の記録',`- 合計: ${weeklyMinutes(totalMinutes)}`,`- 記録日数: ${timeDays}日`,
+    ...(projectTop.length?['- プロジェクト TOP3',...projectTop.map(([name,minutes])=>`  - ${name}: ${weeklyMinutes(minutes)}`)]:['- プロジェクト: 記録なし']),
+    ...(activityTop.length?['- 活動 TOP3',...activityTop.map(([name,minutes])=>`  - ${name}: ${weeklyMinutes(minutes)}`)]:[]),'','## 生活ログ',`- 記録日数: ${summary.days}日`,`- 平均睡眠: ${sleep===null?'—':weeklyFmt(sleep)+'時間'}`,`- 平均体調: ${condition===null?'—':weeklyFmt(condition)+' / 5'}`,`- 平均気分: ${mood===null?'—':weeklyFmt(mood)+' / 5'}`,`- 運動時間: ${summary.metrics.exercise.total}分`,`- 歩いた時間: ${summary.metrics.walk.total}分`,'','## 今週のひとこと',...(oneLines.length?oneLines:['- 記録なし']),''];
+  return lines.join('\n');
+}

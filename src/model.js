@@ -72,3 +72,16 @@ export const FIELD_PRESETS = {
 export const byField=(records,field)=>field==='all'?records:records.filter(r=>r.field===field);
 
 export const projectCount=records=>new Set(records.map(r=>r.project?.trim()).filter(Boolean)).size;
+
+export function recentRecordPresets(records,limit=3){
+  const seen=new Set(),result=[];
+  const sorted=[...records].filter(r=>!r.deleted).sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt)||b.id.localeCompare(a.id));
+  for(const r of sorted){
+    const key=`${r.field}\u0000${r.project}\u0000${r.activity}`;
+    if(seen.has(key))continue;
+    seen.add(key);
+    result.push({field:r.field,project:r.project,activity:r.activity,minutes:r.minutes});
+    if(result.length>=limit)break;
+  }
+  return result;
+}
