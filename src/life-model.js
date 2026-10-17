@@ -100,6 +100,63 @@ export function lifeParseCSV(text,{decodeEscapes=false}={}){
   });
   return lifeValidate({...lifeFresh(),records});
 }
+
+export const SAMSUNG_HEALTH_KEY = 'toki-samsung-step-daily-v1';
+export const healthFresh = () => ({format:'toki-samsung-step-daily',version:1,records:[]});
+const roundTo=(n,digits)=>Number(Number(n).toFixed(digits));
+export function healthValidate(data){
+  if(!data||data.format!=='toki-samsung-step-daily'||data.version!==1||!Array.isArray(data.records)||data.records.length>50000)throw Error('Samsung Healthの歩数データ形式が正しくありません。');
+  const dates=new Set();
+  const records=data.records.map(r=>{
+    if(!r||!validDate(r.date)||dates.has(r.date))throw Error('Samsung Healthの歩数データに無効な日付または重複があります。');
+    for(const [key,min] of [['steps',0],['distanceKm',0],['calories',0],['speedKmh',0]])if(typeof r[key]!=='number'||!Number.isFinite(r[key])||r[key]<min)throw Error('Samsung Healthの歩数データに無効な数値があります。');
+    if(!Number.isInteger(r.steps))throw Error('Samsung Healthの歩数が正しくありません。');
+    if(!Number.isInteger(r.sourceType))throw Error('Samsung Healthのsource_typeが正しくありません。');
+    if(typeof r.sourceUpdatedAt!=='string'||r.sourceUpdatedAt.length>80)throw Error('Samsung Healthの更新時刻が正しくありません。');
+    if(typeof r.importedAt!=='string'||!Number.isFinite(Date.parse(r.importedAt)))throw Error('Samsung Healthの取込時刻が正しくありません。');
+    dates.add(r.date);
+    return {date:r.date,steps:r.steps,distanceKm:r.distanceKm,calories:r.calories,speedKmh:r.speedKmh,sourceType:r.sourceType,sourceUpdatedAt:r.sourceUpdatedAt,importedAt:r.importedAt};
+  });
+  return {...healthFresh(),records};
+}
+export function samsungStepParseCSV(text){
+  const rows=lifeCSVRows(text);
+  const headerIndex=rows.findIndex(row=>row.includes('day_time')&&row.includes('count')&&row.includes('source_type'));
+  if(headerIndex<0)throw Error('Samsung Healthの歩数CSVを選んでください。step_daily_trendの見出しが見つかりません。');
+  if(headerIndex>0&&!String(rows[0][0]||'').includes('com.samsung.shealth.step_daily_trend'))throw Error('Samsung Healthのstep_daily_trend CSVを選んでください。');
+  const headers=rows[headerIndex].map(v=>v.trim()),required=['update_time','source_type','count','speed','distance','calorie','day_time'];
+  if(required.some(h=>!headers.includes(h)))throw Error('Samsung Health歩数CSVの必要な列が不足しています。');
+  const idx=Object.fromEntries(headers.map((h,i)=>[h,i]));
+  const importedAt=new Date().toISOString(),best=new Map();
+  const number=(value,label,rowNo)=>{const n=Number(value);if(!Number.isFinite(n)||n<0)throw Error(`CSVの${rowNo}行目：${label}が正しくありません。`);return n;};
+  for(let i=headerIndex+1;i<rows.length;i++){
+    let row=rows[i];while(row.length>headers.length&&row.at(-1)==='')row=row.slice(0,-1);
+    if(row.length<headers.length)throw Error(`CSVの${i+1}行目：列数が不足しています。`);
+    const dateMatch=String(row[idx.day_time]||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!dateMatch)throw Error(`CSVの${i+1}行目：day_timeが正しくありません。`);
+    const date=`${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;if(!validDate(date))throw Error(`CSVの${i+1}行目：日付が正しくありません。`);
+    const sourceType=Number(row[idx.source_type]);if(!Number.isInteger(sourceType))throw Error(`CSVの${i+1}行目：source_typeが正しくありません。`);
+    const candidate={date,steps:number(row[idx.count],'count',i+1),distanceKm:roundTo(number(row[idx.distance],'distance',i+1)/1000,3),calories:roundTo(number(row[idx.calorie],'calorie',i+1),2),speedKmh:roundTo(number(row[idx.speed],'speed',i+1)*3.6,2),sourceType,sourceUpdatedAt:String(row[idx.update_time]||''),importedAt};
+    if(!Number.isInteger(candidate.steps))throw Error(`CSVの${i+1}行目：countが整数ではありません。`);
+    const current=best.get(date),score=r=>r.sourceType===-2?2:r.sourceType===0?1:0;
+    if(!current||score(candidate)>score(current)||(score(candidate)===score(current)&&candidate.sourceUpdatedAt>current.sourceUpdatedAt))best.set(date,candidate);
+  }
+  if(!best.size)throw Error('Samsung Healthの歩数CSVに取り込める記録がありません。');
+  return healthValidate({...healthFresh(),records:[...best.values()].sort((a,b)=>a.date.localeCompare(b.date))});
+}
+const healthPayload=r=>JSON.stringify([r.date,r.steps,r.distanceKm,r.calories,r.speedKmh,r.sourceType,r.sourceUpdatedAt]);
+export function healthMerge(local,incoming){
+  local=healthValidate(local);incoming=healthValidate(incoming);
+  const map=new Map(local.records.map(r=>[r.date,r]));let added=0,updated=0,unchanged=0;
+  for(const r of incoming.records){const here=map.get(r.date);if(!here){map.set(r.date,r);added++;}else if(healthPayload(here)===healthPayload(r))unchanged++;else{map.set(r.date,r);updated++;}}
+  return {data:healthValidate({...healthFresh(),records:[...map.values()].sort((a,b)=>a.date.localeCompare(b.date))}),added,updated,unchanged};
+}
+export function healthSummary(records){
+  records=records.filter(r=>r&&validDate(r.date));
+  const totalSteps=records.reduce((s,r)=>s+r.steps,0),totalDistanceKm=records.reduce((s,r)=>s+r.distanceKm,0),totalCalories=records.reduce((s,r)=>s+r.calories,0),speedValues=records.map(r=>r.speedKmh).filter(Number.isFinite);
+  const maxSteps=records.length?[...records].sort((a,b)=>b.steps-a.steps||a.date.localeCompare(b.date))[0]:null;
+  return {days:records.length,totalSteps,averageSteps:records.length?totalSteps/records.length:null,totalDistanceKm,totalCalories,averageSpeedKmh:speedValues.length?speedValues.reduce((s,n)=>s+n,0)/speedValues.length:null,maxSteps};
+}
 export function lifeExportCSV(data){
   const checked=lifeValidate(data),quote=v=>'"'+String(v??'').replaceAll('"','""')+'"';
   const rows=[['タイムスタンプ','日付','曜日',...LIFE_FIELDS.map(f=>f.label)],...checked.records.filter(r=>!r.deleted).sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[lifeCSVSafe(r.timestamp),r.date.replaceAll('-','/'),r.weekday,...LIFE_FIELDS.map(f=>f.type==='number'?r[f.key]:lifeCSVSafe(r[f.key]))])];
@@ -165,18 +222,18 @@ const weeklyTop=(records,key,limit=3)=>{
   for(const r of records)totals.set(r[key],(totals.get(r[key])||0)+r.minutes);
   return [...totals].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ja')).slice(0,limit);
 };
-export function weeklyMarkdown({range,timeRecords=[],lifeRecords=[]}){
+export function weeklyMarkdown({range,timeRecords=[],lifeRecords=[],healthRecords=[]}){
   if(!range||!validDate(range.start)||!validDate(range.end)||range.start>range.end)throw Error('週まとめの期間が正しくありません。');
   const times=timeRecords.filter(r=>!r.deleted&&r.date>=range.start&&r.date<=range.end);
   const lives=lifeRecords.filter(r=>!r.deleted&&r.date>=range.start&&r.date<=range.end);
-  const summary=lifeSummary(lives),totalMinutes=times.reduce((sum,r)=>sum+r.minutes,0),timeDays=new Set(times.map(r=>r.date)).size;
+  const summary=lifeSummary(lives),health=healthSummary(healthRecords.filter(r=>r.date>=range.start&&r.date<=range.end)),totalMinutes=times.reduce((sum,r)=>sum+r.minutes,0),timeDays=new Set(times.map(r=>r.date)).size;
   const projectTop=weeklyTop(times,'project'),activityTop=weeklyTop(times,'activity');
   const oneLines=lives.filter(r=>r.oneLine||r.reflection).sort((a,b)=>a.date.localeCompare(b.date)).map(r=>`- ${r.date.slice(5).replace('-','/')}: ${String(r.oneLine||r.reflection).replace(/[\r\n]+/g,' ').trim()}`);
   const sleep=summary.metrics.sleep.average,condition=summary.metrics.condition.average,mood=summary.metrics.mood.average;
   const lines=[
-    '---','type: toki-weekly',`week_start: ${range.start}`,`week_end: ${range.end}`,`time_total_minutes: ${totalMinutes}`,`time_days: ${timeDays}`,`life_days: ${summary.days}`,`sleep_average: ${sleep===null?'null':weeklyFmt(sleep)}`,`condition_average: ${condition===null?'null':weeklyFmt(condition)}`,`mood_average: ${mood===null?'null':weeklyFmt(mood)}`,`exercise_minutes: ${summary.metrics.exercise.total}`,`walk_minutes: ${summary.metrics.walk.total}`,'---','',
+    '---','type: toki-weekly',`week_start: ${range.start}`,`week_end: ${range.end}`,`time_total_minutes: ${totalMinutes}`,`time_days: ${timeDays}`,`life_days: ${summary.days}`,`sleep_average: ${sleep===null?'null':weeklyFmt(sleep)}`,`condition_average: ${condition===null?'null':weeklyFmt(condition)}`,`mood_average: ${mood===null?'null':weeklyFmt(mood)}`,`exercise_minutes: ${summary.metrics.exercise.total}`,`walk_minutes: ${summary.metrics.walk.total}`,`steps_total: ${health.totalSteps}`,`steps_average: ${health.averageSteps===null?'null':Math.round(health.averageSteps)}`,`distance_total_km: ${weeklyFmt(health.totalDistanceKm)}`,'---','',
     `# ${range.start.replaceAll('-','/')}〜${range.end.replaceAll('-','/')} 週間まとめ`,'','## 時間の記録',`- 合計: ${weeklyMinutes(totalMinutes)}`,`- 記録日数: ${timeDays}日`,
     ...(projectTop.length?['- プロジェクト TOP3',...projectTop.map(([name,minutes])=>`  - ${name}: ${weeklyMinutes(minutes)}`)]:['- プロジェクト: 記録なし']),
-    ...(activityTop.length?['- 活動 TOP3',...activityTop.map(([name,minutes])=>`  - ${name}: ${weeklyMinutes(minutes)}`)]:[]),'','## 生活ログ',`- 記録日数: ${summary.days}日`,`- 平均睡眠: ${sleep===null?'—':weeklyFmt(sleep)+'時間'}`,`- 平均体調: ${condition===null?'—':weeklyFmt(condition)+' / 5'}`,`- 平均気分: ${mood===null?'—':weeklyFmt(mood)+' / 5'}`,`- 運動時間: ${summary.metrics.exercise.total}分`,`- 歩いた時間: ${summary.metrics.walk.total}分`,'','## 今週のひとこと',...(oneLines.length?oneLines:['- 記録なし']),''];
+    ...(activityTop.length?['- 活動 TOP3',...activityTop.map(([name,minutes])=>`  - ${name}: ${weeklyMinutes(minutes)}`)]:[]),'','## 生活ログ',`- 記録日数: ${summary.days}日`,`- 平均睡眠: ${sleep===null?'—':weeklyFmt(sleep)+'時間'}`,`- 平均体調: ${condition===null?'—':weeklyFmt(condition)+' / 5'}`,`- 平均気分: ${mood===null?'—':weeklyFmt(mood)+' / 5'}`,`- 運動時間: ${summary.metrics.exercise.total}分`,`- 歩いた時間: ${summary.metrics.walk.total}分`,'','## Samsung Health',...(health.days?[`- 記録日数: ${health.days}日`,`- 合計歩数: ${health.totalSteps.toLocaleString('ja-JP')}歩`,`- 平均歩数: ${Math.round(health.averageSteps).toLocaleString('ja-JP')}歩`,`- 合計距離: ${weeklyFmt(health.totalDistanceKm)}km`,`- 消費カロリー: ${weeklyFmt(health.totalCalories)}kcal`,`- 最多: ${health.maxSteps.date.slice(5).replace('-','/')} ${health.maxSteps.steps.toLocaleString('ja-JP')}歩`]:['- 記録なし']),'','## 今週のひとこと',...(oneLines.length?oneLines:['- 記録なし']),''];
   return lines.join('\n');
 }

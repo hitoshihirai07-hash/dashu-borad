@@ -1,4 +1,4 @@
-import {LIFE_KEY,lifeFresh,lifeValidate} from './life-model.js';
+import {LIFE_KEY,lifeFresh,lifeValidate,SAMSUNG_HEALTH_KEY,healthFresh,healthValidate} from './life-model.js';
 
 export function createLifeStore(storage){
   let data=lifeFresh(),snapshot=JSON.stringify(data),failure='';
@@ -17,6 +17,27 @@ export function createLifeStore(storage){
       try{current=read();}catch{reload();throw Error(failure);}
       if(JSON.stringify(current)!==snapshot){data=current;snapshot=JSON.stringify(data);throw Error('別のタブで生活ログが更新されました。閉じて内容を確認し、もう一度操作してください。');}
       try{storage.setItem(LIFE_KEY,JSON.stringify(checked));}catch{throw Error('生活ログを端末に保存できません。空き容量や保存設定を確認してください。入力内容は残しています。');}
+      data=checked;snapshot=JSON.stringify(data);return data;
+    }
+  };
+}
+
+export function createHealthStore(storage){
+  let data=healthFresh(),snapshot=JSON.stringify(data),failure='';
+  const read=()=>{const raw=storage.getItem(SAMSUNG_HEALTH_KEY);return raw?healthValidate(JSON.parse(raw)):healthFresh();};
+  function reload(){
+    try{data=read();snapshot=JSON.stringify(data);failure='';}
+    catch{failure='Samsung Healthの保存データを読み込めません。既存データを保護するため、歩数CSVの保存を停止しています。';}
+  }
+  reload();
+  return {
+    get:()=>data,error:()=>failure,reload,
+    save(next){
+      if(failure)throw Error(failure);
+      const checked=healthValidate(next);let current;
+      try{current=read();}catch{reload();throw Error(failure);}
+      if(JSON.stringify(current)!==snapshot){data=current;snapshot=JSON.stringify(data);throw Error('別のタブでSamsung Healthデータが更新されました。CSVを読み込み直してください。');}
+      try{storage.setItem(SAMSUNG_HEALTH_KEY,JSON.stringify(checked));}catch{throw Error('Samsung Healthデータを端末に保存できません。空き容量や保存設定を確認してください。');}
       data=checked;snapshot=JSON.stringify(data);return data;
     }
   };
