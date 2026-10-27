@@ -50,7 +50,7 @@ test('concurrent cloud clients CAS detects conflict and keeps local unsent data'
  const before=local.getItem('toki-records-v1')||JSON.stringify(fresh());c.setItem('toki-records-v1',before.replace('"records":[]','"records":[ ]'));
  await new Promise(r=>setTimeout(r,350));assert.equal(c.status(),'conflict');assert.equal(local.getItem('toki-records-v1').includes('[ ]'),true);
 });
-const envBase={OWNER_EMAIL:'owner@example.com',LOGIN_PASSWORD:'correct horse battery staple',SESSION_SECRET:'an-extremely-long-random-session-secret-for-tests'};
+const envBase={OWNER_EMAIL:'owner@example.com',LOGIN_PASSWORD:'simplePass1'};
 function fakeDb(){const rows=new Map();return {prepare(sql){let args=[];return {bind(...v){args=v;return this;},async first(){const row=rows.get(args[0]);return row?{revision:row.revision,payload:row.payload}:null;},async run(){
    if(sql.startsWith('DELETE')){const existed=rows.delete(args[0]);return {meta:{changes:Number(existed)}};}
    if(sql.startsWith('INSERT')&&sql.includes('ON CONFLICT(owner) DO UPDATE')){rows.set(args[0],{revision:0,payload:args[1]});return {meta:{changes:1}};}
@@ -70,6 +70,7 @@ test('site login: email/password authenticate; secure HttpOnly cookie grants ses
  const cookie=setCookie.split(';')[0];const authenticated=await sessionRequest({request:req('/api/session','GET',cookie),env});assert.deepEqual(await authenticated.json(),{authenticated:true,email:env.OWNER_EMAIL});
  const failed=await sessionRequest({request:req('/api/session'),env});assert.equal(failed.status,401);
  const logout=await logoutRequest({request:req('/api/logout','POST',cookie),env});assert.equal(logout.status,200);assert.match(logout.headers.get('Set-Cookie'),/Max-Age=0/);
+ assert.equal((await sessionRequest({request:req('/api/session','GET',cookie),env})).status,401,'logout must revoke session on the server');
 });
 test('server refuses forged/expired sessions and blocks unauthorized state; CAS blocks stale writes',async()=>{
  const env={...envBase,DB:fakeDb()};
@@ -88,4 +89,17 @@ test('login rate limit after five incorrect attempts (15 minute block)',async()=
  const env={...envBase,DB:fakeDb()};
  for(let i=0;i<5;i++)assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,'incorrect'),env})).status,401);
  assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,env.LOGIN_PASSWORD),env})).status,429);
+});
+
+test('only two settings are needed: short password works, old signature or absent session cannot log in',async()=>{
+ const env={DB:fakeDb(),OWNER_EMAIL:'owner@example.com',LOGIN_PASSWORD:'abc123'};
+ const ok=await loginRequest({request:loginReq(env.OWNER_EMAIL,'abc123'),env});
+ assert.equal(ok.status,200,'no secret and no 12-character password requirement');
+ const token=ok.headers.get('Set-Cookie').split(';')[0];
+ assert.match(token,/toki_owner_session=v2\./);
+ assert.equal((await sessionRequest({request:req('/api/session','GET',token),env})).status,200);
+ assert.equal((await stateRequest({request:req('/api/state','GET',token),env})).status,200);
+ assert.equal((await sessionRequest({request:req('/api/session','GET','toki_owner_session=v1.1234.abcdef.signature'),env})).status,401);
+ const missing=await loginRequest({request:loginReq(env.OWNER_EMAIL,'abc123'),env:{...env,LOGIN_PASSWORD:''}});
+ assert.equal(missing.status,503);assert.match((await missing.json()).error,/パスワード/);
 });

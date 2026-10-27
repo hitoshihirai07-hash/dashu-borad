@@ -3,7 +3,7 @@ import {verifySession} from '../../src/server-auth.js';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function onRequest({request,env}){
   if(!['GET','POST'].includes(request.method))return json({error:'許可されていない操作です。'},405);
-  if(!env.DB||!env.OWNER_EMAIL||!env.LOGIN_PASSWORD||!env.SESSION_SECRET)return json({error:'ログインまたはDB設定が未完了です。'},503);
+  if(!env.DB||!env.OWNER_EMAIL||!env.LOGIN_PASSWORD)return json({error:'ログインまたはDB設定が未完了です。'},503);
   let owner;
   try{owner=await verifySession(request,env);}catch{return json({error:'ログイン設定を確認してください。'},503);}
   if(!owner)return json({error:'ログインが必要です。'},401);
