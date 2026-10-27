@@ -14,16 +14,17 @@ export function validate(data) {
     if(!r || typeof r.id!=='string' || !r.id || r.id.length>160 || ids.has(r.id) || typeof r.rev!=='string' || !r.rev || r.rev.length>160 || !Array.isArray(r.parents) || r.parents.length>10000 || r.parents.some(x=>typeof x!=='string'||x.length>160) || !validDate(r.date) || typeof r.activity!=='string' || !r.activity.trim() || r.activity.length>80 || !Number.isInteger(r.minutes) || r.minutes<30 || r.minutes>1440 || r.minutes%30!==0 || typeof r.note!=='string' || r.note.length>2000 || typeof r.deleted!=='boolean' || typeof r.updatedAt!=='string' || !Number.isFinite(Date.parse(r.updatedAt))) throw Error('記録の形式が正しくありません。元の共有ファイルを確認してください。');
     const field=data.version===1&&r.field===undefined?'その他':r.field;
     const project=data.version===1&&r.project===undefined?'未分類':r.project;
+    if(r.taskId!==undefined&&(typeof r.taskId!=='string'||r.taskId.length>160))throw Error('関連タスクの形式が不正です。');
     if([field,project].some(v=>typeof v!=='string'||!v.trim()||v.length>80)) throw Error('分野・プロジェクトは1〜80文字で指定してください。');
     ids.add(r.id);
-    return {field:field.trim(),project:project.trim(),id:r.id,rev:r.rev,parents:[...new Set(r.parents)],date:r.date,activity:r.activity.trim(),minutes:r.minutes,note:r.note,deleted:r.deleted,updatedAt:r.updatedAt};
+    return {field:field.trim(),project:project.trim(),id:r.id,rev:r.rev,parents:[...new Set(r.parents)],date:r.date,activity:r.activity.trim(),minutes:r.minutes,note:r.note,deleted:r.deleted,updatedAt:r.updatedAt,...(r.taskId!==undefined?{taskId:r.taskId}:{})};
   });
   return {format:'toki-records',version:2,records};
 }
 export function revise(old, values) {
   return {field:old?.field||'その他',project:old?.project||'未分類',...values,id:old?.id||uid(),rev:uid(),parents:old?[...new Set([...old.parents,old.rev])]:[],updatedAt:new Date().toISOString(),deleted:values.deleted??false};
 }
-const samePayload=(a,b)=>a.date===b.date&&a.activity===b.activity&&a.minutes===b.minutes&&a.note===b.note&&a.deleted===b.deleted&&a.field===b.field&&a.project===b.project;
+const samePayload=(a,b)=>a.date===b.date&&a.activity===b.activity&&a.minutes===b.minutes&&a.note===b.note&&a.deleted===b.deleted&&a.field===b.field&&a.project===b.project&&(a.taskId||'')===(b.taskId||'');
 export function planMerge(local, incoming) {
   local=validate(local);incoming=validate(incoming);
   const map=new Map(local.records.map(r=>[r.id,r]));

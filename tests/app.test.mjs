@@ -6,13 +6,15 @@ import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {LIFE_KEY,LIFE_FIELDS,lifeFresh,lifeRecord} from '../src/life-model.js';
 import {localDate} from '../src/model.js';
-const script=['model.js','life-model.js','life-store.js','life-log.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
+const script=['model.js','life-model.js','life-store.js','life-log.js','workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
 const legacy={format:'toki-records',version:1,records:[{id:'legacy',rev:'r1',parents:[],date:'2026-09-18',activity:'旧記録',minutes:30,note:'旧メモ',deleted:false,updatedAt:'2026-09-18T00:00:00Z'}]};
 function harness(initial, defaults, blockedStorage=false){
   const storage=new Map(initial?[['toki-records-v1',JSON.stringify(initial)]]:[]),elements=new Map(),docEvents={},winEvents={},downloads=[];
   const el=id=>{if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',value:'',hidden:false,dataset:{},events:{},addEventListener(k,fn){this.events[k]=fn;},showModal(){this.open=true;},close(){this.open=false;},querySelectorAll(){return [];},focus(){},reset(){for(const e of Object.values(this.elements))e.value='';},append(){},remove(){},click(){},setAttribute(){},removeAttribute(){}});return elements.get(id);};
   el('#record-form').elements=Object.fromEntries(['field','project','customProject','date','activity','minutes','note'].map(n=>[n,el(n)]));
   el('#life-form').elements=Object.fromEntries(['date',...LIFE_FIELDS.map(f=>f.key)].map(n=>[n,el('life-'+n)]));
+  el('#workspace-form').elements=Object.fromEntries(['title','project','description','body','detail','due','priority','status','category'].map(n=>[n,el('workspace-'+n)]));
+  el('#workspace-form').querySelectorAll=()=>[];
   el('#sleep-preset-form').elements=Object.fromEntries(Array.from({length:7},(_,i)=>[`wake-${i}`,`bed-${i}`]).flat().map(n=>[n,el('sleep-'+n)]));
   const document={querySelector:el,querySelectorAll:()=>[],documentElement:{outerHTML:'<html>portable shell</html>'},addEventListener:(k,fn)=>docEvents[k]=fn,body:{append(){}},head:{append(){}},createElement:()=>({click(){},remove(){}})};
   const sandbox={document,window:{innerWidth:1365,addEventListener:(k,fn)=>winEvents[k]=fn,scrollTo(){}},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},location:{hash:'#dashboard',protocol:'file:'},navigator:{},crypto:webcrypto,Blob,URL:{createObjectURL:b=>{downloads.push(b);return 'blob:test';},revokeObjectURL(){}},setTimeout:()=>1,clearTimeout(){},console};

@@ -1,10 +1,11 @@
 import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 const shell=await readFile('src/shell.html','utf8');
-const css=await readFile('src/style.css','utf8')+'\n'+await readFile('src/life-log.css','utf8');
+const css=await readFile('src/style.css','utf8')+'\n'+await readFile('src/life-log.css','utf8')+'\n'+await readFile('src/workspace.css','utf8');
 const model=(await readFile('src/model.js','utf8')).replace(/^export /gm,'');
 const life=[];
 for(const file of ['life-model.js','life-store.js','life-log.js'])life.push((await readFile('src/'+file,'utf8')).replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,''));
+for(const file of ['workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js'])life.push((await readFile('src/'+file,'utf8')).replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,''));
 const app=(await readFile('src/app.js','utf8')).replace(/^import .*?;\r?\n/gm,'');
 const html=shell.replace('/* STYLES */',()=>css).replace('/* SCRIPT */',()=>`(()=>{\n${model}\n${life.join('\n')}\n${app}\n})();`);
 await mkdir('dist',{recursive:true});await writeFile('dist/index.html',html);await writeFile('ときの記録.html',html);
