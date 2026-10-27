@@ -35,8 +35,91 @@
 .auth-card .auth-submit{width:100%;margin-top:20px;min-height:45px}
 #logout-button{margin-left:12px;padding:6px 10px;font-size:12px}
 @media(max-width:600px){#logout-button{margin:12px 0 0;width:100%}}
+
+/* Task-first project workspace: clear, readable panels rather than nested cards. */
+.work-eyebrow{display:block;font-size:11px;font-weight:700;color:#65877a;letter-spacing:.03em;margin-bottom:6px}
+.work-task-layout{display:grid;grid-template-columns:minmax(280px,.95fr) minmax(330px,1.2fr);gap:16px;align-items:start}
+.work-project-layout{display:grid;grid-template-columns:minmax(160px,0.7fr) minmax(230px,1fr) minmax(290px,1.35fr);gap:16px;align-items:start}
+.work-task-layout>.panel,.work-project-layout>.panel{margin:0}
+.work-project-nav,.work-project-tasks{min-width:0}
+.work-project-nav>h2{font-size:15px;margin:0 0 17px}
+.work-project-choice,.work-project-overview{border:1px solid transparent;border-radius:10px;background:transparent;color:#264d3d;cursor:pointer;text-align:left;width:100%;padding:12px;display:flex;justify-content:space-between;gap:9px;align-items:center;font:inherit;overflow-wrap:anywhere}
+.work-project-choice:hover,.work-project-overview:hover{background:#f1f8f2}
+.work-project-choice.selected,.work-project-overview.selected{background:#e6f3e9;border-color:#b9d4c1;color:#19583e;font-weight:700}
+.work-project-choice small{flex-shrink:0;color:#618472;font-size:11px}
+.work-project-overview{background:#f7faf8;border:1px solid #e0ebe3;margin:12px 0 14px;font-weight:600}
+.work-project-tasks h2,.work-detail h2{font-size:18px;line-height:1.5;overflow-wrap:anywhere;margin:0}
+.work-section-head,.work-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.work-section-head{margin-bottom:13px}.work-section-head>.button{flex-shrink:0}
+.work-task-list{display:grid;gap:5px}
+.work-task-group{margin-top:18px}.work-task-group h2{font-size:14px;border-bottom:1px solid #e9f0ea;padding-bottom:9px;display:flex;justify-content:space-between;gap:8px}
+.work-task-group small{font-size:11px;color:#839b8c}.work-board-total{font-size:13px;color:#567d66}
+.work-task-row{border:1px solid #e2ece6;border-radius:10px;padding:8px;display:flex;align-items:center;gap:8px;background:white;min-width:0}
+.work-task-row.selected{background:#edf7ef;border-color:#9dcbad}
+.work-task-row .task-toggle{width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.work-task-select{font:inherit;text-align:left;flex:1;min-width:0;background:transparent;border:0;cursor:pointer;padding:5px;overflow-wrap:anywhere;color:#284a38}
+.work-task-select strong{display:block;font-size:13px;line-height:1.6}.work-task-select strong.done{text-decoration:line-through;color:#85948b}
+.work-task-select .workspace-meta{display:block;line-height:1.6;margin-top:1px;font-size:11px}
+.work-note-marker{display:inline-block;color:#416e52;font-size:10px;background:#deede0;border-radius:20px;padding:3px 8px;margin-top:4px}
+.work-detail{position:relative;min-width:0;overflow-wrap:anywhere}
+.work-detail-head{padding-bottom:17px;border-bottom:1px solid #e5ece6}
+.work-detail-head h2{font-size:19px}.work-edit{flex-shrink:0}
+.work-detail-section{border-top:1px solid #e6eee7;margin-top:22px;padding-top:18px}
+.work-detail-section h3{font-size:14px;margin:0 0 9px}
+.work-long-text{white-space:normal;color:#416052;line-height:1.85;font-size:13px;margin:10px 0}
+.work-note-form{margin:20px 0}.work-note-form label{display:block;font-weight:700;font-size:14px;margin-bottom:4px}
+.work-note-form p{font-size:12px;margin:6px 0 10px}
+.work-note-form textarea{width:100%;min-height:140px;padding:12px;border:1px solid #cadbd0;border-radius:9px;font:inherit;line-height:1.7;resize:vertical;background:#fff}
+.work-note-form .button{margin-top:10px}.work-record-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.work-record-list li{background:#f6faf7;border-radius:9px;padding:10px 12px;display:flex;align-items:flex-start;flex-wrap:wrap;gap:5px 12px;justify-content:space-between;font-size:12px}
+.work-record-list li small{display:block;width:100%;color:#627d6c;line-height:1.6;overflow-wrap:anywhere}
+.work-legacy-note{padding:12px 0;border-bottom:1px solid #e5ece7}.work-legacy-note>strong{font-size:13px}.work-legacy-note .button{margin:8px 8px 0 0}
+.habit-home{margin:0 0 22px}.habit-home .panel-heading{margin-bottom:15px}.habit-home h2 small{font-size:12px;color:#5d8c6f}
+.habit-layout{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(330px,1.15fr);gap:16px;align-items:start}
+.habit-checks{display:grid;gap:10px;margin:15px 0}.habit-checks.compact{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.habit-item{display:flex;align-items:center;gap:10px;border:1px solid #e1eae4;border-radius:10px;background:#fff;padding:13px;min-width:0;cursor:pointer;font-size:13px;font-weight:600;color:#375a47}
+.habit-item.done{background:#e7f4ea;border-color:#abd3b6;color:#205f3b}
+.habit-item input{width:20px;height:20px;accent-color:#297a50;flex-shrink:0;cursor:pointer}
+.habit-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:16px 0}
+.habit-day{min-width:0;background:#f6faf7;border:1px solid #e0ebe3;border-radius:9px;display:grid;gap:10px;justify-items:center;padding:10px 3px;cursor:pointer;color:#3c604c;font:inherit;font-size:11px}
+.habit-day.selected{border-color:#65a77a;background:#e6f3e9}
+.habit-day strong{font-size:14px}.habit-meter{width:82%;height:5px;border-radius:8px;background:#deebe0;overflow:hidden}.habit-meter>span{display:block;height:100%;background:#388b59}
+.work-empty{padding:13px 0}.mobile-more{display:none}.desktop-extra-links{display:grid;gap:8px}
+@media(max-width:1200px){.work-project-layout{grid-template-columns:minmax(145px,.8fr) minmax(250px,1.3fr)}.work-project-layout>.work-detail{grid-column:1/-1}}
+@media(max-width:950px){.work-task-layout{grid-template-columns:1fr}.habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.habit-layout{grid-template-columns:1fr}}
+@media(max-width:600px){
+ .work-project-layout,.work-task-layout{grid-template-columns:1fr;gap:12px}
+ .work-project-layout>.work-detail{grid-column:auto}
+ .work-project-nav{padding:14px 12px!important}
+ .work-project-nav>h2{margin-bottom:8px}
+ .work-project-choice{padding:9px 10px}
+ .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .habit-day{font-size:10px;gap:8px;padding:9px 2px}.habit-day strong{font-size:12px}
+ .work-detail-head h2{font-size:17px}.work-detail-head .button{padding:8px}
+ .sidebar nav{overflow:visible}.sidebar nav>a{flex:1}
+ .desktop-extra-links{display:none}.mobile-more{display:block;position:relative;flex:1;min-width:0}
+ .mobile-more summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;color:#425c51;font-size:10px;line-height:1.4;font-weight:600}
+ .mobile-more summary::-webkit-details-marker{display:none}.mobile-more summary svg{width:20px;height:20px}
+ .mobile-more[open] summary{color:#24634b}
+ .mobile-more-links{position:absolute;bottom:calc(100% + 9px);right:0;width:min(240px,90vw);background:#fff;border:1px solid #d4e4d7;border-radius:12px;padding:8px;box-shadow:0 12px 30px #234f3024;display:grid;gap:4px}
+ .mobile-more-links a{display:block!important;padding:12px!important;font-size:13px!important;text-align:left;font-weight:600}
+}
 </style></head>
-<body><div id="auth-screen" class="auth-screen" role="region" aria-label="ログイン"><div class="auth-card"><h1>ときの記録</h1><p>本人専用ログイン</p><form id="auth-form"><label>メールアドレス<input type="email" name="email" autocomplete="username" maxlength="254" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" required></label><p id="auth-error" class="error" role="alert"></p><button class="button primary auth-submit" type="submit">ログイン</button></form><p id="auth-loading" class="muted">ログイン状態を確認中…</p></div></div><a href="#main" class="skip">本文へ移動</a><aside class="sidebar" inert><a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a><nav aria-label="メインナビゲーション"><a href="#dashboard" data-nav="dashboard"><span data-icon="home"></span><span>ダッシュボード</span></a><a href="#tasks" data-nav="tasks"><span data-icon="list"></span><span>タスク</span></a><a href="#projects" data-nav="projects"><span data-icon="grid"></span><span>プロジェクト</span></a><a href="#notes" data-nav="notes"><span data-icon="file"></span><span>クイックメモ</span></a><a href="#prompts" data-nav="prompts"><span data-icon="file"></span><span>プロンプト</span></a><a href="#records" data-nav="records"><span data-icon="list"></span><span>記録一覧</span></a><a href="#life-log" data-nav="life-log"><span data-icon="calendar"></span><span>生活ログ</span></a><a href="#share" data-nav="share"><span data-icon="share"></span><span>データ共有</span></a></nav><div class="sidebar-foot"><span data-icon="save"></span><span>端末とクラウドで管理<small>同期状態は上部に表示します。</small></span></div></aside><div class="workspace" inert><div class="topbar"><span>自分のペースで、積み重ねる。</span><span id="save-status" role="status">接続を確認中</span></div><main id="main" tabindex="-1"></main><footer>データの同期状態を確認し、<a href="#share">定期的にバックアップしてください</a> <button type="button" id="logout-button" class="button secondary">ログアウト</button></footer></div><dialog id="record-dialog" aria-labelledby="record-title"><form id="record-form"><div class="dialog-heading"><h2 id="record-title">時間を記録</h2><button type="button" class="icon-button" data-close="record-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><p class="muted">今日の積み重ねを、30分単位で。</p><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div class="classification-fields"><label>分野<select name="field" required></select></label><label>プロジェクト<select name="project" required></select></label></div><label id="custom-project-label" hidden>新しいプロジェクト名<input name="customProject" maxlength="80" placeholder="プロジェクト名を入力" autocomplete="off"></label><label>関連タスク（任意）<select name="taskId"><option value="">タスク指定なし</option></select></label><label>活動名<input name="activity" list="activities" placeholder="例：記事作成、実践" maxlength="80" required autocomplete="off"></label><datalist id="activities"></datalist><label>時間<select name="minutes"></select></label><label>メモ <span class="muted">（任意）</span><textarea name="note" rows="3" maxlength="2000" placeholder="取り組んだこと、気づいたことなど"></textarea></label><p id="form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="record-dialog">キャンセル</button><button class="button primary" type="submit">保存する</button></div></form></dialog><dialog id="merge-dialog" aria-labelledby="merge-title"><div class="dialog-heading"><h2 id="merge-title">読み込む記録を確認</h2><button class="icon-button" data-close="merge-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><div id="merge-content"></div><p id="merge-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="merge-dialog">キャンセル</button><button class="button primary" id="merge-apply">統合して保存</button></div></dialog><dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-heading"><h2 id="delete-title">この記録を削除しますか？</h2></div><p id="delete-description"></p><p class="muted">削除済みの一覧から元に戻せます。削除状態も共有ファイルに含まれます。</p><div class="dialog-actions"><button class="button secondary" data-close="delete-dialog">キャンセル</button><button class="button danger" id="delete-apply">削除する</button></div></dialog><dialog id="life-dialog" aria-labelledby="life-title"><form id="life-form"><div class="dialog-heading"><h2 id="life-title">生活ログを記録</h2><button type="button" class="icon-button" data-close="life-dialog" aria-label="生活ログの入力を閉じる"><span data-icon="close"></span></button></div><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div id="life-form-tabs"></div><div id="life-form-fields"></div><p id="life-form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="life-dialog">キャンセル</button><button class="button primary" type="submit">生活ログを保存</button></div></form></dialog><dialog id="sleep-preset-dialog" aria-labelledby="sleep-preset-title"><form id="sleep-preset-form"><div class="dialog-heading"><div><h2 id="sleep-preset-title">睡眠プリセット</h2><p class="muted">起床はその曜日の朝、就寝はその曜日の夜として保存します。水曜の夜に0:30就寝なら、水曜日の「就寝」に0:30を設定してください。</p></div><button type="button" class="icon-button" data-close="sleep-preset-dialog" aria-label="睡眠プリセットを閉じる"><span data-icon="close"></span></button></div><div class="sleep-preset-grid"><div class="sleep-preset-head"><span>曜日</span><span>起床</span><span>就寝</span></div><label><strong>日</strong><input name="wake-0" type="time" step="60"><input name="bed-0" type="time" step="60"></label><label><strong>月</strong><input name="wake-1" type="time" step="60"><input name="bed-1" type="time" step="60"></label><label><strong>火</strong><input name="wake-2" type="time" step="60"><input name="bed-2" type="time" step="60"></label><label><strong>水</strong><input name="wake-3" type="time" step="60"><input name="bed-3" type="time" step="60"></label><label><strong>木</strong><input name="wake-4" type="time" step="60"><input name="bed-4" type="time" step="60"></label><label><strong>金</strong><input name="wake-5" type="time" step="60"><input name="bed-5" type="time" step="60"></label><label><strong>土</strong><input name="wake-6" type="time" step="60"><input name="bed-6" type="time" step="60"></label></div><p id="sleep-preset-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="sleep-preset-dialog">キャンセル</button><button class="button primary" type="submit">プリセットを保存</button></div></form></dialog><dialog id="life-delete-dialog" aria-labelledby="life-delete-title"><h2 id="life-delete-title">生活ログを削除しますか？</h2><p id="life-delete-description"></p><p class="muted">履歴の「削除済みを表示」から復元できます。</p><p id="life-delete-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-delete-dialog">キャンセル</button><button class="button danger" id="life-delete-apply">生活ログを削除</button></div></dialog><dialog id="life-import-dialog" aria-labelledby="life-import-title"><div class="dialog-heading"><h2 id="life-import-title">生活ログの読み込みを確認</h2><button class="icon-button" data-close="life-import-dialog" aria-label="読み込み確認を閉じる"><span data-icon="close"></span></button></div><div id="life-import-content"></div><label id="life-import-unescape-label"><input id="life-import-unescape" type="checkbox"> このアプリから出力したCSV（数式保護の引用符を解除）</label><label>同じ日付で内容が異なる場合<select id="life-import-policy"><option value="keep">この端末の記録を残す（追加のみ）</option><option value="replace">読み込むファイルの内容で置き換える</option></select></label><p class="muted">置き換えると、この端末の内容や削除状態がファイルの内容に変わります。先にJSONバックアップを保存してください。</p><p id="life-import-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-import-dialog">キャンセル</button><button class="button primary" id="life-import-apply">取り込んで保存</button></div></dialog><dialog id="health-import-dialog" aria-labelledby="health-import-title"><div class="dialog-heading"><h2 id="health-import-title">Samsung Health歩数CSVを確認</h2><button class="icon-button" data-close="health-import-dialog" aria-label="Samsung Healthの読み込み確認を閉じる"><span data-icon="close"></span></button></div><div id="health-import-content"></div><p id="health-import-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="health-import-dialog">キャンセル</button><button class="button primary" id="health-import-apply">歩数データを取り込む</button></div></dialog><dialog id="workspace-dialog" aria-labelledby="workspace-title"><form id="workspace-form"><div class="dialog-heading"><h2 id="workspace-title">作業を追加</h2><button type="button" class="icon-button" data-close="workspace-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><label>タイトル<input name="title" maxlength="160" required placeholder="名前を入力"></label><label data-workspace-types="tasks,notes,prompts">プロジェクト<select name="project"></select></label><label data-workspace-types="tasks">期限（任意）<input name="due" type="date"></label><div class="classification-fields" data-workspace-types="tasks"><label>優先度<select name="priority"><option value="normal">通常</option><option value="high">高</option><option value="low">低</option></select></label><label>状態<select name="status"><option value="todo">未着手</option><option value="doing">進行中</option><option value="done">完了</option></select></label></div><label data-workspace-types="tasks">タスクの内容<textarea name="detail" maxlength="4000" rows="4"></textarea></label><label data-workspace-types="projects">説明<textarea name="description" maxlength="2000" rows="3"></textarea></label><label data-workspace-types="notes,prompts">本文<textarea name="body" maxlength="15000" rows="6"></textarea></label><label data-workspace-types="prompts">カテゴリ<input name="category" maxlength="80"></label><p id="workspace-form-error" role="alert" class="error"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="workspace-dialog">キャンセル</button><button class="button primary" type="submit">保存</button></div></form></dialog><input id="cloud-import-file" type="file" accept=".json,application/json" hidden><input id="health-import-file" type="file" accept=".csv,text/csv" hidden><input id="life-import-file" type="file" accept=".csv,.json,text/csv,application/json" hidden><input id="import-file" type="file" accept=".json,application/json" hidden><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><noscript>このサイトを使うには、ブラウザーのJavaScriptを有効にしてください。</noscript><script>(()=>{
+<body><div id="auth-screen" class="auth-screen" role="region" aria-label="ログイン"><div class="auth-card"><h1>ときの記録</h1><p>本人専用ログイン</p><form id="auth-form"><label>メールアドレス<input type="email" name="email" autocomplete="username" maxlength="254" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" required></label><p id="auth-error" class="error" role="alert"></p><button class="button primary auth-submit" type="submit">ログイン</button></form><p id="auth-loading" class="muted">ログイン状態を確認中…</p></div></div><a href="#main" class="skip">本文へ移動</a><aside class="sidebar" inert><a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a><nav aria-label="メインナビゲーション">
+  <a href="#dashboard" data-nav="dashboard"><span data-icon="home"></span><span>ホーム</span></a>
+  <a href="#tasks" data-nav="tasks"><span data-icon="list"></span><span>タスク</span></a>
+  <a href="#projects" data-nav="projects"><span data-icon="grid"></span><span>プロジェクト</span></a>
+  <a href="#habits" data-nav="habits"><span data-icon="calendar"></span><span>習慣</span></a>
+  <div class="desktop-extra-links">
+    <a href="#records" data-nav="records"><span data-icon="clock"></span><span>時間記録</span></a>
+    <a href="#life-log" data-nav="life-log"><span data-icon="calendar"></span><span>生活ログ</span></a>
+    <a href="#prompts" data-nav="prompts"><span data-icon="file"></span><span>プロンプト</span></a>
+    <a href="#share" data-nav="share"><span data-icon="share"></span><span>データ共有</span></a>
+  </div>
+  <details class="mobile-more"><summary><span data-icon="grid"></span><span>その他</span></summary><div class="mobile-more-links">
+    <a href="#records" data-nav="records">時間記録</a><a href="#life-log" data-nav="life-log">生活ログ</a><a href="#prompts" data-nav="prompts">プロンプト</a><a href="#share" data-nav="share">データ共有</a>
+  </div></details>
+</nav><div class="sidebar-foot"><span data-icon="save"></span><span>端末とクラウドで管理<small>同期状態は上部に表示します。</small></span></div></aside><div class="workspace" inert><div class="topbar"><span>自分のペースで、積み重ねる。</span><span id="save-status" role="status">接続を確認中</span></div><main id="main" tabindex="-1"></main><footer>データの同期状態を確認し、<a href="#share">定期的にバックアップしてください</a> <button type="button" id="logout-button" class="button secondary">ログアウト</button></footer></div><dialog id="record-dialog" aria-labelledby="record-title"><form id="record-form"><div class="dialog-heading"><h2 id="record-title">時間を記録</h2><button type="button" class="icon-button" data-close="record-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><p class="muted">今日の積み重ねを、30分単位で。</p><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div class="classification-fields"><label>分野<select name="field" required></select></label><label>プロジェクト<select name="project" required></select></label></div><label id="custom-project-label" hidden>新しいプロジェクト名<input name="customProject" maxlength="80" placeholder="プロジェクト名を入力" autocomplete="off"></label><label>関連タスク（任意）<select name="taskId"><option value="">タスク指定なし</option></select></label><label>活動名<input name="activity" list="activities" placeholder="例：記事作成、実践" maxlength="80" required autocomplete="off"></label><datalist id="activities"></datalist><label>時間<select name="minutes"></select></label><label>メモ <span class="muted">（任意）</span><textarea name="note" rows="3" maxlength="2000" placeholder="取り組んだこと、気づいたことなど"></textarea></label><p id="form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="record-dialog">キャンセル</button><button class="button primary" type="submit">保存する</button></div></form></dialog><dialog id="merge-dialog" aria-labelledby="merge-title"><div class="dialog-heading"><h2 id="merge-title">読み込む記録を確認</h2><button class="icon-button" data-close="merge-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><div id="merge-content"></div><p id="merge-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="merge-dialog">キャンセル</button><button class="button primary" id="merge-apply">統合して保存</button></div></dialog><dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-heading"><h2 id="delete-title">この記録を削除しますか？</h2></div><p id="delete-description"></p><p class="muted">削除済みの一覧から元に戻せます。削除状態も共有ファイルに含まれます。</p><div class="dialog-actions"><button class="button secondary" data-close="delete-dialog">キャンセル</button><button class="button danger" id="delete-apply">削除する</button></div></dialog><dialog id="life-dialog" aria-labelledby="life-title"><form id="life-form"><div class="dialog-heading"><h2 id="life-title">生活ログを記録</h2><button type="button" class="icon-button" data-close="life-dialog" aria-label="生活ログの入力を閉じる"><span data-icon="close"></span></button></div><label>日付<input name="date" type="date" min="1900-01-01" max="2200-12-31" required></label><div id="life-form-tabs"></div><div id="life-form-fields"></div><p id="life-form-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="life-dialog">キャンセル</button><button class="button primary" type="submit">生活ログを保存</button></div></form></dialog><dialog id="sleep-preset-dialog" aria-labelledby="sleep-preset-title"><form id="sleep-preset-form"><div class="dialog-heading"><div><h2 id="sleep-preset-title">睡眠プリセット</h2><p class="muted">起床はその曜日の朝、就寝はその曜日の夜として保存します。水曜の夜に0:30就寝なら、水曜日の「就寝」に0:30を設定してください。</p></div><button type="button" class="icon-button" data-close="sleep-preset-dialog" aria-label="睡眠プリセットを閉じる"><span data-icon="close"></span></button></div><div class="sleep-preset-grid"><div class="sleep-preset-head"><span>曜日</span><span>起床</span><span>就寝</span></div><label><strong>日</strong><input name="wake-0" type="time" step="60"><input name="bed-0" type="time" step="60"></label><label><strong>月</strong><input name="wake-1" type="time" step="60"><input name="bed-1" type="time" step="60"></label><label><strong>火</strong><input name="wake-2" type="time" step="60"><input name="bed-2" type="time" step="60"></label><label><strong>水</strong><input name="wake-3" type="time" step="60"><input name="bed-3" type="time" step="60"></label><label><strong>木</strong><input name="wake-4" type="time" step="60"><input name="bed-4" type="time" step="60"></label><label><strong>金</strong><input name="wake-5" type="time" step="60"><input name="bed-5" type="time" step="60"></label><label><strong>土</strong><input name="wake-6" type="time" step="60"><input name="bed-6" type="time" step="60"></label></div><p id="sleep-preset-error" class="error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="sleep-preset-dialog">キャンセル</button><button class="button primary" type="submit">プリセットを保存</button></div></form></dialog><dialog id="life-delete-dialog" aria-labelledby="life-delete-title"><h2 id="life-delete-title">生活ログを削除しますか？</h2><p id="life-delete-description"></p><p class="muted">履歴の「削除済みを表示」から復元できます。</p><p id="life-delete-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-delete-dialog">キャンセル</button><button class="button danger" id="life-delete-apply">生活ログを削除</button></div></dialog><dialog id="life-import-dialog" aria-labelledby="life-import-title"><div class="dialog-heading"><h2 id="life-import-title">生活ログの読み込みを確認</h2><button class="icon-button" data-close="life-import-dialog" aria-label="読み込み確認を閉じる"><span data-icon="close"></span></button></div><div id="life-import-content"></div><label id="life-import-unescape-label"><input id="life-import-unescape" type="checkbox"> このアプリから出力したCSV（数式保護の引用符を解除）</label><label>同じ日付で内容が異なる場合<select id="life-import-policy"><option value="keep">この端末の記録を残す（追加のみ）</option><option value="replace">読み込むファイルの内容で置き換える</option></select></label><p class="muted">置き換えると、この端末の内容や削除状態がファイルの内容に変わります。先にJSONバックアップを保存してください。</p><p id="life-import-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="life-import-dialog">キャンセル</button><button class="button primary" id="life-import-apply">取り込んで保存</button></div></dialog><dialog id="health-import-dialog" aria-labelledby="health-import-title"><div class="dialog-heading"><h2 id="health-import-title">Samsung Health歩数CSVを確認</h2><button class="icon-button" data-close="health-import-dialog" aria-label="Samsung Healthの読み込み確認を閉じる"><span data-icon="close"></span></button></div><div id="health-import-content"></div><p id="health-import-error" class="error" role="alert"></p><div class="dialog-actions"><button class="button secondary" data-close="health-import-dialog">キャンセル</button><button class="button primary" id="health-import-apply">歩数データを取り込む</button></div></dialog><dialog id="workspace-dialog" aria-labelledby="workspace-title"><form id="workspace-form"><div class="dialog-heading"><h2 id="workspace-title">作業を追加</h2><button type="button" class="icon-button" data-close="workspace-dialog" aria-label="閉じる"><span data-icon="close"></span></button></div><label>タイトル<input name="title" maxlength="160" required placeholder="名前を入力"></label><label data-workspace-types="tasks,notes,prompts">プロジェクト<select name="project"></select></label><label data-workspace-types="tasks">期限（任意）<input name="due" type="date"></label><div class="classification-fields" data-workspace-types="tasks"><label>優先度<select name="priority"><option value="normal">通常</option><option value="high">高</option><option value="low">低</option></select></label><label>状態<select name="status"><option value="todo">未着手</option><option value="doing">進行中</option><option value="done">完了</option></select></label></div><label data-workspace-types="tasks">タスクの内容<textarea name="detail" maxlength="4000" rows="4"></textarea></label><label data-workspace-types="projects">説明<textarea name="description" maxlength="2000" rows="3"></textarea></label><label data-workspace-types="projects,tasks">メモ<textarea name="memo" maxlength="10000" rows="5" placeholder="プロジェクト・タスクのメモ"></textarea></label><label data-workspace-types="notes,prompts">本文<textarea name="body" maxlength="15000" rows="6"></textarea></label><label data-workspace-types="prompts">カテゴリ<input name="category" maxlength="80"></label><p id="workspace-form-error" role="alert" class="error"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="workspace-dialog">キャンセル</button><button class="button primary" type="submit">保存</button></div></form></dialog><input id="cloud-import-file" type="file" accept=".json,application/json" hidden><input id="health-import-file" type="file" accept=".csv,text/csv" hidden><input id="life-import-file" type="file" accept=".csv,.json,text/csv,application/json" hidden><input id="import-file" type="file" accept=".json,application/json" hidden><div id="toast" class="toast" role="status" aria-live="polite" hidden></div><noscript>このサイトを使うには、ブラウザーのJavaScriptを有効にしてください。</noscript><script>(()=>{
 const KEY = 'toki-records-v1';
 const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const uid = () => globalThis.crypto?.randomUUID?.() || `t-${Date.now().toString(36)}-${Array.from(globalThis.crypto.getRandomValues(new Uint32Array(4)),x=>x.toString(36)).join('')}`;
@@ -601,33 +684,60 @@ function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc,getTim
   };
 }
 
-// Separate, validated workspace data. All timestamps in UTC; dates in local YYYY-MM-DD.
-const WORKSPACE_KEY='toki-workspace-v1';
-const workspaceFresh=()=>({format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[]});
+// Project/task notes and the independent daily habit tracker share the existing
+// workspace key, so no new D1 table or Cloudflare setting is required.
+const WORKSPACE_KEY = 'toki-workspace-v1';
+const HABITS = Object.freeze([
+  {id:'baseball', label:'野球確認'},
+  {id:'walk', label:'散歩'},
+  {id:'life', label:'生活記録'},
+  {id:'daily', label:'今日の記録'},
+]);
+const workspaceFresh = () => ({
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],habits:{}
+});
+const validDay = v => {
+  if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
+  const d = new Date(v+'T12:00:00');
+  return Number.isFinite(+d)&&d.getFullYear()===+v.slice(0,4)&&d.getMonth()+1===+v.slice(5,7)&&d.getDate()===+v.slice(8,10);
+};
 function workspaceValidate(value){
   if(!value||value.format!=='toki-workspace'||value.version!==1)throw Error('作業管理データの形式が正しくありません。');
   const limits={projects:500,tasks:10000,notes:10000,prompts:2000};
   const all=new Set(),out={format:'toki-workspace',version:1};
-  const string=(v,max,required=false)=>{if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw Error('作業管理の文字数または入力内容が不正です。');return v;};
-  const date=v=>v===''||(/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v+'T12:00:00'))&&new Date(v+'T12:00:00').toISOString().slice(0,10)===v);
+  const str=(v,max,required=false)=>{
+    if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw Error('作業管理の文字数または入力内容が不正です。');
+    return v;
+  };
   for(const type of Object.keys(limits)){
-    const rows=value[type];if(!Array.isArray(rows)||rows.length>limits[type])throw Error('作業管理の件数が上限を超えています。');
+    const rows=value[type];
+    if(!Array.isArray(rows)||rows.length>limits[type])throw Error('作業管理の件数が上限を超えています。');
     out[type]=rows.map(item=>{
       if(!item||typeof item!=='object')throw Error('作業管理の行が不正です。');
-      const id=string(item.id,160,true),title=string(item.title,160,true),project=string(item.project??'',80),createdAt=string(item.createdAt,40,true),updatedAt=string(item.updatedAt,40,true);
+      const id=str(item.id,160,true),title=str(item.title,160,true),project=str(item.project??'',80);
+      const createdAt=str(item.createdAt,40,true),updatedAt=str(item.updatedAt,40,true);
       if(all.has(type+id)||!Number.isFinite(Date.parse(createdAt))||!Number.isFinite(Date.parse(updatedAt)))throw Error('作業管理のIDまたは日時が不正です。');
       all.add(type+id);
       const base={id,title,project,createdAt,updatedAt};
       if(type==='tasks'){
-        const due=string(item.due??'',10),status=string(item.status,15),priority=string(item.priority,15),detail=string(item.detail??'',4000);
-        if(!date(due)||!['todo','doing','done'].includes(status)||!['high','normal','low'].includes(priority))throw Error('タスクの日付・状態が不正です。');
-        return {...base,due,status,priority,detail};
+        const due=str(item.due??'',10),status=str(item.status,15),priority=str(item.priority,15),detail=str(item.detail??'',4000);
+        if((due&&!validDay(due))||!['todo','doing','done'].includes(status)||!['high','normal','low'].includes(priority))throw Error('タスクの日付・状態が不正です。');
+        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000)};
       }
-      if(type==='notes')return {...base,body:string(item.body??'',10000)};
-      if(type==='prompts')return {...base,body:string(item.body??'',15000),category:string(item.category??'',80)};
-      return {...base,description:string(item.description??'',2000)};
+      if(type==='projects')return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000)};
+      // Keep legacy notes; they appear inside the relevant project, never as a standalone notebook.
+      if(type==='notes')return {...base,body:str(item.body??'',10000)};
+      return {...base,body:str(item.body??'',15000),category:str(item.category??'',80)};
     });
   }
+  const raw=value.habits??{};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)||Object.keys(raw).length>5000)throw Error('習慣の履歴が不正です。');
+  const allowed=new Set(HABITS.map(x=>x.id)),habits={};
+  for(const [day,ids] of Object.entries(raw)){
+    if(!validDay(day)||!Array.isArray(ids)||ids.length>HABITS.length||ids.some(x=>typeof x!=='string'||!allowed.has(x))||new Set(ids).size!==ids.length)throw Error('習慣の記録日または内容が不正です。');
+    if(ids.length)habits[day]=[...ids];
+  }
+  out.habits=habits;
   return out;
 }
 function workspaceChange(current,type,payload,id,makeId){
@@ -644,7 +754,32 @@ function workspaceDelete(current,type,id){
   if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id)});
 }
-const taskBuckets=(tasks,today)=>({overdue:tasks.filter(x=>x.status!=='done'&&x.due&&x.due<today),today:tasks.filter(x=>x.status!=='done'&&x.due===today),upcoming:tasks.filter(x=>x.status!=='done'&&(!x.due||x.due>today)),done:tasks.filter(x=>x.status==='done')});
+function workspaceToggleHabit(current,day,habitId){
+  current=workspaceValidate(current);
+  if(!validDay(day)||!HABITS.some(x=>x.id===habitId))throw Error('習慣の選択が不正です。');
+  const entries=new Set(current.habits[day]||[]);
+  if(entries.has(habitId))entries.delete(habitId);else entries.add(habitId);
+  const habits={...current.habits};
+  if(entries.size)habits[day]=[...entries];else delete habits[day];
+  return workspaceValidate({...current,habits});
+}
+function habitWeek(current,date){
+  current=workspaceValidate(current);
+  if(!validDay(date))throw Error('日付が不正です。');
+  const d=new Date(date+'T12:00:00');d.setDate(d.getDate()-(d.getDay()+6)%7);
+  const rows=[];
+  for(let i=0;i<7;i++){
+    const day=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    rows.push({date:day,count:(current.habits[day]||[]).length});d.setDate(d.getDate()+1);
+  }
+  return rows;
+}
+const taskBuckets=(tasks,today)=>({
+  overdue:tasks.filter(x=>x.status!=='done'&&x.due&&x.due<today),
+  today:tasks.filter(x=>x.status!=='done'&&x.due===today),
+  upcoming:tasks.filter(x=>x.status!=='done'&&(!x.due||x.due>today)),
+  done:tasks.filter(x=>x.status==='done')
+});
 
 const CLOUD_KEYS=[KEY,LIFE_KEY,SAMSUNG_HEALTH_KEY,SLEEP_PRESET_KEY,WORKSPACE_KEY,'toki-input-defaults-v2'];
 const CLOUD_MARKER='toki-cloud-state-v1';
@@ -666,7 +801,7 @@ function collectCloudData(storage){
   const sections={};for(const key of CLOUD_KEYS)sections[key]=storage.getItem(key)||defaults[key];
   return validateCloudData({format:CLOUD_MARKER,version:1,sections});
 }
-function nonEmptyCloudData(data){const s=data.sections;return [JSON.parse(s[KEY]).records.length,JSON.parse(s[LIFE_KEY]).records.length,JSON.parse(s[SAMSUNG_HEALTH_KEY]).records.length,JSON.parse(s[WORKSPACE_KEY]).projects.length,JSON.parse(s[WORKSPACE_KEY]).tasks.length,JSON.parse(s[WORKSPACE_KEY]).notes.length,JSON.parse(s[WORKSPACE_KEY]).prompts.length].some(Boolean)||!!Object.values(JSON.parse(s[SLEEP_PRESET_KEY]).weekdays||{}).some(v=>v.wake||v.bed);}
+function nonEmptyCloudData(data){const s=data.sections;return [JSON.parse(s[KEY]).records.length,JSON.parse(s[LIFE_KEY]).records.length,JSON.parse(s[SAMSUNG_HEALTH_KEY]).records.length,JSON.parse(s[WORKSPACE_KEY]).projects.length,JSON.parse(s[WORKSPACE_KEY]).tasks.length,JSON.parse(s[WORKSPACE_KEY]).notes.length,JSON.parse(s[WORKSPACE_KEY]).prompts.length,Object.keys(JSON.parse(s[WORKSPACE_KEY]).habits||{}).length].some(Boolean)||!!Object.values(JSON.parse(s[SLEEP_PRESET_KEY]).weekdays||{}).some(v=>v.wake||v.bed);}
 
 // Conservative synchronization: compare-and-swap on the server; no silent last-writer-wins.
 function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,onUnauthorized,api='/api/state',loc=location}){
@@ -737,31 +872,184 @@ function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onSt
   return {init,act,panel,setItem,beforeWrite,restore,status:()=>status,detail:()=>detail,isRemote:()=>online&&status!=='local',backup,refresh};
 }
 
-function createWorkspace({storage,render,toast,escapeHTML:esc,icon,download,getTimeRecords,uid,localDate}){
+
+function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
   let value=workspaceFresh(),error='',filter='',search='',formType='tasks',formId='';
-  function reload(){try{value=storage.getItem(WORKSPACE_KEY)?workspaceValidate(JSON.parse(storage.getItem(WORKSPACE_KEY))):workspaceFresh();error='';}catch{error='作業管理データが読み取れません。既存データを保護するため編集を停止しました。';}}
+  let selectedProject='',selectedTask='',habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
+  const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト'};
+  const clean=t=>esc(t||'').replace(/\n/g,'<br>');
+  const timeText=mins=>`${Math.floor(mins/60)}時間${mins%60?`${mins%60}分`:''}`;
+  const timeEntries=(project='',taskId='')=>getTimeRecords().filter(r=>!r.deleted&&(taskId?r.taskId===taskId:r.project===project));
+  function reload(){
+    try{value=storage.getItem(WORKSPACE_KEY)?workspaceValidate(JSON.parse(storage.getItem(WORKSPACE_KEY))):workspaceFresh();savedSnapshot=JSON.stringify(value);error='';}
+    catch{error='作業管理の保存データを読み取れません。データ保護のため編集を停止しました。';}
+  }
   reload();
-  const names=()=>[...new Set([...value.projects.map(x=>x.title),...getTimeRecords().filter(r=>!r.deleted).map(r=>r.project)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const names=()=>[...new Set([
+    ...value.projects.map(p=>p.title),...value.tasks.map(t=>t.project),
+    ...value.notes.map(n=>n.project||'未分類'),
+    ...getTimeRecords().filter(r=>!r.deleted).map(r=>r.project),
+  ].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
   const projectOptions=(selected='')=>`<option value="">未分類</option>${[...new Set([...names(),...(selected?[selected]:[])])].map(n=>`<option value="${esc(n)}" ${selected===n?'selected':''}>${esc(n)}</option>`).join('')}`;
-  const clean=t=>esc(t).replace(/\n/g,'<br>');
-  const title={projects:'プロジェクト',tasks:'タスク',notes:'クイックメモ',prompts:'プロンプト'};
-  function save(next){if(error)throw Error(error);storage.setItem(WORKSPACE_KEY,JSON.stringify(next));value=next;render();}
-  function taskRows(rows,compact=false){return rows.length?`<div class="workspace-list">${rows.slice(0,compact?5:1000).map(t=>`<div class="workspace-item"><button class="task-toggle" data-workspace-toggle="${esc(t.id)}" aria-label="${t.status==='done'?'未完了に戻す':'完了にする'}">${icon(t.status==='done'?'restore':'grid')}</button><div class="workspace-item-main"><strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong><div class="workspace-meta">${t.project?esc(t.project)+' · ':''}${t.due?esc(t.due)+' · ':''}${t.priority==='high'?'優先度 高 · ':''}${t.status==='doing'?'進行中':t.status==='done'?'完了':'未着手'}</div>${t.detail&&!compact?`<p>${clean(t.detail)}</p>`:''}${!compact&&getTimeRecords().some(r=>r.taskId===t.id&&!r.deleted)?`<div class="workspace-meta">作業記録：${Math.round(getTimeRecords().filter(r=>r.taskId===t.id&&!r.deleted).reduce((sum,r)=>sum+r.minutes,0)/60*10)/10}時間</div>`:''}</div><button class="icon-button" data-workspace-edit="tasks:${esc(t.id)}" aria-label="編集">${icon('edit')}</button></div>`).join('')}</div>`:'<p class="muted">該当するタスクはありません。</p>';}
-  function home(){const b=taskBuckets(value.tasks,localDate());return `<section class="panel workspace-home"><div class="panel-heading"><h2>今日のタスク</h2><a href="#tasks" class="text-button">タスク一覧</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${taskRows([...b.overdue,...b.today],true)}<div class="workspace-actions"><button class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><button class="button secondary" data-workspace-new="notes">${icon('plus')}メモを残す</button></div></section>`;}
-  function tasks(){const b=taskBuckets(value.tasks,localDate());return `<header class="page-heading"><div><h1>タスク管理</h1><p>今日の作業から、プロジェクト別の予定まで。</p></div><button class="button primary" data-workspace-new="tasks">${icon('plus')}タスク追加</button></header>${error?`<div class="notice" role="alert">${esc(error)}</div>`:''}<section class="stats" aria-label="タスクの状況">${[['今日',b.today.length],['期限切れ',b.overdue.length],['これから',b.upcoming.length]].map(([l,n])=>`<div class="stat"><div><div class="stat-label">${l}</div><div class="stat-value"><strong>${n}</strong>件</div></div></div>`).join('')}</section><div class="workspace-filter"><label>プロジェクト <select id="workspace-project-filter"><option value="">すべて</option>${names().map(p=>`<option value="${esc(p)}" ${filter===p?'selected':''}>${esc(p)}</option>`).join('')}</select></label><label>検索<input id="workspace-search" type="search" placeholder="タスク名で検索" value="${esc(search)}"></label></div>${[['期限切れ',b.overdue],['今日',b.today],['今後・期限なし',b.upcoming],['完了済み',b.done]].map(([label,rows])=>`<section class="panel"><div class="panel-heading"><h2>${label}</h2><small>${rows.filter(x=>(!filter||x.project===filter)&&(!search||`${x.title} ${x.detail}`.includes(search))).length}件</small></div>${taskRows(rows.filter(x=>(!filter||x.project===filter)&&(!search||`${x.title} ${x.detail}`.includes(search))))}</section>`).join('')}`;}
-  function projects(){return `<header class="page-heading"><div><h1>プロジェクト</h1><p>タスク・時間記録・メモを同じ名前で整理します。</p></div><button class="button primary" data-workspace-new="projects">${icon('plus')}新規プロジェクト</button></header><div class="workspace-cards">${names().map(n=>{const meta=value.projects.find(p=>p.title===n);const t=value.tasks.filter(x=>x.project===n),minutes=getTimeRecords().filter(r=>!r.deleted&&r.project===n).reduce((s,r)=>s+r.minutes,0);return `<section class="panel"><div class="panel-heading"><h2>${esc(n)}</h2>${meta?`<button class="icon-button" data-workspace-edit="projects:${esc(meta.id)}" aria-label="プロジェクト編集">${icon('edit')}</button>`:''}</div><p>${meta?.description?clean(meta.description):'作業情報をまとめるプロジェクト'}</p><div class="workspace-meta">未完了 ${t.filter(x=>x.status!=='done').length}件 / 記録 ${Math.round(minutes/60*10)/10}時間 / メモ ${value.notes.filter(x=>x.project===n).length}件</div></section>`;}).join('')||'<p>プロジェクトはまだありません。</p>'}</div>`;}
-  function listPage(type){return `<header class="page-heading"><div><h1>${title[type]}</h1><p>${type==='notes'?'思いついたことをすぐ残し、必要になったらタスクに変換。':'よく使う指示文を保存して、必要なときにコピー。'}</p></div><button class="button primary" data-workspace-new="${type}">${icon('plus')}新規追加</button></header><div class="workspace-cards">${[...value[type]].reverse().map(item=>`<section class="panel workspace-memo"><div class="panel-heading"><h2>${esc(item.title)}</h2><div class="workspace-inline"><button class="icon-button" data-workspace-edit="${type}:${esc(item.id)}" aria-label="編集">${icon('edit')}</button><button class="icon-button" data-workspace-delete="${type}:${esc(item.id)}" aria-label="削除">${icon('trash')}</button></div></div><div class="workspace-meta">${esc(item.project||'Inbox')}${item.category?' · '+esc(item.category):''}</div><p class="workspace-body">${clean(item.body)}</p><div class="workspace-actions">${type==='notes'?`<button class="button secondary" data-workspace-convert="${esc(item.id)}">タスクにする</button>`:`<button class="button secondary" data-workspace-copy="${esc(item.id)}">${icon('file')}コピー</button>`}</div></section>`).join('')||'<p>まだ登録されていません。</p>'}</div>`;}
-  function open(type,id='',prefill=null){const item=prefill||value[type].find(x=>x.id===id),dialog=document.querySelector('#workspace-dialog'),f=document.querySelector('#workspace-form');if(!Object.hasOwn(title,type))throw Error('入力種類が不正です。');formType=type;formId=prefill?'':id;f.reset();document.querySelector('#workspace-title').textContent=`${id?'編集':'追加'}：${title[type]}`;f.elements.title.value=item?.title||'';f.elements.project.innerHTML=projectOptions(item?.project||'');f.elements.project.value=item?.project||'';f.elements.description.value=item?.description||'';f.elements.body.value=item?.body||'';f.elements.detail.value=item?.detail||'';f.elements.due.value=item?.due||'';f.elements.priority.value=item?.priority||'normal';f.elements.status.value=item?.status||'todo';f.elements.category.value=item?.category||'';for(const wrap of f.querySelectorAll('[data-workspace-types]'))wrap.hidden=!wrap.dataset.workspaceTypes.split(',').includes(type);document.querySelector('#workspace-form-error').textContent='';dialog.showModal();}
-  function click(button){try{
-    if(button.dataset.workspaceNew){open(button.dataset.workspaceNew);return true;}
-    if(button.dataset.workspaceEdit){const [type,id]=button.dataset.workspaceEdit.split(':');open(type,id);return true;}
-    if(button.dataset.workspaceToggle){const t=value.tasks.find(x=>x.id===button.dataset.workspaceToggle);if(!t)throw Error('タスクがありません。');save(workspaceChange(value,'tasks',{status:t.status==='done'?'todo':'done'},t.id,uid));toast('タスクの状態を更新しました。');return true;}
-    if(button.dataset.workspaceDelete){const [type,id]=button.dataset.workspaceDelete.split(':');if(!confirm('この項目を削除しますか？先にバックアップを保存してください。'))return true;save(workspaceDelete(value,type,id));toast('削除しました。');return true;}
-    if(button.dataset.workspaceConvert){const note=value.notes.find(x=>x.id===button.dataset.workspaceConvert);if(!note)throw Error('メモがありません。');open('tasks','',{title:note.title,detail:note.body,project:note.project});return true;}
-    if(button.dataset.workspaceCopy){const p=value.prompts.find(x=>x.id===button.dataset.workspaceCopy);if(!p)throw Error('プロンプトがありません。');navigator.clipboard.writeText(p.body).then(()=>toast('コピーしました。'),()=>toast('コピーできませんでした。HTTPSで開いてください。'));return true;}
-  }catch(e){toast(e.message);return true;}return false;}
-  document.querySelector('#workspace-form').addEventListener('submit',event=>{event.preventDefault();try{const f=event.currentTarget,payload={title:f.elements.title.value.trim(),project:f.elements.project.value};if(formType==='tasks')Object.assign(payload,{due:f.elements.due.value,status:f.elements.status.value,priority:f.elements.priority.value,detail:f.elements.detail.value});if(formType==='projects')payload.description=f.elements.description.value;if(formType==='notes'||formType==='prompts')payload.body=f.elements.body.value;if(formType==='prompts')payload.category=f.elements.category.value;const collision=formType==='projects'&&value.projects.some(p=>p.title===payload.title&&p.id!==formId);if(collision)throw Error('同じ名前のプロジェクトは既にあります。');if(formType==='projects'&&formId){const prev=value.projects.find(p=>p.id===formId);if(prev&&prev.title!==payload.title&&([...value.tasks,...value.notes,...value.prompts].some(x=>x.project===prev.title)||getTimeRecords().some(r=>r.project===prev.title)))throw Error('このプロジェクトは記録に使用されています。名前の変更はできません。');}save(workspaceChange(value,formType,payload,formId,uid));document.querySelector('#workspace-dialog').close();toast('保存しました。');}catch(e){document.querySelector('#workspace-form-error').textContent=e.message;}});
-  return {get:()=>value,error:()=>error,reload,home,tasks,projects,notes:()=>listPage('notes'),prompts:()=>listPage('prompts'),click,change(target){if(target.id==='workspace-project-filter'){filter=target.value;render();return true;}return false;},input(target){if(target.id==='workspace-search'){search=target.value;const n=target.selectionStart;render();const target2=document.querySelector('#workspace-search');if(target2){target2.focus();target2.setSelectionRange(n,n);}return true;}return false;}};
+  function save(next){
+    if(error)throw Error(error);
+    const checked=workspaceValidate(next);
+    // Detect another tab updating this workspace between editing and saving.
+    const current=storage.getItem(WORKSPACE_KEY)?workspaceValidate(JSON.parse(storage.getItem(WORKSPACE_KEY))):workspaceFresh();
+    if(JSON.stringify(current)!==savedSnapshot){reload();render();throw Error('別のタブで作業管理が更新されました。内容を確認して、もう一度操作してください。');}
+    storage.setItem(WORKSPACE_KEY,JSON.stringify(checked));
+    value=checked;savedSnapshot=JSON.stringify(checked);render();
+  }
+  function dated(t){return t.due?`期限 ${esc(t.due)}`:'期限なし';}
+  function itemRow(t){
+    return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
+      <button type="button" class="task-toggle" data-workspace-toggle="${esc(t.id)}" aria-label="${t.status==='done'?'未完了に戻す':'完了にする'}">${icon(t.status==='done'?'restore':'grid')}</button>
+      <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
+        <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
+        <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}${t.status==='doing'?' ・ 進行中':''}</span>
+        ${t.memo?'<span class="work-note-marker">メモあり</span>':''}
+      </button>
+    </div>`;
+  }
+  const taskList=(arr,empty='タスクはありません。')=>arr.length?`<div class="work-task-list">${arr.map(itemRow).join('')}</div>`:`<p class="muted work-empty">${empty}</p>`;
+  function visibleTask(id){return value.tasks.find(t=>t.id===id);}
+  function detailTask(t){
+    const records=timeEntries('',t.id),minutes=records.reduce((s,r)=>s+r.minutes,0);
+    return `<section class="panel work-detail" aria-label="タスク詳細">
+      <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)} ・ ${t.status==='done'?'完了':t.status==='doing'?'進行中':'未着手'}</p></div><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button></div>
+      ${t.detail?`<section class="work-detail-section"><h3>タスクの内容</h3><p class="work-long-text">${clean(t.detail)}</p></section>`:''}
+      <form class="work-note-form" data-workspace-save-note="tasks" data-id="${esc(t.id)}"><label for="work-task-note">タスクメモ</label><p class="muted">作業途中の気づきや次にやることを残せます。</p><textarea id="work-task-note" name="memo" rows="6" maxlength="10000" placeholder="このタスクについてのメモ">${esc(t.memo||'')}</textarea><button class="button primary" type="submit">メモを保存</button></form>
+      <section class="work-detail-section"><div class="work-section-head"><h3>作業時間：${timeText(minutes)}</h3><button type="button" class="button secondary" data-workspace-record="${esc(t.id)}">時間を記録</button></div>${recordHistory(records)}</section>
+    </section>`;
+  }
+  function recordHistory(records){
+    if(!records.length)return '<p class="muted">記録はまだありません。</p>';
+    return `<ul class="work-record-list">${[...records].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(r=>`<li><span>${esc(r.date)} ・ ${esc(r.activity)}</span><strong>${timeText(r.minutes)}</strong>${r.note?`<small>${clean(r.note)}</small>`:''}</li>`).join('')}</ul>`;
+  }
+  function detailProject(project){
+    const p=value.projects.find(x=>x.title===project),records=timeEntries(project),minutes=records.reduce((s,r)=>s+r.minutes,0);
+    const oldNotes=value.notes.filter(x=>(x.project||'未分類')===project);
+    return `<section class="panel work-detail" aria-label="プロジェクト詳細">
+      <div class="work-detail-head"><div><span class="work-eyebrow">プロジェクト詳細</span><h2>${esc(project)}</h2><p class="workspace-meta">作業時間 ${timeText(minutes)} ・ タスク ${value.tasks.filter(t=>t.project===project).length}件</p></div>${p?`<button class="button secondary" type="button" data-workspace-edit="projects:${esc(p.id)}">編集</button>`:''}</div>
+      ${p?.description?`<section class="work-detail-section"><h3>概要</h3><p class="work-long-text">${clean(p.description)}</p></section>`:''}
+      <form class="work-note-form" data-workspace-save-note="projects" data-project="${esc(project)}"><label for="work-project-note">プロジェクトメモ</label><p class="muted">目的・更新方針・今後の予定など。</p><textarea id="work-project-note" name="memo" rows="7" maxlength="10000" placeholder="このプロジェクトで覚えておきたいこと">${esc(p?.memo||'')}</textarea><button class="button primary" type="submit">メモを保存</button></form>
+      ${oldNotes.length?`<section class="work-detail-section"><h3>以前のメモ（${oldNotes.length}件）</h3><p class="muted">旧クイックメモを削除せず、このプロジェクト内に表示しています。</p>${oldNotes.map(n=>`<div class="work-legacy-note"><strong>${esc(n.title)}</strong><p class="work-long-text">${clean(n.body)}</p><button type="button" class="button secondary" data-workspace-edit="notes:${esc(n.id)}">編集・移動</button><button type="button" class="button secondary" data-workspace-convert="${esc(n.id)}">タスクにする</button></div>`).join('')}</section>`:''}
+      <section class="work-detail-section"><div class="work-section-head"><h3>最近の作業記録</h3><button class="button secondary" type="button" data-workspace-record-project="${esc(project)}">時間を記録</button></div>${recordHistory(records)}</section>
+    </section>`;
+  }
+  function tasks(){
+    const b=taskBuckets(value.tasks,localDate()),matched=value.tasks.filter(t=>(!filter||t.project===filter)&&(!search||`${t.title} ${t.detail} ${t.memo} ${t.project}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
+    if(selectedTask&&!matched.some(t=>t.id===selectedTask))selectedTask='';
+    const picked=matched.find(t=>t.id===selectedTask)||matched[0];if(picked)selectedTask=picked.id;
+    const sections=[['期限切れ',b.overdue],['今日',b.today],['今後・期限なし',b.upcoming],['完了済み',b.done]];
+    return `<header class="page-heading"><div><h1>タスク</h1><p>選ぶと右側に内容・メモ・作業時間が表示されます。</p></div><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></header>
+      ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
+      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${names().map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
+      <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">未完了 <strong>${matched.filter(t=>t.status!=='done').length}件</strong></div>${sections.map(([label,rows])=>{const list=rows.filter(t=>matched.includes(t));return `<section class="work-task-group"><h2>${label}<small>${list.length}</small></h2>${taskList(list)}</section>`;}).join('')}</div>${picked?detailTask(picked):'<section class="panel work-detail"><h2>タスクを追加してください</h2><p class="muted">作業したいことを一件登録すると、ここに詳細が表示されます。</p></section>'}</div>`;
+  }
+  function projects(){
+    const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
+    const projectTasks=value.tasks.filter(t=>t.project===selectedProject);
+    if(selectedTask&&!projectTasks.some(t=>t.id===selectedTask))selectedTask='';
+    return `<header class="page-heading"><div><h1>プロジェクト</h1><p>プロジェクト・タスク・メモ・時間をこの画面で確認できます。</p></div><button type="button" class="button primary" data-workspace-new="projects">${icon('plus')}新規プロジェクト</button></header>
+      ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
+      <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${value.tasks.filter(t=>t.project===n&&t.status!=='done').length}件</small></button>`).join('')||'<p class="muted">プロジェクトはまだありません。</p>'}</nav>
+      <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>タスク一覧</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${selectedTask?'':'selected'}" data-workspace-overview="1">プロジェクトのメモ・概要を見る</button>${taskList(projectTasks,'このプロジェクトにはまだタスクがありません。')}</section>
+      ${selectedProject?(selectedTask?detailTask(visibleTask(selectedTask)):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
+  }
+  function home(){
+    const b=taskBuckets(value.tasks,localDate());
+    const focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
+    return `<section class="panel workspace-home"><div class="panel-heading"><h2>今日の作業</h2><a class="text-button" href="#tasks">タスク一覧へ</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${focus.length?taskList(focus):'<p class="muted">今日のタスクはありません。やることを追加できます。</p>'}<div class="workspace-actions"><button type="button" class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><a class="button secondary" href="#projects">プロジェクトを開く</a></div></section>`;
+  }
+  function habitChecks(day,compact=false){
+    const done=new Set(value.habits[day]||[]);
+    return `<div class="habit-checks ${compact?'compact':''}">${HABITS.map(h=>`<label class="habit-item ${done.has(h.id)?'done':''}"><input type="checkbox" data-workspace-habit="${h.id}" data-date="${esc(day)}" ${done.has(h.id)?'checked':''}><span>${esc(h.label)}</span></label>`).join('')}</div>`;
+  }
+  function habitHome(){
+    const today=localDate(),completed=(value.habits[today]||[]).length;
+    return `<section class="panel habit-home"><div class="panel-heading"><h2>今日の習慣 <small>${completed}/${HABITS.length}</small></h2><a href="#habits" class="text-button">習慣の履歴</a></div>${habitChecks(today,true)}</section>`;
+  }
+  function habits(){
+    const week=habitWeek(value,habitDate),selected=(value.habits[habitDate]||[]).length;
+    const available=week.filter(d=>d.date<=localDate());
+    const earned=available.reduce((a,d)=>a+d.count,0),possible=available.length*HABITS.length;
+    return `<header class="page-heading"><div><h1>習慣トラッカー</h1><p>プロジェクトとは別に、毎日の4項目をチェックします。</p></div><button type="button" class="button secondary" data-workspace-habit-today="1">今日へ戻る</button></header>
+      <div class="habit-layout"><section class="panel"><div class="work-section-head"><div><span class="work-eyebrow">選択日</span><h2>${esc(habitDate)} <small>${selected}/${HABITS.length} 達成</small></h2></div></div>${habitChecks(habitDate)}<p class="muted">チェックはすぐ保存され、クラウド同期の対象になります。</p></section>
+      <section class="panel"><div class="work-section-head"><div><span class="work-eyebrow">月曜〜日曜</span><h2>週間の達成率 <strong>${possible?Math.round(earned/possible*100):0}%</strong></h2><p class="muted">今日までの記録で集計</p></div></div><div class="habit-week">${week.map(d=>`<button type="button" data-workspace-habit-day="${esc(d.date)}" class="habit-day ${habitDate===d.date?'selected':''}"><span>${esc(d.date.slice(5))}</span><strong>${d.count}/${HABITS.length}</strong><span class="habit-meter"><span style="width:${d.count/HABITS.length*100}%"></span></span></button>`).join('')}</div><div class="workspace-actions"><button class="button secondary" type="button" data-workspace-habit-shift="-7">前の週</button><button class="button secondary" type="button" data-workspace-habit-shift="7">次の週</button></div></section></div>`;
+  }
+  function listPage(type){
+    // Existing manually saved prompts are preserved until a later prompt workflow update.
+    return `<header class="page-heading"><div><h1>${titles[type]}</h1><p>登録済みの指示文を確認・コピーできます。</p></div><button type="button" class="button primary" data-workspace-new="${type}">${icon('plus')}追加</button></header><div class="workspace-cards">${[...value[type]].reverse().map(item=>`<section class="panel workspace-memo"><div class="panel-heading"><h2>${esc(item.title)}</h2><div class="workspace-inline"><button type="button" class="icon-button" data-workspace-edit="${type}:${esc(item.id)}" aria-label="編集">${icon('edit')}</button><button type="button" class="icon-button" data-workspace-delete="${type}:${esc(item.id)}" aria-label="削除">${icon('trash')}</button></div></div><div class="workspace-meta">${esc(item.project||'未分類')}</div><p class="workspace-body">${clean(item.body)}</p><div class="workspace-actions"><button type="button" class="button secondary" data-workspace-copy="${esc(item.id)}">コピー</button></div></section>`).join('')||'<p>登録されたプロンプトはありません。</p>'}</div>`;
+  }
+  function open(type,id='',prefill=null){
+    const item=prefill||value[type].find(x=>x.id===id),dialog=document.querySelector('#workspace-dialog'),f=document.querySelector('#workspace-form');
+    if(!Object.hasOwn(titles,type))throw Error('入力種類が不正です。');
+    formType=type;formId=prefill?'':id;f.reset();document.querySelector('#workspace-title').textContent=`${id?'編集':'追加'}：${titles[type]}`;
+    f.elements.title.value=item?.title||'';f.elements.project.innerHTML=projectOptions(item?.project||'');f.elements.project.value=item?.project||'';
+    f.elements.description.value=item?.description||'';f.elements.body.value=item?.body||'';f.elements.detail.value=item?.detail||'';
+    f.elements.memo.value=item?.memo||'';f.elements.due.value=item?.due||'';f.elements.priority.value=item?.priority||'normal';f.elements.status.value=item?.status||'todo';f.elements.category.value=item?.category||'';
+    for(const wrap of f.querySelectorAll('[data-workspace-types]'))wrap.hidden=!wrap.dataset.workspaceTypes.split(',').includes(type);
+    document.querySelector('#workspace-form-error').textContent='';dialog.showModal();
+  }
+  function click(button){
+    try{
+      if(button.dataset.workspaceNew){open(button.dataset.workspaceNew);return true;}
+      if(button.dataset.workspaceNewTask!==undefined){open('tasks','',{project:button.dataset.workspaceNewTask});return true;}
+      if(button.dataset.workspaceEdit){const [type,id]=button.dataset.workspaceEdit.split(':');open(type,id);return true;}
+      if(button.dataset.workspaceSelectProject!==undefined){selectedProject=button.dataset.workspaceSelectProject;selectedTask='';render();return true;}
+      if(button.dataset.workspaceOverview!==undefined){selectedTask='';render();return true;}
+      if(button.dataset.workspaceSelectTask){selectedTask=button.dataset.workspaceSelectTask;if(!['#tasks','#projects'].includes(location.hash))location.hash='#tasks';render();if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({behavior:'smooth',block:'start'});return true;}
+      if(button.dataset.workspaceToggle){const t=visibleTask(button.dataset.workspaceToggle);if(!t)throw Error('タスクがありません。');save(workspaceChange(value,'tasks',{status:t.status==='done'?'todo':'done'},t.id,uid));toast('タスクを更新しました。');return true;}
+      if(button.dataset.workspaceRecord){const t=visibleTask(button.dataset.workspaceRecord);if(!t)throw Error('タスクがありません。');startRecord({project:t.project,taskId:t.id});return true;}
+      if(button.dataset.workspaceRecordProject!==undefined){startRecord({project:button.dataset.workspaceRecordProject});return true;}
+      if(button.dataset.workspaceHabitShift){const d=new Date(habitDate+'T12:00:00');d.setDate(d.getDate()+Number(button.dataset.workspaceHabitShift));habitDate=localDate(d);render();return true;}
+      if(button.dataset.workspaceHabitDay){habitDate=button.dataset.workspaceHabitDay;render();return true;}
+      if(button.dataset.workspaceHabitToday!==undefined){habitDate=localDate();render();return true;}
+      if(button.dataset.workspaceDelete){const [type,id]=button.dataset.workspaceDelete.split(':');if(!confirm('この項目を削除しますか？先にバックアップを保存してください。'))return true;save(workspaceDelete(value,type,id));toast('削除しました。');return true;}
+      if(button.dataset.workspaceConvert){const note=value.notes.find(x=>x.id===button.dataset.workspaceConvert);if(!note)throw Error('メモがありません。');open('tasks','',{title:note.title,detail:note.body,project:note.project});return true;}
+      if(button.dataset.workspaceCopy){const p=value.prompts.find(x=>x.id===button.dataset.workspaceCopy);if(!p)throw Error('プロンプトがありません。');navigator.clipboard.writeText(p.body).then(()=>toast('コピーしました。'),()=>toast('コピーできませんでした。'));return true;}
+    }catch(e){toast(e.message);return true;}return false;
+  }
+  function change(target){
+    if(target.id==='workspace-project-filter'){filter=target.value;selectedTask='';render();return true;}
+    if(target.dataset?.workspaceHabit){try{save(workspaceToggleHabit(value,target.dataset.date,target.dataset.workspaceHabit));toast('習慣を保存しました。');}catch(e){toast(e.message);render();}return true;}
+    return false;
+  }
+  function input(target){
+    if(target.id!=='workspace-search')return false;
+    search=target.value;const cursor=target.selectionStart;render();const field=document.querySelector('#workspace-search');if(field){field.focus();field.setSelectionRange(cursor,cursor);}return true;
+  }
+  document.querySelector('#workspace-form').addEventListener('submit',event=>{
+    event.preventDefault();try{
+      const f=event.currentTarget,payload={title:f.elements.title.value.trim(),project:f.elements.project.value};
+      if(formType==='tasks')Object.assign(payload,{due:f.elements.due.value,status:f.elements.status.value,priority:f.elements.priority.value,detail:f.elements.detail.value,memo:f.elements.memo.value});
+      if(formType==='projects')Object.assign(payload,{description:f.elements.description.value,memo:f.elements.memo.value});
+      if(formType==='notes'||formType==='prompts')payload.body=f.elements.body.value;
+      if(formType==='prompts')payload.category=f.elements.category.value;
+      if(formType==='projects'&&value.projects.some(p=>p.title===payload.title&&p.id!==formId))throw Error('同じ名前のプロジェクトは既にあります。');
+      if(formType==='projects'&&formId){const prev=value.projects.find(p=>p.id===formId);if(prev&&prev.title!==payload.title&&([...value.tasks,...value.notes,...value.prompts].some(x=>x.project===prev.title)||getTimeRecords().some(r=>r.project===prev.title)))throw Error('記録があるプロジェクトの名前は変更できません。');}
+      const next=workspaceChange(value,formType,payload,formId,uid);
+      if(formType==='tasks'){selectedTask=next.tasks.find(t=>t.id===formId)?.id||next.tasks.at(-1)?.id||'';if(payload.project)selectedProject=payload.project;}
+      if(formType==='projects')selectedProject=payload.title;
+      save(next);document.querySelector('#workspace-dialog').close();toast('保存しました。');
+    }catch(e){document.querySelector('#workspace-form-error').textContent=e.message;}
+  });
+  document.addEventListener('submit',event=>{
+    const form=event.target;if(!form.matches('[data-workspace-save-note]'))return;
+    event.preventDefault();try{
+      const text=form.elements.memo.value,type=form.dataset.workspaceSaveNote;
+      if(type==='tasks'){
+        const t=visibleTask(form.dataset.id);if(!t)throw Error('タスクが見つかりません。');
+        save(workspaceChange(value,'tasks',{memo:text},t.id,uid));
+      }else if(type==='projects'){
+        const project=form.dataset.project,found=value.projects.find(p=>p.title===project);
+        save(workspaceChange(value,'projects',found?{memo:text}:{title:project,project:'',description:'',memo:text},found?.id||'',uid));
+      }else throw Error('保存対象が不正です。');
+      toast('メモを保存しました。');
+    }catch(e){toast(e.message);}
+  });
+  return {get:()=>value,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts:()=>listPage('prompts'),click,change,input};
 }
 
 const $=s=>document.querySelector(s);
@@ -776,11 +1064,11 @@ try{const raw=localStorage.getItem(KEY);if(raw)data=validate(JSON.parse(raw));}c
 let selectedField='all',breakdownKey='project',inputDefaults={field:'プロ野球',projects:{}};
 try{const stored=JSON.parse(localStorage.getItem('toki-input-defaults-v2'));if(stored&&Object.hasOwn(FIELD_PRESETS,stored.field)&&stored.projects&&typeof stored.projects==='object')inputDefaults=stored;}catch{}
 function fieldTabs(){return `<div class="segmented field-tabs" role="group" aria-label="分野で表示切替">${[['all','全体'],['プロ野球','プロ野球']].map(([value,label])=>`<button data-field="${value}" class="${selectedField===value?'active':''}" aria-pressed="${selectedField===value}">${label}</button>`).join('')}</div>`;}
-function updateTaskCandidates(taskId=''){const f=$('#record-form');if(!f?.elements?.taskId)return;const project=f.elements.project.value;const items=workspace.get().tasks.filter(t=>t.status!=='done'||t.id===taskId);f.elements.taskId.innerHTML='<option value="">タスク指定なし</option>'+items.map(t=>`<option value="${escapeHTML(t.id)}" ${t.id===taskId?'selected':''}>${escapeHTML(t.title)}${t.project?'（'+escapeHTML(t.project)+'）':''}</option>`).join('');}
+function updateTaskCandidates(taskId=''){const f=$('#record-form');if(!f?.elements?.taskId)return;const project=f.elements.project.value;const items=workspace.get().tasks.filter(t=>(!project||t.project===project||t.id===taskId)&&(t.status!=='done'||t.id===taskId));f.elements.taskId.innerHTML='<option value="">タスク指定なし</option>'+items.map(t=>`<option value="${escapeHTML(t.id)}" ${t.id===taskId?'selected':''}>${escapeHTML(t.title)}${t.project?'（'+escapeHTML(t.project)+'）':''}</option>`).join('');}
 function updateCandidates(project){
   const f=$('#record-form'),field=f.elements.field.value,preset=FIELD_PRESETS[field]||FIELD_PRESETS['その他'];
   const records=byField(activeRecords(data),field);
-  const projects=[...new Set([...preset.projects,...records.map(r=>r.project),...(project?[project]:[])])];
+  const projects=[...new Set([...preset.projects,...records.map(r=>r.project),...workspace.get().projects.map(p=>p.title),...(project?[project]:[])])];
   f.elements.project.innerHTML=projects.map(p=>`<option value="${escapeHTML(p)}">${escapeHTML(p)}</option>`).join('')+'<option value="__custom__">＋ 新しいプロジェクト</option>';
   f.elements.project.value=projects.includes(project)?project:projects[0];
   $('#custom-project-label').hidden=true;f.elements.customProject.required=false;f.elements.customProject.value='';
@@ -791,7 +1079,7 @@ function rememberInput(field,project){if(!Object.hasOwn(FIELD_PRESETS,field))ret
 let savedSnapshot=JSON.stringify(data);
 const syncedStorage={getItem:key=>localStorage.getItem(key),setItem:(key,value)=>cloud.setItem(key,value)};
 const lifeLog=createLifeLog({storage:syncedStorage,render,toast,download,icon,escapeHTML,getTimeRecords:()=>data.records});
-const workspace=createWorkspace({storage:syncedStorage,render,toast,download,icon,escapeHTML,getTimeRecords:()=>data.records,uid,localDate});
+const workspace=createWorkspace({storage:syncedStorage,render,toast,download,icon,escapeHTML,getTimeRecords:()=>data.records,uid,localDate,startRecord:options=>openRecord('',options)});
 const cloud=createCloudSync({storage:(()=>{try{return localStorage;}catch{return {getItem(){throw Error('端末保存を利用できません。');},setItem(){throw Error('端末保存を利用できません。');},removeItem(){}};}})(),download,onApply(){
   try{const raw=localStorage.getItem(KEY);data=raw?validate(JSON.parse(raw)):fresh();savedSnapshot=JSON.stringify(data);storageError='';}
   catch{storageError='クラウドから取得した時間記録を確認できません。書き込みを停止しました。';}
@@ -832,16 +1120,16 @@ function quickRecordPanel(){
   return `<section class="panel quick-record-panel ${hasToday?'':'needs-record'}"><div class="quick-record-copy"><h2>${hasToday?'最近の活動をすぐ記録':'今日はまだ時間記録がありません'}</h2><p>${hasToday?'よく使う活動を、今日の記録として1クリックで追加できます。':'忘れる前に、最近使った活動からそのまま今日へ追加できます。'}</p></div><div class="quick-record-actions">${recent.map((r,i)=>`<button class="quick-record-button" data-quick-record="${i}"><strong>${escapeHTML(r.activity)}</strong><span>${escapeHTML(r.project)} · ${timeText(r.minutes)}</span></button>`).join('')||`<button class="button secondary" data-action="add">${icon('plus')}時間を記録</button>`}</div></section>`;
 }
 function dashboard(){const range=periodRange(mode,anchor),records=inRange(byField(activeRecords(data),selectedField),range),total=records.reduce((s,r)=>s+r.minutes,0),days=new Set(records.map(r=>r.date)).size;let label=mode==='month'?`${anchor.slice(0,4)}年${Number(anchor.slice(5,7))}月`:mode==='day'?`${anchor.replaceAll('-','/')}（${['日','月','火','水','木','金','土'][new Date(anchor+'T12:00:00').getDay()]}）`:`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`;
-  return heading('時間を、見えるかたちに。','小さな積み重ねを、次の一歩へ。')+workspace.home()+fieldTabs()+quickRecordPanel()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div><section class="panel"><div class="panel-heading"><h2>最近の記録</h2><a class="text-button" href="#records">すべての記録を見る</a></div>${recordTable(sortRecords(records).slice(0,5))}${!records.length?emptyTable():''}</section>`;
+  return heading('今日の作業と記録','タスクと習慣を確認して、作業時間を残しましょう。')+workspace.home()+workspace.habitHome()+fieldTabs()+quickRecordPanel()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div><section class="panel"><div class="panel-heading"><h2>最近の記録</h2><a class="text-button" href="#records">すべての記録を見る</a></div>${recordTable(sortRecords(records).slice(0,5))}${!records.length?emptyTable():''}</section>`;
 }
 const sortRecords=records=>[...records].sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt)||a.id.localeCompare(b.id));
 function matchingRecords(){return sortRecords(byField(data.records,selectedField).filter(r=>r.deleted===showDeleted&&(!activityFilter||r.activity===activityFilter)&&(!query||`${r.field} ${r.project} ${r.activity} ${r.note} ${r.date}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))));}
 function listResults(){const records=matchingRecords();const pages=Math.max(1,Math.ceil(records.length/25));page=Math.min(page,pages);return `<div class="panel-heading"><h2>${showDeleted?'削除済みの記録':'すべての記録'}</h2><small>${records.length}件 ・ ${timeText(records.reduce((s,r)=>s+r.minutes,0))}</small></div>${recordTable(records.slice((page-1)*25,page*25))}${!records.length?emptyTable(query||activityFilter?'条件に合う記録がありません':showDeleted?'削除済みの記録はありません':'まだ記録がありません'):''}${records.length>25?`<div class="pagination"><button class="button secondary" data-page="-1" ${page<=1?'disabled':''}>前へ</button><span>${page} / ${pages} ページ</span><button class="button secondary" data-page="1" ${page>=pages?'disabled':''}>次へ</button></div>`:''}`;}
 function recordsPage(){return heading('記録一覧','積み重ねた時間を、いつでも振り返る。')+fieldTabs()+`<div class="list-tools"><div class="search">${icon('search')}<input id="record-search" aria-label="記録を検索" type="search" placeholder="プロジェクト・活動・メモなどで検索" value="${escapeHTML(query)}"></div><select id="activity-filter" aria-label="活動で絞り込み"><option value="">すべての活動</option>${[...new Set(byField(data.records,selectedField).map(r=>r.activity))].sort().map(a=>`<option value="${escapeHTML(a)}" ${a===activityFilter?'selected':''}>${escapeHTML(a)}</option>`).join('')}</select><label><input id="deleted-filter" type="checkbox" ${showDeleted?'checked':''}>削除済みを表示</label></div><section class="panel" id="list-results">${listResults()}</section>`;}
-function sharePage(){return heading('バックアップ・同期','記録を守るためのバックアップとクラウド保存。',false)+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・メモ・プロンプトを1つのJSONに保存できます。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
+function sharePage(){return heading('バックアップ・同期','記録を守るためのバックアップとクラウド保存。',false)+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・メモ・習慣・プロンプトを1つのJSONに保存できます。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
 
-function render(){view=['dashboard','records','share','life-log','tasks','projects','notes','prompts'].includes(location.hash.slice(1))?location.hash.slice(1):'dashboard';document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===view);if(el.dataset.nav===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});$('#main').innerHTML=(!['ready','local','dirty','loading'].includes(cloud.status())?'<div class="notice storage-alert" role="alert">同期の確認が必要です。<a href="#share">バックアップ・同期設定を確認</a></div>':'')+(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+({dashboard,records:recordsPage,share:sharePage,'life-log':lifeLog.page,tasks:workspace.tasks,projects:workspace.projects,notes:workspace.notes,prompts:workspace.prompts}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();}
-function openRecord(id){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const field=editing?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||inputDefaults.projects[field]);updateTaskCandidates(editing?.taskId||'');$('#record-dialog').showModal();}
+function render(){view=['dashboard','records','share','life-log','tasks','projects','habits','prompts'].includes(location.hash.slice(1))?location.hash.slice(1):location.hash==='#notes'?'projects':'dashboard';document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===view);if(el.dataset.nav===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});$('#main').innerHTML=(!['ready','local','dirty','loading'].includes(cloud.status())?'<div class="notice storage-alert" role="alert">同期の確認が必要です。<a href="#share">バックアップ・同期設定を確認</a></div>':'')+(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+({dashboard,records:recordsPage,share:sharePage,'life-log':lifeLog.page,tasks:workspace.tasks,projects:workspace.projects,habits:workspace.habits,prompts:workspace.prompts}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();}
+function openRecord(id='',defaults={}){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const linked=defaults.project?data.records.find(r=>r.project===defaults.project&&!r.deleted):null;const field=editing?.field||linked?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||defaults.project||inputDefaults.projects[field]);updateTaskCandidates(editing?.taskId||defaults.taskId||'');$('#record-dialog').showModal();}
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function exportJSON(){download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_${localDate()}_${Date.now()}.json`,'application/json');toast('共有ファイルの保存を開始しました。');}
 function exportCSV(){const cell=v=>'"'+String(v).replace(/^[=+\-@\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['日付','活動','時間（分）','メモ','分野','プロジェクト'],...sortRecords(activeRecords(data)).map(r=>[r.date,r.activity,r.minutes,r.note,r.field,r.project])];download('\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n'),`ときの記録_${localDate()}.csv`,'text/csv;charset=utf-8');toast('CSVの保存を開始しました。');}
@@ -879,7 +1167,7 @@ $('#delete-apply').addEventListener('click',()=>{try{if(data.records.find(r=>r.i
 $('#import-file').addEventListener('change',event=>importFile(event.target.files[0]));
 $('#cloud-import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>1_800_000)throw Error('一括バックアップは1.8MBまでです。');const source=JSON.parse(await file.text());await cloud.restore(source);}catch(e){toast(e.message);}finally{event.target.value='';}});
 $('#merge-apply').addEventListener('click',()=>{try{if(JSON.stringify(data)!==mergeSnapshot)throw Error('確認中に記録が変更されました。閉じて、ファイルを読み込み直してください。');const choices={};$('#merge-content').querySelectorAll('input:checked').forEach(input=>{choices[mergePlan.conflicts[Number(input.dataset.conflictIndex)].local.id]=input.value;});persist(resolveMerge(mergePlan,choices));$('#merge-dialog').close();toast('記録を統合して保存しました。');}catch(error){$('#merge-error').textContent=error.message;}});
-window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0);});
+window.addEventListener('hashchange',()=>{const extra=document.querySelector('.mobile-more');if(extra)extra.open=false;render();window.scrollTo(0,0);});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(view==='dashboard')render();},150);});
 window.addEventListener('storage',event=>{lifeLog.onStorage(event);if(event.key==='toki-workspace-v1'||event.key===null){workspace.reload();render();}if(event.key!==KEY&&event.key!==null)return;try{data=event.newValue&&event.key===KEY?validate(JSON.parse(event.newValue)):fresh();savedSnapshot=JSON.stringify(data);render();toast('別のタブの変更を反映しました。');}catch{storageError='別のタブの保存データを読み込めません。バックアップを確認してください。';render();}});
 $('#record-form').elements.minutes.innerHTML=Array.from({length:48},(_,i)=>`<option value="${(i+1)*30}">${timeText((i+1)*30)}${(i+1)*30<60?'（0.5時間）':''}</option>`).join('');

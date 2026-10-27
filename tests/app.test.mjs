@@ -105,7 +105,7 @@ test('life form retains entered values on stale-tab save errors',async()=>{
 });
 
 test('blocked browser storage still renders time dashboard and protected life log page',()=>{
- const h=harness(undefined,undefined,true);assert.match(h.html(),/時間を、見えるかたちに/);h.nav('#life-log');assert.match(h.html(),/生活ログを読み込めません/);
+ const h=harness(undefined,undefined,true);assert.match(h.html(),/今日の作業と記録/);h.nav('#life-log');assert.match(h.html(),/生活ログを読み込めません/);
 });
 
 
