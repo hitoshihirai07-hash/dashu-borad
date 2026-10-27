@@ -1,31 +1,12 @@
 import {validateCloudData} from '../../src/cloud-schema.js';
+import {verifySession} from '../../src/server-auth.js';
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-const b64=(value)=>{const raw=atob(value.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0));};
-const str=value=>new TextDecoder().decode(b64(value));
-// The header is untrusted until RS256 signature, audience, issuer, time and owner email are verified.
-export async function verifyAccess(request,env){
-  const domain=env.TEAM_DOMAIN?.replace(/\/$/,'');
-  if(!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/i.test(domain||'')||!env.POLICY_AUD||!env.OWNER_EMAIL)throw Error('認証設定が不足しています。');
-  const token=request.headers.get('cf-access-jwt-assertion');
-  if(!token||token.length>12000)throw Error('ログイン認証が必要です。');
-  const parts=token.split('.');if(parts.length!==3)throw Error('認証形式が不正です。');
-  const header=JSON.parse(str(parts[0]));const payload=JSON.parse(str(parts[1]));
-  if(header.alg!=='RS256'||typeof header.kid!=='string')throw Error('認証方式が不正です。');
-  const now=Math.floor(Date.now()/1000);
-  if(payload.iss!==domain||!(Array.isArray(payload.aud)?payload.aud:[payload.aud]).includes(env.POLICY_AUD)||typeof payload.exp!=='number'||payload.exp<=now||typeof payload.iat!=='number'||payload.iat>now+60||(payload.nbf!==undefined&&payload.nbf>now+60)||String(payload.email||'').toLowerCase()!==env.OWNER_EMAIL.trim().toLowerCase())throw Error('許可されていない利用者です。');
-  const keyResponse=await fetch(domain+'/cdn-cgi/access/certs');
-  if(!keyResponse.ok)throw Error('署名の確認に失敗しました。');
-  const keys=await keyResponse.json();const jwk=keys.keys?.find(k=>k.kid===header.kid&&k.kty==='RSA');
-  if(!jwk)throw Error('認証署名が見つかりません。');
-  const key=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
-  if(!await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,b64(parts[2]),new TextEncoder().encode(parts[0]+'.'+parts[1])))throw Error('署名が正しくありません。');
-  return env.OWNER_EMAIL.trim().toLowerCase();
-}
 export async function onRequest({request,env}){
   if(!['GET','POST'].includes(request.method))return json({error:'許可されていない操作です。'},405);
-  if(!env.DB||!env.TEAM_DOMAIN||!env.POLICY_AUD||!env.OWNER_EMAIL)return json({error:'Cloudflareの接続設定が未完了です。'},503);
+  if(!env.DB||!env.OWNER_EMAIL||!env.LOGIN_PASSWORD||!env.SESSION_SECRET)return json({error:'ログインまたはDB設定が未完了です。'},503);
   let owner;
-  try{owner=await verifyAccess(request,env);}catch(e){return json({error:'本人認証を確認できません。Accessのログイン・設定をご確認ください。'},403);}
+  try{owner=await verifySession(request,env);}catch{return json({error:'ログイン設定を確認してください。'},503);}
+  if(!owner)return json({error:'ログインが必要です。'},401);
   try{
     const row=await env.DB.prepare('SELECT revision,payload FROM app_state WHERE owner=?').bind(owner).first();
     if(request.method==='GET')return json({revision:row?.revision||0,payload:row?JSON.parse(row.payload):null});

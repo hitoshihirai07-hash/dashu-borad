@@ -1,6 +1,6 @@
 import {CLOUD_KEYS,collectCloudData,nonEmptyCloudData,validateCloudData} from './cloud-schema.js';
 // Conservative synchronization: compare-and-swap on the server; no silent last-writer-wins.
-export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,api='/api/state',loc=location}){
+export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,onUnauthorized,api='/api/state',loc=location}){
   const revisionKey='toki-sync-ack-revision-v1',pendingKey='toki-sync-pending-v1';
   const online=['https:','http:'].includes(loc.protocol);
   let status=online?'loading':'local',detail='',revision=0,remote=null,acked='',backed=false,dirty=false,posting=false,scheduled=null,refreshing=false;
@@ -12,7 +12,7 @@ export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApp
   function afterWrite(key){if(!CLOUD_KEYS.includes(key)||status==='local'||!online)return;if(status==='setup'){backed=false;onStatus?.(status,detail);return;}dirty=true;storage.setItem(pendingKey,'1');announce('dirty','この端末に保存済み・クラウドへ送信中');schedule();}
   const setItem=(key,value)=>{beforeWrite(key);storage.setItem(key,value);afterWrite(key);};
   function apply(data){validateCloudData(data);for(const key of CLOUD_KEYS)storage.setItem(key,data.sections[key]);onApply?.();}
-  async function request(method='GET',body){const res=await fetcher(api,{method,credentials:'same-origin',cache:'no-store',headers:method==='POST'?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{})});if(res.status===404)return {unavailable:true};const result=await res.json().catch(()=>({error:`通信エラー (${res.status})`}));return {...result,ok:res.ok,statusCode:res.status};}
+  async function request(method='GET',body){const res=await fetcher(api,{method,credentials:'same-origin',cache:'no-store',headers:method==='POST'?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{})});if(res.status===404)return {unavailable:true};if(res.status===401){onUnauthorized?.();return {ok:false,statusCode:401,error:'ログインが必要です。'};}const result=await res.json().catch(()=>({error:`通信エラー (${res.status})`}));return {...result,ok:res.ok,statusCode:res.status};}
   function saveAck(){acked=snapshot();dirty=false;storage.removeItem(pendingKey);storage.setItem(revisionKey,String(revision));announce('ready','クラウドに保存済み');}
   function schedule(){if(scheduled)clearTimeout(scheduled);scheduled=setTimeout(()=>{scheduled=null;flush();},250);}
   async function flush(){if(posting||!dirty||!['ready','dirty'].includes(status))return;posting=true;const sent=snapshot();try{
@@ -34,7 +34,7 @@ export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApp
       if(raw===JSON.stringify(validateCloudData(remote))){saveAck();return;}
       if(nonEmptyCloudData(here)){announce('choose','この端末とクラウドの内容が異なります。端末のバックアップを保存してからクラウドを読み込んでください。');return;}
       apply(remote);saveAck();
-    }catch(e){announce('error','接続または認証設定を確認してください。'+e.message);}}
+    }catch(e){announce('error','接続またはログイン状態を確認してください。'+e.message);}}
   function backup(){const data=localData();download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_全データバックアップ_${new Date().toISOString().slice(0,10)}.json`,'application/json');backed=true;onStatus?.(status,detail);}
   async function start(){if(status!=='setup')throw Error('初回設定の状態ではありません。');const data=localData();if(nonEmptyCloudData(data)&&!backed)throw Error('先に全データのバックアップを書き出してください。');announce('loading','クラウドに初期データを送信中');try{const answer=await request('POST',{baseRevision:0,payload:data});if(!answer.ok){if(answer.statusCode===409){announce('conflict','別の端末で初期登録されています。');return;}throw Error(answer.error||'初回登録が失敗しました。');}revision=answer.revision;remote=data;saveAck();}catch(e){announce('error',e.message);}}
   function useRemote(){if(!['choose','conflict'].includes(status))throw Error('読込操作が必要な状態ではありません。');if(!backed)throw Error('先に端末の全データバックアップを書き出してください。');if(!remote){init();return;}apply(remote);saveAck();}

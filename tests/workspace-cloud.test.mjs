@@ -1,9 +1,13 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {webcrypto,generateKeyPairSync,createSign} from 'node:crypto';
+import {webcrypto} from 'node:crypto';
 import {workspaceFresh,workspaceChange,workspaceValidate,workspaceDelete,taskBuckets} from '../src/workspace-model.js';
 import {collectCloudData,validateCloudData,nonEmptyCloudData} from '../src/cloud-schema.js';
 import {createCloudSync} from '../src/cloud-sync.js';
-import {onRequest,verifyAccess} from '../functions/api/state.js';
+import {onRequest as stateRequest} from '../functions/api/state.js';
+import {onRequest as loginRequest} from '../functions/api/login.js';
+import {onRequest as sessionRequest} from '../functions/api/session.js';
+import {onRequest as logoutRequest} from '../functions/api/logout.js';
+import {verifySession} from '../src/server-auth.js';
 import {fresh,revise,uid} from '../src/model.js';
 const store=(starting={})=>{const m=new Map(Object.entries(starting));return {getItem:k=>m.get(k)??null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k),map:m};};
 const day='2026-10-27';
@@ -46,28 +50,42 @@ test('concurrent cloud clients CAS detects conflict and keeps local unsent data'
  const before=local.getItem('toki-records-v1')||JSON.stringify(fresh());c.setItem('toki-records-v1',before.replace('"records":[]','"records":[ ]'));
  await new Promise(r=>setTimeout(r,350));assert.equal(c.status(),'conflict');assert.equal(local.getItem('toki-records-v1').includes('[ ]'),true);
 });
-const {privateKey,publicKey}=generateKeyPairSync('rsa',{modulusLength:2048});
-const jwk=publicKey.export({format:'jwk'});Object.assign(jwk,{kid:'unit-test-key',alg:'RS256'});
-const envBase={TEAM_DOMAIN:'https://demo.cloudflareaccess.com',POLICY_AUD:'test-audience',OWNER_EMAIL:'owner@example.com'};
-const jwt=(overrides={})=>{
- const enc=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const now=Math.floor(Date.now()/1000);
- const a=enc({alg:'RS256',typ:'JWT',kid:jwk.kid}),b=enc({iss:envBase.TEAM_DOMAIN,aud:[envBase.POLICY_AUD],email:envBase.OWNER_EMAIL,iat:now,exp:now+600,...overrides});
- const sign=createSign('RSA-SHA256');sign.update(`${a}.${b}`);return `${a}.${b}.${sign.sign(privateKey).toString('base64url')}`;
-};
-function fakeDb(){let row=null;return {prepare(sql){let args=[];return {bind(...v){args=v;return this;},async first(){return row?{revision:row.revision,payload:row.payload}:null;},async run(){if(sql.startsWith('INSERT')){if(row)return {meta:{changes:0}};row={revision:1,payload:args[1]};return {meta:{changes:1}};}if(sql.startsWith('UPDATE')){if(!row||args[3]!==row.revision)return {meta:{changes:0}};row={revision:row.revision+1,payload:args[0]};return {meta:{changes:1}};}throw Error('bad query');}};}};}
-test('API requires valid signed Cloudflare JWT and owner email; atomic CAS rejects stale writes',async()=>{
- const oldFetch=globalThis.fetch;globalThis.fetch=async()=>Response.json({keys:[jwk]});
- try{
- const env={...envBase,DB:fakeDb()};const base='https://example.pages.dev/api/state';
- const request=(method='GET',token='',body,origin='https://example.pages.dev')=>new Request(base,{method,headers:{...(token?{'cf-access-jwt-assertion':token}:{}),...(method==='POST'?{'Content-Type':'application/json','Origin':origin}:{})},...(body?{body:JSON.stringify(body)}:{})});
- assert.equal((await onRequest({request:request(),env})).status,403);
- assert.equal((await onRequest({request:request('GET',jwt({email:'other@example.com'})),env})).status,403);
- assert.equal((await onRequest({request:request('GET',jwt({aud:['wrong']})),env})).status,403);
- const ok=jwt();const get=await onRequest({request:request('GET',ok),env});assert.deepEqual(await get.json(),{revision:0,payload:null});
+const envBase={OWNER_EMAIL:'owner@example.com',LOGIN_PASSWORD:'correct horse battery staple',SESSION_SECRET:'an-extremely-long-random-session-secret-for-tests'};
+function fakeDb(){const rows=new Map();return {prepare(sql){let args=[];return {bind(...v){args=v;return this;},async first(){const row=rows.get(args[0]);return row?{revision:row.revision,payload:row.payload}:null;},async run(){
+   if(sql.startsWith('DELETE')){const existed=rows.delete(args[0]);return {meta:{changes:Number(existed)}};}
+   if(sql.startsWith('INSERT')&&sql.includes('ON CONFLICT(owner) DO UPDATE')){rows.set(args[0],{revision:0,payload:args[1]});return {meta:{changes:1}};}
+   if(sql.startsWith('INSERT')){if(rows.has(args[0]))return {meta:{changes:0}};rows.set(args[0],{revision:1,payload:args[1]});return {meta:{changes:1}};}
+   if(sql.startsWith('UPDATE')){const row=rows.get(args[2]);if(!row||args[3]!==row.revision)return {meta:{changes:0}};rows.set(args[2],{revision:row.revision+1,payload:args[0]});return {meta:{changes:1}};}
+   throw Error(`unexpected SQL: ${sql}`);
+  }};},rows};}
+const base='https://example.pages.dev';
+function loginReq(email,password,origin=base){return new Request(base+'/api/login',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','CF-Connecting-IP':'203.0.113.1'},body:JSON.stringify({email,password})});}
+function req(path,method='GET',cookie='',body=null,origin=base){return new Request(base+path,{method,headers:{...(cookie?{Cookie:cookie}:{}),...(method==='POST'?{Origin:origin,'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});}
+test('site login: email/password authenticate; secure HttpOnly cookie grants session and logout clears it',async()=>{
+ const env={...envBase,DB:fakeDb()};
+ assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,'wrong'),env})).status,401);
+ assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,env.LOGIN_PASSWORD,'https://evil.invalid'),env})).status,403);
+ const response=await loginRequest({request:loginReq(env.OWNER_EMAIL,env.LOGIN_PASSWORD),env});assert.equal(response.status,200);
+ const setCookie=response.headers.get('Set-Cookie');assert.match(setCookie,/HttpOnly; Secure; SameSite=Lax/);
+ const cookie=setCookie.split(';')[0];const authenticated=await sessionRequest({request:req('/api/session','GET',cookie),env});assert.deepEqual(await authenticated.json(),{authenticated:true,email:env.OWNER_EMAIL});
+ const failed=await sessionRequest({request:req('/api/session'),env});assert.equal(failed.status,401);
+ const logout=await logoutRequest({request:req('/api/logout','POST',cookie),env});assert.equal(logout.status,200);assert.match(logout.headers.get('Set-Cookie'),/Max-Age=0/);
+});
+test('server refuses forged/expired sessions and blocks unauthorized state; CAS blocks stale writes',async()=>{
+ const env={...envBase,DB:fakeDb()};
+ const denied=await stateRequest({request:req('/api/state'),env});assert.equal(denied.status,401);
+ const logged=await loginRequest({request:loginReq(env.OWNER_EMAIL,env.LOGIN_PASSWORD),env});const cookie=logged.headers.get('Set-Cookie').split(';')[0];
+ assert.equal(await verifySession(req('/api/state','GET',cookie),env),env.OWNER_EMAIL);
+ const forged=cookie.slice(0,-1)+(cookie.endsWith('a')?'b':'a');assert.equal((await stateRequest({request:req('/api/state','GET',forged),env})).status,401);
+ const ok=await stateRequest({request:req('/api/state','GET',cookie),env});assert.deepEqual(await ok.json(),{revision:0,payload:null});
  const body={baseRevision:0,payload:collectCloudData(store())};
- assert.equal((await onRequest({request:request('POST',ok,body,'https://attacker.invalid'),env})).status,403);
- const init=await onRequest({request:request('POST',ok,body),env});assert.equal(init.status,200);assert.equal((await init.json()).revision,1);
- assert.equal((await onRequest({request:request('POST',ok,body),env})).status,409);
- assert.equal((await (await onRequest({request:request('GET',ok),env})).json()).revision,1);
- }finally{globalThis.fetch=oldFetch;}
+ assert.equal((await stateRequest({request:req('/api/state','POST',cookie,body,'https://evil.invalid'),env})).status,403);
+ const init=await stateRequest({request:req('/api/state','POST',cookie,body),env});assert.equal(init.status,200);assert.equal((await init.json()).revision,1);
+ assert.equal((await stateRequest({request:req('/api/state','POST',cookie,body),env})).status,409);
+ assert.equal((await (await stateRequest({request:req('/api/state','GET',cookie),env})).json()).revision,1);
+});
+test('login rate limit after five incorrect attempts (15 minute block)',async()=>{
+ const env={...envBase,DB:fakeDb()};
+ for(let i=0;i<5;i++)assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,'incorrect'),env})).status,401);
+ assert.equal((await loginRequest({request:loginReq(env.OWNER_EMAIL,env.LOGIN_PASSWORD),env})).status,429);
 });

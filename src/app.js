@@ -35,7 +35,7 @@ const cloud=createCloudSync({storage:(()=>{try{return localStorage;}catch{return
   catch{storageError='クラウドから取得した時間記録を確認できません。書き込みを停止しました。';}
   try{const v=JSON.parse(localStorage.getItem('toki-input-defaults-v2'));if(v&&v.projects)inputDefaults=v;}catch{}
   lifeLog.onStorage({key:null});workspace.reload();render();
-},onStatus(){const badge=$('#save-status');if(badge){const state=cloud.status(),labels={loading:'接続中',local:'端末保存',setup:'初回設定',choose:'確認待ち',ready:'同期済み',dirty:'同期中',conflict:'競合あり',error:'同期エラー'};badge.textContent=labels[state]||state;badge.dataset.cloudStatus=state;}
+},onUnauthorized(){showAuth();},onStatus(){const badge=$('#save-status');if(badge){const state=cloud.status(),labels={loading:'接続中',local:'端末保存',setup:'初回設定',choose:'確認待ち',ready:'同期済み',dirty:'同期中',conflict:'競合あり',error:'同期エラー'};badge.textContent=labels[state]||state;badge.dataset.cloudStatus=state;}
   const box=$('#cloud-panel-container');if(box)box.innerHTML=cloud.panel();
 }});
 function toast(message){$('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,5000);}
@@ -123,5 +123,37 @@ window.addEventListener('storage',event=>{lifeLog.onStorage(event);if(event.key=
 $('#record-form').elements.minutes.innerHTML=Array.from({length:48},(_,i)=>`<option value="${(i+1)*30}">${timeText((i+1)*30)}${(i+1)*30<60?'（0.5時間）':''}</option>`).join('');
 // Capture the unrendered document: portable downloads must never contain personal data.
 const portableDocument='<!doctype html>\n'+document.documentElement.outerHTML;
-hydrateIcons();render();cloud.init().catch(e=>toast(e.message));
+// A visible login form is the only entry to the hosted app. The static HTML remains public.
+const authScreen=$('#auth-screen'),authForm=$('#auth-form'),authError=$('#auth-error'),authLoading=$('#auth-loading');
+let authBusy=false;
+function showAuth(message=''){
+  $('.sidebar').inert=true;$('.workspace').inert=true;authScreen.hidden=false;authForm.hidden=false;authLoading.hidden=true;
+  authError.textContent=message;
+}
+async function authCall(url,options={}){
+  const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options});
+  const result=await response.json().catch(()=>({error:'サーバーの応答を読み取れません。'}));
+  return {ok:response.ok,...result};
+}
+async function afterLogin(){authScreen.hidden=true;$('.sidebar').inert=false;$('.workspace').inert=false;render();await cloud.init();}
+authForm.addEventListener('submit',async e=>{
+  e.preventDefault();if(authBusy)return;authBusy=true;
+  const button=authForm.querySelector('button[type="submit"]');button.disabled=true;authError.textContent='';
+  try{const fields=new FormData(authForm);const response=await authCall('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fields.get('email'),password:fields.get('password')})});
+    if(!response.ok)throw Error(response.error||'ログインできませんでした。');authForm.elements.password.value='';await afterLogin();
+  }catch(error){showAuth(error.message);}finally{authBusy=false;button.disabled=false;}
+});
+$('#logout-button').addEventListener('click',async()=>{
+  if(cloud.status()!=='ready'&&cloud.status()!=='setup')return toast('同期完了または初回登録後にログアウトしてください。');
+  if(cloud.status()==='setup'&&nonEmptyCloudData(collectCloudData(localStorage)))return toast('現在の端末データをバックアップ・クラウド登録してからログアウトしてください。');
+  try{const response=await authCall('/api/logout',{method:'POST'});if(!response.ok)throw Error(response.error||'ログアウトできませんでした。');
+    // Preserve unsent data. Clear local synchronized copies only when server confirms all updates.
+    if(cloud.status()==='ready')for(const key of CLOUD_KEYS)localStorage.removeItem(key);
+    localStorage.removeItem('toki-sync-ack-revision-v1');localStorage.removeItem('toki-sync-pending-v1');
+    location.reload();
+  }catch(e){toast(e.message);}
+});
+hydrateIcons();
+if(location.protocol==='file:'){authScreen.hidden=true;$('.sidebar').inert=false;$('.workspace').inert=false;render();cloud.init().catch(e=>toast(e.message));}
+else{authForm.hidden=true;authLoading.hidden=false;authCall('/api/session').then(response=>response.ok?afterLogin():showAuth(response.error||'')).catch(()=>showAuth('サーバーに接続できません。'));}
 if(['https:','http:'].includes(location.protocol)&&window.isSecureContext&&'serviceWorker' in navigator){const link=document.createElement('link');link.rel='manifest';link.href='./manifest.webmanifest';document.head.append(link);navigator.serviceWorker.register('./sw.js').catch(()=>{});}
