@@ -81,3 +81,15 @@
  .mobile-more-links{position:absolute;bottom:calc(100% + 9px);right:0;width:min(240px,90vw);background:#fff;border:1px solid #d4e4d7;border-radius:12px;padding:8px;box-shadow:0 12px 30px #234f3024;display:grid;gap:4px}
  .mobile-more-links a{display:block!important;padding:12px!important;font-size:13px!important;text-align:left;font-weight:600}
 }
+
+/* One-step task status editing in every task list. */
+.work-task-status{flex:0 0 auto;width:105px;min-height:38px;border:1px solid #bfd8c8;border-radius:9px;background:#f5faf6;color:#21563d;padding:7px 5px;font:inherit;font-size:13px;cursor:pointer}
+.work-task-status:focus-visible,.work-project-settings-toggle:focus-visible,.work-project-settings-row button:focus-visible{outline:3px solid #72b58b;outline-offset:2px}
+/* Project display preferences: hidden names never delete historical data. */
+.work-project-settings-toggle{display:block;width:100%;margin-top:15px;padding:10px 6px;border:0;border-top:1px solid #dfece2;background:transparent;text-align:left;color:#266447;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.work-project-settings{padding:4px 0 0;border-top:1px solid #e7eee8}
+.work-project-settings>p{font-size:11px;line-height:1.6;color:#617f6d;margin:7px 0 12px}
+.work-project-settings-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:7px 0;border-bottom:1px solid #ecf1ed}
+.work-project-settings-row>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;color:#365c45}
+.work-project-settings-row>.button{flex:0 0 auto;padding:6px 8px;font-size:11px;min-height:32px}
+@media(max-width:600px){.work-task-status{width:110px;min-height:42px;font-size:16px}.work-task-row{gap:5px}}

@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],habits:{}
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -52,6 +52,10 @@ export function workspaceValidate(value){
     if(ids.length)habits[day]=[...ids];
   }
   out.habits=habits;
+  // Optional for older backups. Keep this setting within the existing synced workspace.
+  const hidden=value.hiddenProjects??[];
+  if(!Array.isArray(hidden)||hidden.length>2000||hidden.some(x=>typeof x!=='string'||!x.trim()||x.length>80)||new Set(hidden).size!==hidden.length)throw Error('プロジェクトの表示設定が不正です。');
+  out.hiddenProjects=[...hidden];
   return out;
 }
 export function workspaceChange(current,type,payload,id,makeId){
@@ -67,6 +71,13 @@ export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
   if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id)});
+}
+export function workspaceSetProjectVisibility(current,project,visible){
+  current=workspaceValidate(current);
+  if(typeof project!=='string'||!project.trim()||project.length>80||typeof visible!=='boolean')throw Error('プロジェクトの表示設定が不正です。');
+  const hidden=new Set(current.hiddenProjects);
+  if(visible)hidden.delete(project);else hidden.add(project);
+  return workspaceValidate({...current,hiddenProjects:[...hidden]});
 }
 export function workspaceToggleHabit(current,day,habitId){
   current=workspaceValidate(current);

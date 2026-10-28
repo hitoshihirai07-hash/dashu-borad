@@ -104,6 +104,18 @@
  .mobile-more-links{position:absolute;bottom:calc(100% + 9px);right:0;width:min(240px,90vw);background:#fff;border:1px solid #d4e4d7;border-radius:12px;padding:8px;box-shadow:0 12px 30px #234f3024;display:grid;gap:4px}
  .mobile-more-links a{display:block!important;padding:12px!important;font-size:13px!important;text-align:left;font-weight:600}
 }
+
+/* One-step task status editing in every task list. */
+.work-task-status{flex:0 0 auto;width:105px;min-height:38px;border:1px solid #bfd8c8;border-radius:9px;background:#f5faf6;color:#21563d;padding:7px 5px;font:inherit;font-size:13px;cursor:pointer}
+.work-task-status:focus-visible,.work-project-settings-toggle:focus-visible,.work-project-settings-row button:focus-visible{outline:3px solid #72b58b;outline-offset:2px}
+/* Project display preferences: hidden names never delete historical data. */
+.work-project-settings-toggle{display:block;width:100%;margin-top:15px;padding:10px 6px;border:0;border-top:1px solid #dfece2;background:transparent;text-align:left;color:#266447;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.work-project-settings{padding:4px 0 0;border-top:1px solid #e7eee8}
+.work-project-settings>p{font-size:11px;line-height:1.6;color:#617f6d;margin:7px 0 12px}
+.work-project-settings-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:7px 0;border-bottom:1px solid #ecf1ed}
+.work-project-settings-row>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;color:#365c45}
+.work-project-settings-row>.button{flex:0 0 auto;padding:6px 8px;font-size:11px;min-height:32px}
+@media(max-width:600px){.work-task-status{width:110px;min-height:42px;font-size:16px}.work-task-row{gap:5px}}
 </style></head>
 <body><div id="auth-screen" class="auth-screen" role="region" aria-label="ログイン"><div class="auth-card"><h1>ときの記録</h1><p>本人専用ログイン</p><form id="auth-form"><label>メールアドレス<input type="email" name="email" autocomplete="username" maxlength="254" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" required></label><p id="auth-error" class="error" role="alert"></p><button class="button primary auth-submit" type="submit">ログイン</button></form><p id="auth-loading" class="muted">ログイン状態を確認中…</p></div></div><a href="#main" class="skip">本文へ移動</a><aside class="sidebar" inert><a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a><nav aria-label="メインナビゲーション">
   <a href="#dashboard" data-nav="dashboard"><span data-icon="home"></span><span>ホーム</span></a>
@@ -694,7 +706,7 @@ const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],habits:{}
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -738,6 +750,10 @@ function workspaceValidate(value){
     if(ids.length)habits[day]=[...ids];
   }
   out.habits=habits;
+  // Optional for older backups. Keep this setting within the existing synced workspace.
+  const hidden=value.hiddenProjects??[];
+  if(!Array.isArray(hidden)||hidden.length>2000||hidden.some(x=>typeof x!=='string'||!x.trim()||x.length>80)||new Set(hidden).size!==hidden.length)throw Error('プロジェクトの表示設定が不正です。');
+  out.hiddenProjects=[...hidden];
   return out;
 }
 function workspaceChange(current,type,payload,id,makeId){
@@ -753,6 +769,13 @@ function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
   if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id)});
+}
+function workspaceSetProjectVisibility(current,project,visible){
+  current=workspaceValidate(current);
+  if(typeof project!=='string'||!project.trim()||project.length>80||typeof visible!=='boolean')throw Error('プロジェクトの表示設定が不正です。');
+  const hidden=new Set(current.hiddenProjects);
+  if(visible)hidden.delete(project);else hidden.add(project);
+  return workspaceValidate({...current,hiddenProjects:[...hidden]});
 }
 function workspaceToggleHabit(current,day,habitId){
   current=workspaceValidate(current);
@@ -801,7 +824,7 @@ function collectCloudData(storage){
   const sections={};for(const key of CLOUD_KEYS)sections[key]=storage.getItem(key)||defaults[key];
   return validateCloudData({format:CLOUD_MARKER,version:1,sections});
 }
-function nonEmptyCloudData(data){const s=data.sections;return [JSON.parse(s[KEY]).records.length,JSON.parse(s[LIFE_KEY]).records.length,JSON.parse(s[SAMSUNG_HEALTH_KEY]).records.length,JSON.parse(s[WORKSPACE_KEY]).projects.length,JSON.parse(s[WORKSPACE_KEY]).tasks.length,JSON.parse(s[WORKSPACE_KEY]).notes.length,JSON.parse(s[WORKSPACE_KEY]).prompts.length,Object.keys(JSON.parse(s[WORKSPACE_KEY]).habits||{}).length].some(Boolean)||!!Object.values(JSON.parse(s[SLEEP_PRESET_KEY]).weekdays||{}).some(v=>v.wake||v.bed);}
+function nonEmptyCloudData(data){const s=data.sections;return [JSON.parse(s[KEY]).records.length,JSON.parse(s[LIFE_KEY]).records.length,JSON.parse(s[SAMSUNG_HEALTH_KEY]).records.length,JSON.parse(s[WORKSPACE_KEY]).projects.length,JSON.parse(s[WORKSPACE_KEY]).tasks.length,JSON.parse(s[WORKSPACE_KEY]).notes.length,JSON.parse(s[WORKSPACE_KEY]).prompts.length,(JSON.parse(s[WORKSPACE_KEY]).hiddenProjects||[]).length,Object.keys(JSON.parse(s[WORKSPACE_KEY]).habits||{}).length].some(Boolean)||!!Object.values(JSON.parse(s[SLEEP_PRESET_KEY]).weekdays||{}).some(v=>v.wake||v.bed);}
 
 // Conservative synchronization: compare-and-swap on the server; no silent last-writer-wins.
 function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,onUnauthorized,api='/api/state',loc=location}){
@@ -875,7 +898,7 @@ function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onSt
 
 function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
   let value=workspaceFresh(),error='',filter='',search='',formType='tasks',formId='';
-  let selectedProject='',selectedTask='',habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
+  let selectedProject='',selectedTask='',projectSettingsOpen=false,habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト'};
   const clean=t=>esc(t||'').replace(/\n/g,'<br>');
   const timeText=mins=>`${Math.floor(mins/60)}時間${mins%60?`${mins%60}分`:''}`;
@@ -885,11 +908,12 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
     catch{error='作業管理の保存データを読み取れません。データ保護のため編集を停止しました。';}
   }
   reload();
-  const names=()=>[...new Set([
+  const allNames=()=>[...new Set([
     ...value.projects.map(p=>p.title),...value.tasks.map(t=>t.project),
     ...value.notes.map(n=>n.project||'未分類'),
     ...getTimeRecords().filter(r=>!r.deleted).map(r=>r.project),
   ].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const names=()=>allNames().filter(n=>!value.hiddenProjects.includes(n));
   const projectOptions=(selected='')=>`<option value="">未分類</option>${[...new Set([...names(),...(selected?[selected]:[])])].map(n=>`<option value="${esc(n)}" ${selected===n?'selected':''}>${esc(n)}</option>`).join('')}`;
   function save(next){
     if(error)throw Error(error);
@@ -903,12 +927,16 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   function dated(t){return t.due?`期限 ${esc(t.due)}`:'期限なし';}
   function itemRow(t){
     return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
-      <button type="button" class="task-toggle" data-workspace-toggle="${esc(t.id)}" aria-label="${t.status==='done'?'未完了に戻す':'完了にする'}">${icon(t.status==='done'?'restore':'grid')}</button>
       <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
         <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
-        <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}${t.status==='doing'?' ・ 進行中':''}</span>
+        <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}</span>
         ${t.memo?'<span class="work-note-marker">メモあり</span>':''}
       </button>
+      <select class="work-task-status" data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}のステータス">
+        <option value="todo" ${t.status==='todo'?'selected':''}>未着手</option>
+        <option value="doing" ${t.status==='doing'?'selected':''}>進行中</option>
+        <option value="done" ${t.status==='done'?'selected':''}>完了</option>
+      </select>
     </div>`;
   }
   const taskList=(arr,empty='タスクはありません。')=>arr.length?`<div class="work-task-list">${arr.map(itemRow).join('')}</div>`:`<p class="muted work-empty">${empty}</p>`;
@@ -944,16 +972,19 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
     const sections=[['期限切れ',b.overdue],['今日',b.today],['今後・期限なし',b.upcoming],['完了済み',b.done]];
     return `<header class="page-heading"><div><h1>タスク</h1><p>選ぶと右側に内容・メモ・作業時間が表示されます。</p></div><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
-      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${names().map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
+      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
       <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">未完了 <strong>${matched.filter(t=>t.status!=='done').length}件</strong></div>${sections.map(([label,rows])=>{const list=rows.filter(t=>matched.includes(t));return `<section class="work-task-group"><h2>${label}<small>${list.length}</small></h2>${taskList(list)}</section>`;}).join('')}</div>${picked?detailTask(picked):'<section class="panel work-detail"><h2>タスクを追加してください</h2><p class="muted">作業したいことを一件登録すると、ここに詳細が表示されます。</p></section>'}</div>`;
   }
   function projects(){
     const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
     const projectTasks=value.tasks.filter(t=>t.project===selectedProject);
     if(selectedTask&&!projectTasks.some(t=>t.id===selectedTask))selectedTask='';
+    const hiddenNames=allNames().filter(n=>value.hiddenProjects.includes(n));
     return `<header class="page-heading"><div><h1>プロジェクト</h1><p>プロジェクト・タスク・メモ・時間をこの画面で確認できます。</p></div><button type="button" class="button primary" data-workspace-new="projects">${icon('plus')}新規プロジェクト</button></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
-      <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${value.tasks.filter(t=>t.project===n&&t.status!=='done').length}件</small></button>`).join('')||'<p class="muted">プロジェクトはまだありません。</p>'}</nav>
+      <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${value.tasks.filter(t=>t.project===n&&t.status!=='done').length}件</small></button>`).join('')||'<p class="muted">表示中のプロジェクトはありません。</p>'}
+        <button type="button" class="work-project-settings-toggle" data-workspace-manage-projects="1" aria-expanded="${projectSettingsOpen}">表示設定（非表示 ${hiddenNames.length}件）${projectSettingsOpen?' ▲':' ▼'}</button>
+        ${projectSettingsOpen?`<div class="work-project-settings"><p>非表示にしてもタスク・メモ・時間記録は残り、タスク一覧でも確認できます。</p>${allNames().map(n=>`<div class="work-project-settings-row"><span title="${esc(n)}">${esc(n)}</span><button type="button" class="button secondary" data-workspace-project-visibility="${esc(n)}" data-visible="${value.hiddenProjects.includes(n)?'true':'false'}" aria-label="${esc(n)}を${value.hiddenProjects.includes(n)?'表示':'非表示'}にする">${value.hiddenProjects.includes(n)?'表示する':'隠す'}</button></div>`).join('')||'<p>プロジェクトはまだありません。</p>'}</div>`:''}</nav>
       <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>タスク一覧</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${selectedTask?'':'selected'}" data-workspace-overview="1">プロジェクトのメモ・概要を見る</button>${taskList(projectTasks,'このプロジェクトにはまだタスクがありません。')}</section>
       ${selectedProject?(selectedTask?detailTask(visibleTask(selectedTask)):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
   }
@@ -1000,7 +1031,13 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       if(button.dataset.workspaceSelectProject!==undefined){selectedProject=button.dataset.workspaceSelectProject;selectedTask='';render();return true;}
       if(button.dataset.workspaceOverview!==undefined){selectedTask='';render();return true;}
       if(button.dataset.workspaceSelectTask){selectedTask=button.dataset.workspaceSelectTask;if(!['#tasks','#projects'].includes(location.hash))location.hash='#tasks';render();if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({behavior:'smooth',block:'start'});return true;}
-      if(button.dataset.workspaceToggle){const t=visibleTask(button.dataset.workspaceToggle);if(!t)throw Error('タスクがありません。');save(workspaceChange(value,'tasks',{status:t.status==='done'?'todo':'done'},t.id,uid));toast('タスクを更新しました。');return true;}
+      if(button.dataset.workspaceManageProjects!==undefined){projectSettingsOpen=!projectSettingsOpen;render();return true;}
+      if(button.dataset.workspaceProjectVisibility!==undefined){
+        const project=button.dataset.workspaceProjectVisibility,visible=button.dataset.visible==='true';
+        if(!allNames().includes(project))throw Error('プロジェクトが見つかりません。');
+        save(workspaceSetProjectVisibility(value,project,visible));
+        toast(visible?'プロジェクトを再表示しました。':'プロジェクトを非表示にしました。');return true;
+      }
       if(button.dataset.workspaceRecord){const t=visibleTask(button.dataset.workspaceRecord);if(!t)throw Error('タスクがありません。');startRecord({project:t.project,taskId:t.id});return true;}
       if(button.dataset.workspaceRecordProject!==undefined){startRecord({project:button.dataset.workspaceRecordProject});return true;}
       if(button.dataset.workspaceHabitShift){const d=new Date(habitDate+'T12:00:00');d.setDate(d.getDate()+Number(button.dataset.workspaceHabitShift));habitDate=localDate(d);render();return true;}
@@ -1013,6 +1050,15 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   }
   function change(target){
     if(target.id==='workspace-project-filter'){filter=target.value;selectedTask='';render();return true;}
+    if(target.dataset?.workspaceStatus!==undefined){
+      try{
+        const t=visibleTask(target.dataset.workspaceStatus);
+        if(!t)throw Error('タスクが見つかりません。');
+        if(!['todo','doing','done'].includes(target.value))throw Error('タスクの状態が不正です。');
+        if(t.status!==target.value){save(workspaceChange(value,'tasks',{status:target.value},t.id,uid));toast('ステータスを更新しました。');}
+      }catch(e){toast(e.message);render();}
+      return true;
+    }
     if(target.dataset?.workspaceHabit){try{save(workspaceToggleHabit(value,target.dataset.date,target.dataset.workspaceHabit));toast('習慣を保存しました。');}catch(e){toast(e.message);render();}return true;}
     return false;
   }
@@ -1049,7 +1095,7 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts:()=>listPage('prompts'),click,change,input};
+  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts:()=>listPage('prompts'),click,change,input};
 }
 
 const $=s=>document.querySelector(s);
@@ -1068,7 +1114,7 @@ function updateTaskCandidates(taskId=''){const f=$('#record-form');if(!f?.elemen
 function updateCandidates(project){
   const f=$('#record-form'),field=f.elements.field.value,preset=FIELD_PRESETS[field]||FIELD_PRESETS['その他'];
   const records=byField(activeRecords(data),field);
-  const projects=[...new Set([...preset.projects,...records.map(r=>r.project),...workspace.get().projects.map(p=>p.title),...(project?[project]:[])])];
+  const hidden=new Set(workspace.get().hiddenProjects);const projects=[...new Set([...preset.projects,...records.map(r=>r.project),...workspace.get().projects.map(p=>p.title),...(project?[project]:[])])].filter(p=>!hidden.has(p)||p===project);
   f.elements.project.innerHTML=projects.map(p=>`<option value="${escapeHTML(p)}">${escapeHTML(p)}</option>`).join('')+'<option value="__custom__">＋ 新しいプロジェクト</option>';
   f.elements.project.value=projects.includes(project)?project:projects[0];
   $('#custom-project-label').hidden=true;f.elements.customProject.required=false;f.elements.customProject.value='';
@@ -1129,7 +1175,7 @@ function recordsPage(){return heading('記録一覧','積み重ねた時間を�
 function sharePage(){return heading('バックアップ・同期','記録を守るためのバックアップとクラウド保存。',false)+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・メモ・習慣・プロンプトを1つのJSONに保存できます。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
 
 function render(){view=['dashboard','records','share','life-log','tasks','projects','habits','prompts'].includes(location.hash.slice(1))?location.hash.slice(1):location.hash==='#notes'?'projects':'dashboard';document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===view);if(el.dataset.nav===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});$('#main').innerHTML=(!['ready','local','dirty','loading'].includes(cloud.status())?'<div class="notice storage-alert" role="alert">同期の確認が必要です。<a href="#share">バックアップ・同期設定を確認</a></div>':'')+(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+({dashboard,records:recordsPage,share:sharePage,'life-log':lifeLog.page,tasks:workspace.tasks,projects:workspace.projects,habits:workspace.habits,prompts:workspace.prompts}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();}
-function openRecord(id='',defaults={}){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const linked=defaults.project?data.records.find(r=>r.project===defaults.project&&!r.deleted):null;const field=editing?.field||linked?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||defaults.project||inputDefaults.projects[field]);updateTaskCandidates(editing?.taskId||defaults.taskId||'');$('#record-dialog').showModal();}
+function openRecord(id='',defaults={}){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const linked=defaults.project?data.records.find(r=>r.project===defaults.project&&!r.deleted):null;const field=editing?.field||linked?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||defaults.project||(!workspace.get().hiddenProjects.includes(inputDefaults.projects[field])?inputDefaults.projects[field]:''));updateTaskCandidates(editing?.taskId||defaults.taskId||'');$('#record-dialog').showModal();}
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function exportJSON(){download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_${localDate()}_${Date.now()}.json`,'application/json');toast('共有ファイルの保存を開始しました。');}
 function exportCSV(){const cell=v=>'"'+String(v).replace(/^[=+\-@\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['日付','活動','時間（分）','メモ','分野','プロジェクト'],...sortRecords(activeRecords(data)).map(r=>[r.date,r.activity,r.minutes,r.note,r.field,r.project])];download('\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n'),`ときの記録_${localDate()}.csv`,'text/csv;charset=utf-8');toast('CSVの保存を開始しました。');}
@@ -1160,7 +1206,7 @@ document.addEventListener('click',event=>{const button=event.target.closest('but
     if(action==='rescue'){download(localStorage.getItem(KEY)||'','ときの記録_救出.txt','text/plain');}
   }catch(error){toast(error.message);}
 });
-document.addEventListener('change',event=>{if(lifeLog.change(event.target))return;if(workspace.change(event.target))return;if(event.target.name==='field'){updateCandidates(inputDefaults.projects[event.target.value]);}if(event.target.name==='project'){const custom=event.target.value==='__custom__';$('#custom-project-label').hidden= !custom;$('#record-form').elements.customProject.required=custom;if(custom)$('#record-form').elements.customProject.focus();updateTaskCandidates();}if(event.target.id==='anchor-date'&&validDate(event.target.value)){anchor=event.target.value;render();}if(event.target.id==='activity-filter'){activityFilter=event.target.value;page=1;$('#list-results').innerHTML=listResults();}if(event.target.id==='deleted-filter'){showDeleted=event.target.checked;page=1;$('#list-results').innerHTML=listResults();}});
+document.addEventListener('change',event=>{if(lifeLog.change(event.target))return;if(workspace.change(event.target))return;if(event.target.name==='field'){const remembered=inputDefaults.projects[event.target.value];updateCandidates(workspace.get().hiddenProjects.includes(remembered)?'':remembered);}if(event.target.name==='project'){const custom=event.target.value==='__custom__';$('#custom-project-label').hidden= !custom;$('#record-form').elements.customProject.required=custom;if(custom)$('#record-form').elements.customProject.focus();updateTaskCandidates();}if(event.target.id==='anchor-date'&&validDate(event.target.value)){anchor=event.target.value;render();}if(event.target.id==='activity-filter'){activityFilter=event.target.value;page=1;$('#list-results').innerHTML=listResults();}if(event.target.id==='deleted-filter'){showDeleted=event.target.checked;page=1;$('#list-results').innerHTML=listResults();}});
 document.addEventListener('input',event=>{if(lifeLog.input(event.target))return;if(workspace.input(event.target))return;if(event.target.id==='record-search'){query=event.target.value;page=1;$('#list-results').innerHTML=listResults();}});
 $('#record-form').addEventListener('submit',event=>{event.preventDefault();try{if(editing&&data.records.find(r=>r.id===editing.id)?.rev!==editing.rev)throw Error('この記録は別のタブで更新されました。閉じてから開き直してください。');const f=event.currentTarget;const values={taskId:f.elements.taskId?.value||'',field:f.elements.field.value,project:(f.elements.project.value==='__custom__'?f.elements.customProject.value:f.elements.project.value).trim(),date:f.elements.date.value,activity:f.elements.activity.value.trim(),minutes:Number(f.elements.minutes.value),note:f.elements.note.value,deleted:false};if(!values.activity)throw Error('活動名を入力してください。');if(values.taskId&&!workspace.get().tasks.some(t=>t.id===values.taskId))throw Error('関連タスクが見つかりません。');const r=revise(editing,values);persist({...data,records:editing?data.records.map(x=>x.id===editing.id?r:x):[...data.records,r]});rememberInput(r.field,r.project);anchor=r.date;render();$('#record-dialog').close();toast(editing?'記録を更新しました。':'時間を記録しました。');}catch(error){$('#form-error').textContent=error.message;}});
 $('#delete-apply').addEventListener('click',()=>{try{if(data.records.find(r=>r.id===deleting.id)?.rev!==deleting.rev)throw Error('この記録は更新されています。閉じてから確認し直してください。');persist({...data,records:data.records.map(r=>r.id===deleting.id?revise(r,{...r,deleted:true}):r)});$('#delete-dialog').close();toast('削除しました。削除済みの一覧から復元できます。');}catch(error){toast(error.message);}});

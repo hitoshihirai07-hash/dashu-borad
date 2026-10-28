@@ -1,8 +1,8 @@
-import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceToggleHabit,habitWeek,taskBuckets} from './workspace-model.js';
+import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets} from './workspace-model.js';
 
 export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
   let value=workspaceFresh(),error='',filter='',search='',formType='tasks',formId='';
-  let selectedProject='',selectedTask='',habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
+  let selectedProject='',selectedTask='',projectSettingsOpen=false,habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト'};
   const clean=t=>esc(t||'').replace(/\n/g,'<br>');
   const timeText=mins=>`${Math.floor(mins/60)}時間${mins%60?`${mins%60}分`:''}`;
@@ -12,11 +12,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     catch{error='作業管理の保存データを読み取れません。データ保護のため編集を停止しました。';}
   }
   reload();
-  const names=()=>[...new Set([
+  const allNames=()=>[...new Set([
     ...value.projects.map(p=>p.title),...value.tasks.map(t=>t.project),
     ...value.notes.map(n=>n.project||'未分類'),
     ...getTimeRecords().filter(r=>!r.deleted).map(r=>r.project),
   ].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const names=()=>allNames().filter(n=>!value.hiddenProjects.includes(n));
   const projectOptions=(selected='')=>`<option value="">未分類</option>${[...new Set([...names(),...(selected?[selected]:[])])].map(n=>`<option value="${esc(n)}" ${selected===n?'selected':''}>${esc(n)}</option>`).join('')}`;
   function save(next){
     if(error)throw Error(error);
@@ -30,12 +31,16 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   function dated(t){return t.due?`期限 ${esc(t.due)}`:'期限なし';}
   function itemRow(t){
     return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
-      <button type="button" class="task-toggle" data-workspace-toggle="${esc(t.id)}" aria-label="${t.status==='done'?'未完了に戻す':'完了にする'}">${icon(t.status==='done'?'restore':'grid')}</button>
       <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
         <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
-        <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}${t.status==='doing'?' ・ 進行中':''}</span>
+        <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}</span>
         ${t.memo?'<span class="work-note-marker">メモあり</span>':''}
       </button>
+      <select class="work-task-status" data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}のステータス">
+        <option value="todo" ${t.status==='todo'?'selected':''}>未着手</option>
+        <option value="doing" ${t.status==='doing'?'selected':''}>進行中</option>
+        <option value="done" ${t.status==='done'?'selected':''}>完了</option>
+      </select>
     </div>`;
   }
   const taskList=(arr,empty='タスクはありません。')=>arr.length?`<div class="work-task-list">${arr.map(itemRow).join('')}</div>`:`<p class="muted work-empty">${empty}</p>`;
@@ -71,16 +76,19 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const sections=[['期限切れ',b.overdue],['今日',b.today],['今後・期限なし',b.upcoming],['完了済み',b.done]];
     return `<header class="page-heading"><div><h1>タスク</h1><p>選ぶと右側に内容・メモ・作業時間が表示されます。</p></div><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
-      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${names().map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
+      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
       <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">未完了 <strong>${matched.filter(t=>t.status!=='done').length}件</strong></div>${sections.map(([label,rows])=>{const list=rows.filter(t=>matched.includes(t));return `<section class="work-task-group"><h2>${label}<small>${list.length}</small></h2>${taskList(list)}</section>`;}).join('')}</div>${picked?detailTask(picked):'<section class="panel work-detail"><h2>タスクを追加してください</h2><p class="muted">作業したいことを一件登録すると、ここに詳細が表示されます。</p></section>'}</div>`;
   }
   function projects(){
     const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
     const projectTasks=value.tasks.filter(t=>t.project===selectedProject);
     if(selectedTask&&!projectTasks.some(t=>t.id===selectedTask))selectedTask='';
+    const hiddenNames=allNames().filter(n=>value.hiddenProjects.includes(n));
     return `<header class="page-heading"><div><h1>プロジェクト</h1><p>プロジェクト・タスク・メモ・時間をこの画面で確認できます。</p></div><button type="button" class="button primary" data-workspace-new="projects">${icon('plus')}新規プロジェクト</button></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
-      <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${value.tasks.filter(t=>t.project===n&&t.status!=='done').length}件</small></button>`).join('')||'<p class="muted">プロジェクトはまだありません。</p>'}</nav>
+      <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${value.tasks.filter(t=>t.project===n&&t.status!=='done').length}件</small></button>`).join('')||'<p class="muted">表示中のプロジェクトはありません。</p>'}
+        <button type="button" class="work-project-settings-toggle" data-workspace-manage-projects="1" aria-expanded="${projectSettingsOpen}">表示設定（非表示 ${hiddenNames.length}件）${projectSettingsOpen?' ▲':' ▼'}</button>
+        ${projectSettingsOpen?`<div class="work-project-settings"><p>非表示にしてもタスク・メモ・時間記録は残り、タスク一覧でも確認できます。</p>${allNames().map(n=>`<div class="work-project-settings-row"><span title="${esc(n)}">${esc(n)}</span><button type="button" class="button secondary" data-workspace-project-visibility="${esc(n)}" data-visible="${value.hiddenProjects.includes(n)?'true':'false'}" aria-label="${esc(n)}を${value.hiddenProjects.includes(n)?'表示':'非表示'}にする">${value.hiddenProjects.includes(n)?'表示する':'隠す'}</button></div>`).join('')||'<p>プロジェクトはまだありません。</p>'}</div>`:''}</nav>
       <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>タスク一覧</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${selectedTask?'':'selected'}" data-workspace-overview="1">プロジェクトのメモ・概要を見る</button>${taskList(projectTasks,'このプロジェクトにはまだタスクがありません。')}</section>
       ${selectedProject?(selectedTask?detailTask(visibleTask(selectedTask)):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
   }
@@ -127,7 +135,13 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(button.dataset.workspaceSelectProject!==undefined){selectedProject=button.dataset.workspaceSelectProject;selectedTask='';render();return true;}
       if(button.dataset.workspaceOverview!==undefined){selectedTask='';render();return true;}
       if(button.dataset.workspaceSelectTask){selectedTask=button.dataset.workspaceSelectTask;if(!['#tasks','#projects'].includes(location.hash))location.hash='#tasks';render();if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({behavior:'smooth',block:'start'});return true;}
-      if(button.dataset.workspaceToggle){const t=visibleTask(button.dataset.workspaceToggle);if(!t)throw Error('タスクがありません。');save(workspaceChange(value,'tasks',{status:t.status==='done'?'todo':'done'},t.id,uid));toast('タスクを更新しました。');return true;}
+      if(button.dataset.workspaceManageProjects!==undefined){projectSettingsOpen=!projectSettingsOpen;render();return true;}
+      if(button.dataset.workspaceProjectVisibility!==undefined){
+        const project=button.dataset.workspaceProjectVisibility,visible=button.dataset.visible==='true';
+        if(!allNames().includes(project))throw Error('プロジェクトが見つかりません。');
+        save(workspaceSetProjectVisibility(value,project,visible));
+        toast(visible?'プロジェクトを再表示しました。':'プロジェクトを非表示にしました。');return true;
+      }
       if(button.dataset.workspaceRecord){const t=visibleTask(button.dataset.workspaceRecord);if(!t)throw Error('タスクがありません。');startRecord({project:t.project,taskId:t.id});return true;}
       if(button.dataset.workspaceRecordProject!==undefined){startRecord({project:button.dataset.workspaceRecordProject});return true;}
       if(button.dataset.workspaceHabitShift){const d=new Date(habitDate+'T12:00:00');d.setDate(d.getDate()+Number(button.dataset.workspaceHabitShift));habitDate=localDate(d);render();return true;}
@@ -140,6 +154,15 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function change(target){
     if(target.id==='workspace-project-filter'){filter=target.value;selectedTask='';render();return true;}
+    if(target.dataset?.workspaceStatus!==undefined){
+      try{
+        const t=visibleTask(target.dataset.workspaceStatus);
+        if(!t)throw Error('タスクが見つかりません。');
+        if(!['todo','doing','done'].includes(target.value))throw Error('タスクの状態が不正です。');
+        if(t.status!==target.value){save(workspaceChange(value,'tasks',{status:target.value},t.id,uid));toast('ステータスを更新しました。');}
+      }catch(e){toast(e.message);render();}
+      return true;
+    }
     if(target.dataset?.workspaceHabit){try{save(workspaceToggleHabit(value,target.dataset.date,target.dataset.workspaceHabit));toast('習慣を保存しました。');}catch(e){toast(e.message);render();}return true;}
     return false;
   }
@@ -176,5 +199,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts:()=>listPage('prompts'),click,change,input};
+  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts:()=>listPage('prompts'),click,change,input};
 }
