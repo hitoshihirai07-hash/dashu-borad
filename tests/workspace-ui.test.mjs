@@ -8,7 +8,7 @@ function createUI(){
  const makeElement=()=>({value:'',textContent:'',innerHTML:'',dataset:{},hidden:false,showModal(){this.open=true;},close(){this.open=false;},focus(){},setSelectionRange(){},querySelectorAll(){return[];},reset(){for(const el of Object.values(this.elements))el.value='';},addEventListener(name,callback){this.handlers??={};this.handlers[name]=callback;}});
  for(const selector of ['#workspace-dialog','#workspace-form','#workspace-title','#workspace-form-error','#workspace-search'])root.set(selector,makeElement());
  const form=root.get('#workspace-form');form.elements={};
- for(const name of ['title','project','description','memo','body','detail','due','priority','status','category'])form.elements[name]=makeElement();
+ for(const name of ['title','project','description','memo','body','detail','due','priority','status','category','repeatType','monthDay','steps','pinned'])form.elements[name]=makeElement();
  const oldDoc=globalThis.document,oldLoc=globalThis.location,oldWindow=globalThis.window;
  globalThis.document={querySelector:selector=>root.get(selector)||null,addEventListener:(name,callback)=>handlers[name]=callback};
  globalThis.location={hash:'#projects'};
@@ -52,4 +52,61 @@ test('habit UI updates only habits and keeps projects untouched',()=>{
  h.ui.change({dataset:{workspaceHabit:'walk',date:'2026-10-27'}});
  assert.equal(h.ui.get().habits['2026-10-27'],undefined);
 }finally{h.close();}
+});
+
+test('project-scoped prompt can be created, pinned, filtered and copied without AI service',()=>{
+ const h=createUI();try{
+  h.ui.click({dataset:{workspaceNewPrompt:'PlayerLens'}});
+  h.form.elements.title.value='調査用';h.form.elements.body.value='記事の根拠を確認';h.form.elements.pinned.checked=true;
+  h.submit();
+  const p=h.ui.get().prompts[0];
+  assert.equal(p.project,'PlayerLens');assert.equal(p.pinned,true);
+  assert.match(h.ui.prompts(),/記事の根拠を確認/);
+  h.ui.change({id:'workspace-prompt-filter',value:'プロ野球観戦メモ'});
+  assert.doesNotMatch(h.ui.prompts(),/記事の根拠を確認/);
+  h.ui.change({id:'workspace-prompt-filter',value:'PlayerLens'});
+  assert.match(h.ui.prompts(),/記事の根拠を確認/);
+  h.ui.click({dataset:{workspacePin:p.id}});
+  assert.equal(h.ui.get().prompts[0].pinned,false);
+ }finally{h.close();}
+});
+
+test('save a task template and reuse it without modifying the original',()=>{
+ const h=createUI();try{
+  h.ui.click({dataset:{workspaceNew:'templates'}});
+  h.form.elements.title.value='毎週振り返り';h.form.elements.project.value='プロ野球観戦メモ';h.form.elements.detail.value='一週間をまとめる';
+  h.form.elements.priority.value='high';h.form.elements.steps.value='完了項目を確認\n来週の作業を決定';h.submit();
+  const source=h.ui.get().templates[0];
+  assert.deepEqual(source.steps.map(x=>x.text),['完了項目を確認','来週の作業を決定']);
+  assert.match(h.ui.templates(),/この内容でタスク作成/);
+  h.ui.click({dataset:{workspaceUseTemplate:source.id}});
+  assert.equal(h.form.elements.title.value,'毎週振り返り');
+  assert.equal(h.form.elements.steps.value,'完了項目を確認\n来週の作業を決定');
+  h.form.elements.status.value='todo';h.submit();
+  assert.equal(h.ui.get().tasks[0].title,'毎週振り返り');
+  assert.equal(h.ui.get().tasks[0].steps.length,2);
+  assert.equal(h.ui.get().templates.length,1);
+  const id=h.ui.get().tasks[0].id;
+  h.ui.change({dataset:{workspaceStep:id,index:'0'}});
+  assert.equal(h.ui.get().tasks[0].steps[0].done,true);
+  assert.equal(h.ui.get().templates[0].steps[0].done,false);
+ }finally{h.close();}
+});
+
+test('task form creates weekly routine and completion creates next task through status dropdown',()=>{
+ const h=createUI();try{
+  h.form.querySelectorAll=selector=>selector==='[name="repeatDay"]:checked'?[{value:'0'},{value:'3'}]:[];
+  h.ui.click({dataset:{workspaceNew:'tasks'}});
+  h.form.elements.title.value='定例更新';h.form.elements.project.value='PlayerLens';h.form.elements.status.value='todo';h.form.elements.priority.value='normal';
+  h.form.elements.repeatType.value='weekly';h.form.elements.steps.value='記事を見る';
+  h.submit();
+  const first=h.ui.get().tasks[0];
+  assert.equal(first.due,'2026-10-28'); // Tuesday Oct 27 -> Wednesday Oct 28
+  assert.deepEqual(first.repeat.days,[0,3]);
+  h.ui.change({dataset:{workspaceStatus:first.id},value:'done'});
+  const next=h.ui.get().tasks.find(t=>t.status!=='done');
+  assert.equal(next.due,'2026-11-01');
+  assert.equal(h.ui.get().tasks.length,2);
+  assert.match(h.ui.tasks(),/ルーチン/);
+ }finally{h.close();}
 });

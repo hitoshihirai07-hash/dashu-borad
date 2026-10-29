@@ -93,3 +93,26 @@
 .work-project-settings-row>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;color:#365c45}
 .work-project-settings-row>.button{flex:0 0 auto;padding:6px 8px;font-size:11px;min-height:32px}
 @media(max-width:600px){.work-task-status{width:110px;min-height:42px;font-size:16px}.work-task-row{gap:5px}}
+
+/* Project prompts, reusable checklists and recurrence controls. */
+.work-help{margin:12px 0 19px;font-size:12px;line-height:1.7}
+.work-step-list{display:grid;gap:9px;margin-top:11px}
+.work-step{display:flex;gap:10px;align-items:flex-start;background:#f7faf7;border:1px solid #e1eee4;border-radius:10px;padding:11px;cursor:pointer;font-size:13px;line-height:1.6}
+.work-step input{accent-color:#2d8752;width:18px;height:18px;flex-shrink:0;margin-top:2px}
+.work-step .checked{text-decoration:line-through;color:#789482}
+.work-template-steps{margin:10px 0 15px;padding-left:22px;color:#486953;font-size:12px;line-height:1.9}
+.work-linked-prompt{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #e4eee7;flex-wrap:wrap}
+.work-linked-prompt span{flex:1;min-width:110px;overflow-wrap:anywhere;font-size:12px;font-weight:600}
+.work-linked-prompt button{font-size:12px;padding:6px 10px}
+.work-repeat-settings{background:#f4faf6;border:1px solid #d6e8dc;border-radius:12px;padding:13px;margin:7px 0}
+.work-repeat-settings>label{display:block;margin-top:6px}
+.work-repeat-settings fieldset{border:0;padding:9px 0;margin:10px 0}
+.work-repeat-settings legend{font-weight:700;font-size:13px}
+.work-weekday-picks{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.work-weekday-picks label{border:1px solid #b8d9c2;padding:7px 9px;border-radius:8px;background:#fff;display:flex;align-items:center;gap:5px;cursor:pointer}
+.work-weekday-picks input{accent-color:#297a50}
+.work-repeat-settings small{display:block;font-size:11px;color:#64806b;margin-top:7px}
+.work-pin-label{display:flex!important;align-items:center;gap:9px}
+.work-pin-label input{width:18px;height:18px;accent-color:#297a50}
+#workspace-weekdays[hidden],#workspace-monthday[hidden]{display:none!important}
+@media(max-width:600px){.work-linked-prompt .button{flex:0 0 auto}.work-repeat-settings{padding:10px}.work-weekday-picks label{min-width:40px;justify-content:center}}
