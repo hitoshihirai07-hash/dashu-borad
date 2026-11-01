@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],habits:{},hiddenProjects:[]
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -17,14 +17,14 @@ const validDay = v => {
 };
 export function workspaceValidate(value){
   if(!value||value.format!=='toki-workspace'||value.version!==1)throw Error('作業管理データの形式が正しくありません。');
-  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000};
+  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000,links:100};
   const all=new Set(),out={format:'toki-workspace',version:1};
   const str=(v,max,required=false)=>{
     if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw Error('作業管理の文字数または入力内容が不正です。');
     return v;
   };
   for(const type of Object.keys(limits)){
-    const rows=type==='templates'?(value.templates??[]):value[type];
+    const rows=['templates','links'].includes(type)?(value[type]??[]):value[type];
     if(!Array.isArray(rows)||rows.length>limits[type])throw Error('作業管理の件数が上限を超えています。');
     out[type]=rows.map(item=>{
       if(!item||typeof item!=='object')throw Error('作業管理の行が不正です。');
@@ -45,9 +45,14 @@ export function workspaceValidate(value){
         if(!['high','normal','low'].includes(priority))throw Error('テンプレートの優先度が不正です。');
         return {...base,detail:str(item.detail??'',4000),priority,steps:normalizedSteps};
       }
+      if(type==='links'){
+        const url=str(item.url??'',2048,true);
+        if(!validLinkUrl(url))throw Error('リンクはhttp/httpsの有効なURLを入力してください。');
+        return {...base,project:'',url};
+      }
       if(type==='tasks'){
         const due=str(item.due??'',10),status=str(item.status,15),priority=str(item.priority,15),detail=str(item.detail??'',4000);
-        if((due&&!validDay(due))||!['todo','doing','done'].includes(status)||!['high','normal','low'].includes(priority))throw Error('タスクの日付・状態が不正です。');
+        if((due&&!validDay(due))||!['todo','doing','waiting','someday','done'].includes(status)||!['high','normal','low'].includes(priority))throw Error('タスクの日付・状態が不正です。');
         const repeat=item.repeat??null;
         let rule=null;
         if(repeat!==null){
@@ -60,10 +65,12 @@ export function workspaceValidate(value){
           if(!due)throw Error('ルーチンタスクには実行日が必要です。');
           rule={type:repeat.type,days,monthDay};
         }
+        const reviewDate=str(item.reviewDate??'',10),waitingFor=str(item.waitingFor??'',1000),startCondition=str(item.startCondition??'',1000);
+        if((reviewDate&&!validDay(reviewDate))||(rule&&['waiting','someday'].includes(status)))throw Error('確認目安またはルーチンと待機状態の組み合わせが不正です。');
         const routineId=str(item.routineId??'',160),completedAt=str(item.completedAt??'',40);
         if(completedAt&&!Number.isFinite(Date.parse(completedAt)))throw Error('タスクの完了日時が不正です。');
         if(typeof(item.skipped??false)!=='boolean')throw Error('スキップ状態が不正です。');
-        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt};
+        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects')return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000)};
       // Keep legacy notes; they appear inside the relevant project, never as a standalone notebook.
@@ -85,9 +92,13 @@ export function workspaceValidate(value){
   out.hiddenProjects=[...hidden];
   return out;
 }
+export function validLinkUrl(value){
+  if(typeof value!=='string'||value.length>2048||!value.trim())return false;
+  try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)&&!!url.hostname&&!url.username&&!url.password;}catch{return false;}
+}
 export function workspaceChange(current,type,payload,id,makeId){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1},type))throw Error('種類が不正です。');
   const old=id?current[type].find(x=>x.id===id):null;
   if(id&&!old)throw Error('編集対象が見つかりません。再読み込みしてください。');
   const now=new Date().toISOString();
@@ -96,8 +107,17 @@ export function workspaceChange(current,type,payload,id,makeId){
 }
 export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id)});
+}
+export function workspaceMoveLink(current,id,direction){
+  current=workspaceValidate(current);
+  if(!['up','down'].includes(direction))throw Error('移動方向が不正です。');
+  const links=[...current.links],index=links.findIndex(x=>x.id===id),next=index+(direction==='up'?-1:1);
+  if(index<0)throw Error('リンクが見つかりません。');
+  if(next<0||next>=links.length)return current;
+  [links[index],links[next]]=[links[next],links[index]];
+  return workspaceValidate({...current,links});
 }
 export function workspaceSetProjectVisibility(current,project,visible){
   current=workspaceValidate(current);
@@ -127,9 +147,13 @@ export function habitWeek(current,date){
   return rows;
 }
 export const taskBuckets=(tasks,today)=>({
-  overdue:tasks.filter(x=>x.status!=='done'&&x.due&&x.due<today),
-  today:tasks.filter(x=>x.status!=='done'&&x.due===today),
-  upcoming:tasks.filter(x=>x.status!=='done'&&(!x.due||x.due>today)),
+  overdue:tasks.filter(x=>!['done','waiting','someday'].includes(x.status)&&x.due&&x.due<today),
+  today:tasks.filter(x=>!['done','waiting','someday'].includes(x.status)&&x.due===today),
+  upcoming:tasks.filter(x=>!['done','waiting','someday'].includes(x.status)&&x.due&&x.due>today),
+  undated:tasks.filter(x=>!['done','waiting','someday'].includes(x.status)&&!x.due),
+  waiting:tasks.filter(x=>x.status==='waiting'),
+  someday:tasks.filter(x=>x.status==='someday'),
+  review:tasks.filter(x=>['waiting','someday'].includes(x.status)&&x.reviewDate&&x.reviewDate<=today),
   done:tasks.filter(x=>x.status==='done')
 });
 
@@ -172,10 +196,11 @@ export function workspaceAdvanceTask(current,id,today,makeId,skip=false){
   return workspaceValidate({...current,tasks});
 }
 export function workspaceSetTaskStatus(current,id,status,today,makeId){
-  if(!['todo','doing','done'].includes(status))throw Error('タスクの状態が不正です。');
+  if(!['todo','doing','waiting','someday','done'].includes(status))throw Error('タスクの状態が不正です。');
   const t=workspaceValidate(current).tasks.find(t=>t.id===id);
   if(!t)throw Error('タスクがありません。');
   if(t.status===status)return workspaceValidate(current);
+  if(t.repeat&&['waiting','someday'].includes(status))throw Error('繰り返しタスクを待機にするには、先に繰り返しを解除してください。');
   return status==='done'?workspaceAdvanceTask(current,id,today,makeId):workspaceChange(current,'tasks',{status,skipped:false,completedAt:''},id,makeId);
 }
 export function workspaceToggleTaskStep(current,id,index,makeId){

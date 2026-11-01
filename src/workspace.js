@@ -1,10 +1,11 @@
-import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep} from './workspace-model.js';
+import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep,workspaceMoveLink} from './workspace-model.js';
 
 export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
   let value=workspaceFresh(),error='',filter='',search='',formType='tasks',formId='';
   let selectedProject='',selectedTask='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),savedSnapshot=JSON.stringify(workspaceFresh());
-  const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート'};
+  const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート',links:'毎日使うリンク'};
   const clean=t=>esc(t||'').replace(/\n/g,'<br>');
+  const suggestedLinks=[{title:'プロ野球観戦メモ',url:'https://pro-baseball-watch-guide.com/'},{title:'Notion',url:'https://www.notion.so/'},{title:'ベンチからの一手',url:'https://bench-first.pages.dev/'},{title:'Player Lens',url:'https://pro-baseball-watch-guide.com/player-lens/'}];
   const timeText=mins=>`${Math.floor(mins/60)}時間${mins%60?`${mins%60}分`:''}`;
   const timeEntries=(project='',taskId='')=>getTimeRecords().filter(r=>!r.deleted&&(taskId?r.taskId===taskId:r.project===project));
   function reload(){
@@ -31,18 +32,20 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   const weekday=['日','月','火','水','木','金','土'];
   function repeatLabel(rule){return !rule?'':rule.type==='daily'?'毎日':rule.type==='weekly'?`毎週 ${rule.days.map(n=>weekday[n]).join('・')}曜`:`毎月${rule.monthDay}日`;}
-  function completedLabel(t){return t.skipped?'スキップ':t.status==='done'?'完了':t.status==='doing'?'進行中':'未着手';}
+  function completedLabel(t){return t.skipped?'スキップ':({done:'完了',doing:'進行中',waiting:'待機中',someday:'いつかやる',todo:'未着手'}[t.status]||'未着手');}
   function dated(t){return t.due?`期限 ${esc(t.due)}`:'期限なし';}
   function itemRow(t){
     return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
       <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
         <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
         <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}</span>
-        ${t.memo?'<span class="work-note-marker">メモあり</span>':''}${t.repeat?`<span class="work-note-marker">↻ ${esc(repeatLabel(t.repeat))}</span>`:''}${t.skipped?'<span class="work-note-marker">スキップ済み</span>':''}
+        ${['waiting','someday'].includes(t.status)?`<span class="work-note-marker">${esc(completedLabel(t))}</span>`:''}${t.reviewDate&&['waiting','someday'].includes(t.status)?`<span class="work-note-marker ${t.reviewDate<=localDate()&&['waiting','someday'].includes(t.status)?'work-review-due':''}">確認目安 ${esc(t.reviewDate)}</span>`:''}${t.memo?'<span class="work-note-marker">メモあり</span>':''}${t.repeat?`<span class="work-note-marker">↻ ${esc(repeatLabel(t.repeat))}</span>`:''}${t.skipped?'<span class="work-note-marker">スキップ済み</span>':''}
       </button>
       <select class="work-task-status" data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}のステータス">
         <option value="todo" ${t.status==='todo'?'selected':''}>未着手</option>
         <option value="doing" ${t.status==='doing'?'selected':''}>進行中</option>
+        <option value="waiting" ${t.status==='waiting'?'selected':''}>待機中</option>
+        <option value="someday" ${t.status==='someday'?'selected':''}>いつかやる</option>
         <option value="done" ${t.status==='done'?'selected':''}>完了</option>
       </select>
     </div>`;
@@ -54,6 +57,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     return `<section class="panel work-detail" aria-label="タスク詳細">
       <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)} ・ ${completedLabel(t)}</p></div><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button></div>
       ${t.detail?`<section class="work-detail-section"><h3>タスクの内容</h3><p class="work-long-text">${clean(t.detail)}</p></section>`:''}
+      ${(t.waitingFor||t.startCondition||t.reviewDate)?`<section class="work-detail-section"><h3>待機・確認の情報</h3>${t.waitingFor?`<p class="work-long-text"><strong>待機理由：</strong>${clean(t.waitingFor)}</p>`:''}${t.startCondition?`<p class="work-long-text"><strong>作業開始の条件：</strong>${clean(t.startCondition)}</p>`:''}${t.reviewDate?`<p class="workspace-meta">確認目安：${esc(t.reviewDate)}（作業期限とは別）</p>`:''}${['waiting','someday'].includes(t.status)?`<button type="button" class="button secondary" data-workspace-resume="${esc(t.id)}">未着手に戻す</button>`:''}</section>`: ['waiting','someday'].includes(t.status)?`<div class="workspace-actions"><button type="button" class="button secondary" data-workspace-resume="${esc(t.id)}">未着手に戻す</button></div>`:''}
+
       ${t.repeat?`<section class="work-detail-section"><h3>ルーチン：${esc(repeatLabel(t.repeat))}</h3><p class="muted">完了すると次回分を自動作成します。未完了分は1件のまま残ります。</p><div class="workspace-actions"><button type="button" class="button secondary" data-workspace-skip="${esc(t.id)}">今回だけスキップ</button><button type="button" class="button secondary" data-workspace-stop-repeat="${esc(t.id)}">繰り返しを解除</button></div></section>`:''}
       ${t.steps.length?`<section class="work-detail-section"><h3>作業チェックリスト <small>${t.steps.filter(s=>s.done).length}/${t.steps.length}</small></h3><div class="work-step-list">${t.steps.map((s,i)=>`<label class="work-step"><input type="checkbox" data-workspace-step="${esc(t.id)}" data-index="${i}" ${s.done?'checked':''} ${t.status==='done'?'disabled':''}><span class="${s.done?'checked':''}">${esc(s.text)}</span></label>`).join('')}</div></section>`:''}
       ${t.status!=='done'?`<div class="workspace-actions"><button type="button" class="button secondary" data-workspace-save-template="${esc(t.id)}">このタスクをテンプレートに保存</button></div>`:''}
@@ -80,15 +85,15 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     </section>`;
   }
   function tasks(){
-    const b=taskBuckets(value.tasks,localDate()),matched=value.tasks.filter(t=>(!filter||t.project===filter)&&(!search||`${t.title} ${t.detail} ${t.memo} ${t.project}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
+    const b=taskBuckets(value.tasks,localDate()),matched=value.tasks.filter(t=>(!filter||t.project===filter)&&(!search||`${t.title} ${t.detail} ${t.memo} ${t.project} ${t.waitingFor} ${t.startCondition}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
     if(selectedTask&&!matched.some(t=>t.id===selectedTask))selectedTask='';
     const picked=matched.find(t=>t.id===selectedTask)||matched[0];if(picked)selectedTask=picked.id;
-    const sections=[['期限切れ',b.overdue],['今日',b.today],['今後・期限なし',b.upcoming],['完了済み',b.done]];
+    const sections=[['期限切れ',b.overdue],['今日',b.today],['今後の予定',b.upcoming],['日付未定（着手可能）',b.undated],['確認目安が来た待機',b.review],['待機中',b.waiting.filter(t=>!b.review.includes(t))],['いつかやる',b.someday.filter(t=>!b.review.includes(t))],['完了済み',b.done]];
     return `<header class="page-heading"><div><h1>タスク</h1><p>選ぶと右側に内容・メモ・作業時間が表示されます。</p></div><div class="workspace-actions"><a class="button secondary" href="#templates">テンプレートから追加</a><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></div></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
-      <p class="muted work-help">ルーチンはタスク編集で「毎日・毎週・毎月」を選びます。指定曜日のタスクが完了すると、次の予定日が自動で作られます。</p>
+      <p class="muted work-help">日付が未定の作業は「待機中」「いつかやる」で保管できます。確認目安は期限ではありません。ルーチンはタスク編集で「毎日・毎週・毎月」を選びます。指定曜日のタスクが完了すると、次の予定日が自動で作られます。</p>
       <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label></div>
-      <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">未完了 <strong>${matched.filter(t=>t.status!=='done').length}件</strong></div>${sections.map(([label,rows])=>{const list=rows.filter(t=>matched.includes(t));return `<section class="work-task-group"><h2>${label}<small>${list.length}</small></h2>${taskList(list)}</section>`;}).join('')}</div>${picked?detailTask(picked):'<section class="panel work-detail"><h2>タスクを追加してください</h2><p class="muted">作業したいことを一件登録すると、ここに詳細が表示されます。</p></section>'}</div>`;
+      <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">未完了 <strong>${matched.filter(t=>t.status!=='done').length}件</strong></div>${sections.filter(([label,rows])=>label==='今日'||rows.some(t=>matched.includes(t))).map(([label,rows])=>{const list=rows.filter(t=>matched.includes(t));return `<section class="work-task-group"><h2>${label}<small>${list.length}</small></h2>${taskList(list)}</section>`;}).join('')}</div>${picked?detailTask(picked):'<section class="panel work-detail"><h2>タスクを追加してください</h2><p class="muted">作業したいことを一件登録すると、ここに詳細が表示されます。</p></section>'}</div>`;
   }
   function projects(){
     const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
@@ -106,7 +111,18 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   function home(){
     const b=taskBuckets(value.tasks,localDate());
     const focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
-    return `<section class="panel workspace-home"><div class="panel-heading"><h2>今日の作業</h2><a class="text-button" href="#tasks">タスク一覧へ</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${focus.length?taskList(focus):'<p class="muted">今日のタスクはありません。やることを追加できます。</p>'}<div class="workspace-actions"><button type="button" class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><a class="button secondary" href="#projects">プロジェクトを開く</a></div></section>`;
+    return `<section class="panel workspace-home"><div class="panel-heading"><h2>今日の作業</h2><a class="text-button" href="#tasks">タスク一覧へ</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${b.review.length?`<div class="work-review-reminder"><strong>確認目安が来た待機タスク ${b.review.length}件</strong><p>情報が出たか確認して、作業できるようになったら「未着手」に戻してください。</p>${taskList(b.review.slice(0,3))}<a href="#tasks" class="text-button">待機タスクを確認する</a></div>`:''}${focus.length?taskList(focus):'<p class="muted">今日のタスクはありません。やることを追加できます。</p>'}<div class="workspace-actions"><button type="button" class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><a class="button secondary" href="#projects">プロジェクトを開く</a></div></section>`;
+  }
+  function linksHome(){
+    const links=value.links;
+    return `<section class="panel work-daily-links"><div class="panel-heading"><h2>毎日使うリンク</h2><a class="text-button" href="#links">${links.length?'編集・並べ替え':'リンクを登録'}</a></div>${links.length?`<div class="work-link-grid">${links.map(l=>`<a class="work-link-tile" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer"><span class="work-link-avatar" aria-hidden="true">↗</span><span>${esc(l.title)}</span><small>別タブで開く ↗</small></a>`).join('')}</div>`:'<p class="muted">普段確認するサイトを登録すると、ここからすぐ開けます。</p>'}</section>`;
+  }
+  function links(){
+    const ready=suggestedLinks.filter(l=>!value.links.some(x=>x.url===l.url));
+    return `<header class="page-heading"><div><h1>毎日使うリンク</h1><p>普段使うサイトに1タップで移動。作業確認のチェックやタスクは増えません。</p></div><button type="button" class="button primary" data-workspace-new="links">${icon('plus')}リンクを追加</button></header>
+      ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
+      <section class="panel work-links-manage"><div class="work-section-head"><h2>登録済みリンク <small>${value.links.length}件</small></h2></div><div class="work-link-manage-list">${value.links.map((l,i)=>`<div class="work-link-manage-row"><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" class="work-link-open"><strong>${esc(l.title)}</strong><small>${esc(l.url)}</small></a><div class="work-link-controls"><button type="button" class="button secondary" data-workspace-move-link="${esc(l.id)}" data-direction="up" ${i===0?'disabled':''} aria-label="${esc(l.title)}を上へ">↑</button><button type="button" class="button secondary" data-workspace-move-link="${esc(l.id)}" data-direction="down" ${i===value.links.length-1?'disabled':''} aria-label="${esc(l.title)}を下へ">↓</button><button type="button" class="button secondary" data-workspace-edit="links:${esc(l.id)}">編集</button><button type="button" class="button secondary" data-workspace-delete="links:${esc(l.id)}">削除</button></div></div>`).join('')||'<p class="muted">まだリンクはありません。下の候補からワンタップで追加できます。</p>'}</div></section>
+      ${ready.length?`<section class="panel work-link-suggestions"><h2>登録候補</h2><p class="muted">必要なサイトだけ追加してください。URLはいつでも編集できます。</p><div class="work-link-suggestions-list">${suggestedLinks.map((l,i)=>ready.some(x=>x.url===l.url)?`<button type="button" class="button secondary" data-workspace-suggest-link="${i}">＋ ${esc(l.title)}</button>`:'').join('')}</div></section>`:''}`;
   }
   function habitChecks(day,compact=false){
     const done=new Set(value.habits[day]||[]);
@@ -147,7 +163,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     f.elements.repeatType.value=item?.repeat?.type||'none';f.elements.monthDay.value=String(item?.repeat?.monthDay||1);
     f.querySelectorAll('[name="repeatDay"]').forEach(el=>el.checked=!!item?.repeat?.days.includes(Number(el.value)));
     f.elements.pinned.checked=item?.pinned||false;
+    if(f.elements.reviewDate)f.elements.reviewDate.value=item?.reviewDate||'';
+    if(f.elements.waitingFor)f.elements.waitingFor.value=item?.waitingFor||'';
+    if(f.elements.startCondition)f.elements.startCondition.value=item?.startCondition||'';
+    if(f.elements.url)f.elements.url.value=item?.url||'';
     updateRepeatFields();
+    updateWaitFields();
     for(const wrap of f.querySelectorAll('[data-workspace-types]'))wrap.hidden=!wrap.dataset.workspaceTypes.split(',').includes(type);
     document.querySelector('#workspace-form-error').textContent='';dialog.showModal();
   }
@@ -157,6 +178,10 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const days=document.querySelector('#workspace-weekdays'),month=document.querySelector('#workspace-monthday');
     if(days)days.hidden=type!=='weekly';
     if(month)month.hidden=type!=='monthly';
+  }
+  function updateWaitFields(){
+    const f=document.querySelector('#workspace-form'),field=document.querySelector('#workspace-wait-fields');
+    if(field)field.hidden=!['waiting','someday'].includes(f.elements.status.value);
   }
   function makeSteps(text,old=[]){
     const lines=text.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
@@ -177,6 +202,9 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function click(button){
     try{
+      if(button.dataset.workspaceResume){save(workspaceSetTaskStatus(value,button.dataset.workspaceResume,'todo',localDate(),uid));toast('未着手に戻しました。');return true;}
+      if(button.dataset.workspaceMoveLink){save(workspaceMoveLink(value,button.dataset.workspaceMoveLink,button.dataset.direction));return true;}
+      if(button.dataset.workspaceSuggestLink!==undefined){const l=suggestedLinks[Number(button.dataset.workspaceSuggestLink)];if(!l)throw Error('リンク候補が見つかりません。');if(value.links.some(x=>x.url===l.url))throw Error('このURLは登録済みです。');save(workspaceChange(value,'links',l,'',uid));toast('リンクを追加しました。');return true;}
       if(button.dataset.workspaceNew){open(button.dataset.workspaceNew);return true;}
       if(button.dataset.workspaceNewPrompt!==undefined){open('prompts','',{project:button.dataset.workspaceNewPrompt});return true;}
       if(button.dataset.workspaceNewTask!==undefined){open('tasks','',{project:button.dataset.workspaceNewTask});return true;}
@@ -214,13 +242,14 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   function change(target){
     if(target.id==='workspace-prompt-filter'){promptFilter=target.value;render();return true;}
     if(target.name==='repeatType'){updateRepeatFields();return true;}
+    if(target.name==='status'&&formType==='tasks'){updateWaitFields();return true;}
     if(target.dataset?.workspaceStep!==undefined){try{save(workspaceToggleTaskStep(value,target.dataset.workspaceStep,Number(target.dataset.index),uid));}catch(e){toast(e.message);render();}return true;}
     if(target.id==='workspace-project-filter'){filter=target.value;selectedTask='';render();return true;}
     if(target.dataset?.workspaceStatus!==undefined){
       try{
         const t=visibleTask(target.dataset.workspaceStatus);
         if(!t)throw Error('タスクが見つかりません。');
-        if(!['todo','doing','done'].includes(target.value))throw Error('タスクの状態が不正です。');
+        if(!['todo','doing','waiting','someday','done'].includes(target.value))throw Error('タスクの状態が不正です。');
         if(t.status!==target.value){const next=workspaceSetTaskStatus(value,t.id,target.value,localDate(),uid);if(t.repeat&&target.value==='done')selectedTask=next.tasks.find(x=>x.routineId===(t.routineId||t.id)&&x.status!=='done')?.id||'';save(next);toast(t.repeat&&target.value==='done'?'完了しました。次回分のタスクを作成しました。':'ステータスを更新しました。');}
       }catch(e){toast(e.message);render();}
       return true;
@@ -235,10 +264,11 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   document.querySelector('#workspace-form').addEventListener('submit',event=>{
     event.preventDefault();try{
       const f=event.currentTarget,payload={title:f.elements.title.value.trim(),project:f.elements.project.value};
+      if(formType==='links'){payload.project='';payload.url=f.elements.url.value.trim();}
       if(formType==='tasks'){
         const old=value.tasks.find(t=>t.id===formId);
         const rpt=parseRepeat(f,old);
-        Object.assign(payload,{due:rpt?.due||f.elements.due.value,status:f.elements.status.value,priority:f.elements.priority.value,detail:f.elements.detail.value,memo:f.elements.memo.value,steps:makeSteps(f.elements.steps.value,old?.steps),repeat:rpt?.rule||null});
+        Object.assign(payload,{due:rpt?.due||f.elements.due.value,status:f.elements.status.value,priority:f.elements.priority.value,detail:f.elements.detail.value,memo:f.elements.memo.value,steps:makeSteps(f.elements.steps.value,old?.steps),repeat:rpt?.rule||null,reviewDate:f.elements.reviewDate?.value||'',waitingFor:f.elements.waitingFor?.value||'',startCondition:f.elements.startCondition?.value||''});
         if(old?.status==='done'&&payload.repeat)throw Error('完了履歴にはルーチンを設定できません。新しいタスクを作成してください。');
       }
       if(formType==='templates')Object.assign(payload,{detail:f.elements.detail.value,priority:f.elements.priority.value,steps:makeSteps(f.elements.steps.value)});
@@ -276,5 +306,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,tasks,projects,habitHome,habits,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,linksHome,links,tasks,projects,habitHome,habits,prompts,templates,click,change,input};
 }

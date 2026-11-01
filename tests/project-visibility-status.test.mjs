@@ -67,7 +67,7 @@ test('hiding projects from time history does not remove tasks, notes, prompts or
 });
 
 test('status changes directly from task rows and persists across reload without deleting task details',()=>{
-  let w=workspaceChange(workspaceFresh(),'tasks',{title:'記事の確認',project:'観戦',status:'todo',priority:'high',detail:'記事をレビュー',memo:'確認箇所'},'',id);
+  let w=workspaceChange(workspaceFresh(),'tasks',{title:'記事の確認',project:'観戦',status:'todo',priority:'high',due:'2026-10-28',detail:'記事をレビュー',memo:'確認箇所'},'',id);
   const h=setupUI({initial:w});
   try{
     const t=w.tasks[0];
