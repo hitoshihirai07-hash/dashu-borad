@@ -4,7 +4,7 @@ import {createLifeStore,createHealthStore} from './life-store.js';
 
 export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc,getTimeRecords=()=>[]}){
   const store=createLifeStore(storage),healthStore=createHealthStore(storage),$life=s=>document.querySelector(s);
-  let mode='today',anchor=localDate(),detail=0,metric='sleep',page=1,query='',deleted=false,editing=null,editSnapshot='',pendingDelete=null,importData=null,importSnapshot='',importCSVText=null,healthImportData=null,healthImportSnapshot='';
+  let mode='today',anchor=localDate(),detail=0,formGroup=0,formQuick=true,metric='sleep',page=1,query='',deleted=false,editing=null,editSnapshot='',pendingDelete=null,importData=null,importSnapshot='',importCSVText=null,healthImportData=null,healthImportSnapshot='';
   const fmt=n=>n===null||n===undefined?'—':String(Number(n.toFixed(2)));
   const fmtInt=n=>n===null||n===undefined?'—':Math.round(n).toLocaleString('ja-JP');
   const fieldFor=key=>LIFE_FIELDS.find(f=>f.key===key);
@@ -80,17 +80,24 @@ export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc
     return `<div class="life-page"><header class="page-heading"><div><h1>生活ログ</h1><p>日々の調子を、ひと目で。振り返りは自動で。</p></div><div class="life-header-actions"><button class="button secondary" data-life="health-import">${icon('download')}歩数CSV</button><button class="button primary" data-life="today-edit">${icon('plus')}${currentRecords().some(r=>r.date===localDate())?'今日の記録を編集':'今日を記録'}</button></div></header>${timeReminder}${store.error()?`<div class="notice" role="alert">${esc(store.error())}<button class="text-button" data-life="rescue">保存データを救出</button></div>`:''}<div class="toolbar">${tabs('life-mode',mode,[['today','今日'],['week','週'],['month','月'],['history','履歴']],'生活ログの表示')}${mode!=='history'?`<div class="date-control"><button class="icon-button" data-life-shift="-1" aria-label="生活ログの前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${dateLabel}</span><input id="life-anchor" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="生活ログの表示日付"></div><button class="icon-button" data-life-shift="1" aria-label="生活ログの次の期間">${icon('right')}</button></div><button class="text-button" data-life="today">今日に戻る</button><button class="text-button" data-life="sleep-presets">睡眠プリセット設定</button>`:''}</div>${mode==='history'?history():mode==='today'?healthDayPanel()+dayPanel():summaryCards(records,previous)+healthAggregate(healthRecords,range)+aggregate(records,range)+(mode==='week'?weeklyPanel(range,records):'')}<details class="panel life-data-tools"><summary>CSV移行・バックアップ <small>この端末に保存</small></summary><div class="download-row"><button class="button secondary" data-life="health-import">${icon('download')}Samsung Health歩数CSV</button><button class="button secondary" data-life="import">${icon('download')}生活ログCSV / JSON</button><button class="button secondary" data-life="backup">JSONバックアップ</button><button class="button secondary" data-life="csv">CSV出力</button></div><p>生活ログとSamsung Healthの歩数データは別々に、このブラウザー内へ保存します。歩数CSVは同じ日付を再度読み込むと最新値へ更新します。</p><p>ブラウザーのデータ削除で記録は失われます。定期的にバックアップしてください。CSVは削除済みを除く全記録、JSONは削除状態も含む全記録を書き出します。</p></details></div>`;
   }
   function formFields(){
-    return sections.map(([group])=>`<section data-life-form-section="${group}" ${group!==0?'hidden':''}>${group===0?`<div class="life-sleep-quick"><span>睡眠の入力</span><button type="button" class="button secondary" data-life="apply-preset">いつもの時間</button><button type="button" class="button secondary" data-life="copy-sleep">昨日コピー</button></div>`:''}<div class="life-input-grid">${LIFE_FIELDS.filter(f=>f.group===group).map(f=>`<label class="${f.type==='text'?'life-input-text':''}">${f.label}${f.unit?` <small>(${f.unit})</small>`:''}${f.type==='choice'?`<select name="${f.key}"><option value="">未入力</option>${f.options.map(v=>`<option>${v}</option>`).join('')}</select>`:f.type==='text'?`<textarea name="${f.key}" rows="${group===2?2:1}" maxlength="4000"></textarea>`:`<input name="${f.key}" type="${f.type}" ${f.type==='number'?`min="${f.min}" max="${f.max}" step="${f.step===1?1:'any'}"`:'step="1"'}>`}${f.hint?`<small>${f.hint}</small>`:''}</label>`).join('')}</div></section>`).join('');
+    return sections.map(([group])=>`<section data-life-form-section="${group}" ${group!==0?'hidden':''}>${group===0?`<div class="life-sleep-quick"><span>睡眠の入力</span><button type="button" class="button secondary" data-life="apply-preset">いつもの時間</button><button type="button" class="button secondary" data-life="copy-sleep">昨日コピー</button></div>`:''}<div class="life-input-grid">${LIFE_FIELDS.filter(f=>f.group===group).map(f=>`<label data-life-field="${f.key}" class="${f.type==='text'?'life-input-text':''}">${f.label}${f.unit?` <small>(${f.unit})</small>`:''}${f.type==='choice'?`<select name="${f.key}"><option value="">未入力</option>${f.options.map(v=>`<option>${v}</option>`).join('')}</select>`:f.type==='text'?`<textarea name="${f.key}" rows="${group===2?2:1}" maxlength="4000"></textarea>`:`<input name="${f.key}" type="${f.type}" ${f.type==='number'?`min="${f.min}" max="${f.max}" step="${f.step===1?1:'any'}"`:'step="1"'}>`}${f.hint?`<small>${f.hint}</small>`:''}</label>`).join('')}</div></section>`).join('');
   }
   function setFormTab(group){
+    formGroup=group;
+    $life('#life-form-tabs').hidden=formQuick;
     $life('#life-form-tabs').innerHTML=tabs('life-form-tab',group,sections,'生活ログの入力項目');
-    document.querySelectorAll('[data-life-form-section]').forEach(el=>el.hidden=Number(el.dataset.lifeFormSection)!==group);
+    document.querySelectorAll('[data-life-form-section]').forEach(el=>el.hidden=!formQuick&&Number(el.dataset.lifeFormSection)!==group);
+    const quickFields=new Set(['sleep','condition','walk','oneLine']);
+    document.querySelectorAll('[data-life-field]').forEach(el=>el.hidden=formQuick&&!quickFields.has(el.dataset.lifeField));
+    $life('#life-form-mode').textContent=formQuick?'詳細入力に切り替え':'簡易入力に切り替え';
+    $life('#life-form-mode').setAttribute('aria-pressed',String(formQuick));
+    $life('#life-form-mode-note').textContent=formQuick?'簡易入力：睡眠・体調・歩いた時間・ひとこと':'全項目をタブで切り替えて編集できます';
   }
   function openRecord(date){
     editing=store.get().records.find(r=>r.date===date)||null;editSnapshot=JSON.stringify(editing);
     const f=$life('#life-form');f.reset();$life('#life-form-fields').innerHTML=formFields();f.elements.date.value=date;f.elements.date.disabled=!!editing;
     for(const field of LIFE_FIELDS)f.elements[field.key].value=editing?.[field.key]??'';
-    $life('#life-form-error').textContent='';$life('#life-title').textContent=editing?'生活ログを編集':'生活ログを記録';setFormTab(0);$life('#life-dialog').showModal();
+    $life('#life-form-error').textContent='';$life('#life-title').textContent=editing?'生活ログを編集':'生活ログを記録';formQuick=true;setFormTab(0);$life('#life-dialog').showModal();
   }
   function save(next){store.save(next);render();}
   $life('#sleep-preset-form').addEventListener('submit',event=>{
@@ -109,7 +116,7 @@ export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc
     }catch(error){$life('#life-form-error').textContent=error.message;}
   });
   // Hidden tabs can contain invalid number inputs; surface their tab before browser validation.
-  $life('#life-form').addEventListener('invalid',event=>{const field=fieldFor(event.target.name);if(field)setFormTab(field.group);},true);
+  $life('#life-form').addEventListener('invalid',event=>{const field=fieldFor(event.target.name);if(field){formQuick=false;setFormTab(field.group);}},true);
   $life('#life-delete-apply').addEventListener('click',()=>{
     try{const here=store.get().records.find(r=>r.date===pendingDelete?.date);if(JSON.stringify(here)!==JSON.stringify(pendingDelete))throw Error('記録が更新されています。閉じてから確認し直してください。');save({...store.get(),records:store.get().records.map(r=>r.date===here.date?{...r,deleted:true,updatedAt:new Date().toISOString()}:r)});$life('#life-delete-dialog').close();toast('生活ログを削除しました。履歴の「削除済み」から復元できます。');}catch(error){$life('#life-delete-error').textContent=error.message;}
   });
@@ -177,6 +184,7 @@ export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc
       if(b.lifeRestore){save({...store.get(),records:store.get().records.map(r=>r.date===b.lifeRestore?{...r,deleted:false,updatedAt:new Date().toISOString()}:r)});toast('生活ログを復元しました。');return true;}
       if(!b.life)return false;
       if(b.life==='sleep-presets'){const f=$life('#sleep-preset-form'),presets=loadSleepPresets();for(let i=0;i<7;i++){f.elements[`wake-${i}`].value=presets.weekdays[String(i)].wake;f.elements[`bed-${i}`].value=presets.weekdays[String(i)].bed;}$life('#sleep-preset-error').textContent='';$life('#sleep-preset-dialog').showModal();}
+      if(b.life==='form-mode'){formQuick=!formQuick;setFormTab(formGroup);return true;}
       if(b.life==='apply-preset'){const f=$life('#life-form'),values=sleepPresetForDate(loadSleepPresets(),f.elements.date.value);if(values.wake)f.elements.wake.value=values.wake;if(values.bed)f.elements.bed.value=values.bed;if(!values.wake&&!values.bed)toast('この曜日の睡眠プリセットはまだ設定されていません。');else toast('睡眠プリセットを入力しました。');}
       if(b.life==='copy-sleep'){const f=$life('#life-form'),values=previousSleepValues(currentRecords(),f.elements.date.value);if(!values)toast('前日の生活ログがないためコピーできません。');else{f.elements.wake.value=values.wake;f.elements.bed.value=values.bed;toast('前日の起床・就寝時間をコピーしました。');}}
       if(b.life==='weekly-md'){const range=lifeRange('week',anchor),md=weeklyMarkdown({range,timeRecords:getTimeRecords(),lifeRecords:store.get().records,healthRecords:healthStore.get().records});download(md,`週まとめ_${range.start}_${range.end}.md`,'text/markdown;charset=utf-8');toast('Obsidian用Markdownを保存します。');}

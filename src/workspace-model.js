@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],habits:{},hiddenProjects:[]
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],focusDays:{},habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -17,14 +17,14 @@ const validDay = v => {
 };
 export function workspaceValidate(value){
   if(!value||value.format!=='toki-workspace'||value.version!==1)throw Error('作業管理データの形式が正しくありません。');
-  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000,links:100};
+  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000,links:100,events:3000};
   const all=new Set(),out={format:'toki-workspace',version:1};
   const str=(v,max,required=false)=>{
     if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw Error('作業管理の文字数または入力内容が不正です。');
     return v;
   };
   for(const type of Object.keys(limits)){
-    const rows=['templates','links'].includes(type)?(value[type]??[]):value[type];
+    const rows=['templates','links','events'].includes(type)?(value[type]??[]):value[type];
     if(!Array.isArray(rows)||rows.length>limits[type])throw Error('作業管理の件数が上限を超えています。');
     out[type]=rows.map(item=>{
       if(!item||typeof item!=='object')throw Error('作業管理の行が不正です。');
@@ -49,6 +49,12 @@ export function workspaceValidate(value){
         const url=str(item.url??'',2048,true);
         if(!validLinkUrl(url))throw Error('リンクはhttp/httpsの有効なURLを入力してください。');
         return {...base,project:'',url};
+      }
+      if(type==='events'){
+        const date=str(item.date??'',10,true),time=str(item.time??'',5),note=str(item.note??'',2000);
+        const allDay=item.allDay??false;
+        if(!validDay(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||typeof allDay!=='boolean'||(allDay&&time))throw Error('予定の日付・時刻の形式が不正です。');
+        return {...base,project:'',date,time,allDay,note};
       }
       if(type==='tasks'){
         const due=str(item.due??'',10),status=str(item.status,15),priority=str(item.priority,15),detail=str(item.detail??'',4000);
@@ -86,6 +92,14 @@ export function workspaceValidate(value){
     if(ids.length)habits[day]=[...ids];
   }
   out.habits=habits;
+  // Dates of deliberately selected tasks are not task due dates. Older backups omit this map.
+  const rawFocus=value.focusDays??{},focusDays={};
+  if(!rawFocus||typeof rawFocus!=='object'||Array.isArray(rawFocus)||Object.keys(rawFocus).length>5000)throw Error('今日やるタスクの保存形式が不正です。');
+  for(const [day,ids] of Object.entries(rawFocus)){
+    if(!validDay(day)||!Array.isArray(ids)||ids.length>3||ids.some(id=>typeof id!=='string'||!id||id.length>160)||new Set(ids).size!==ids.length)throw Error('今日やるタスクは1日3件までです。');
+    if(ids.length)focusDays[day]=[...ids];
+  }
+  out.focusDays=focusDays;
   // Optional for older backups. Keep this setting within the existing synced workspace.
   const hidden=value.hiddenProjects??[];
   if(!Array.isArray(hidden)||hidden.length>2000||hidden.some(x=>typeof x!=='string'||!x.trim()||x.length>80)||new Set(hidden).size!==hidden.length)throw Error('プロジェクトの表示設定が不正です。');
@@ -98,7 +112,7 @@ export function validLinkUrl(value){
 }
 export function workspaceChange(current,type,payload,id,makeId){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1},type))throw Error('種類が不正です。');
   const old=id?current[type].find(x=>x.id===id):null;
   if(id&&!old)throw Error('編集対象が見つかりません。再読み込みしてください。');
   const now=new Date().toISOString();
@@ -107,8 +121,9 @@ export function workspaceChange(current,type,payload,id,makeId){
 }
 export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1},type))throw Error('種類が不正です。');
-  return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id)});
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1},type))throw Error('種類が不正です。');
+  return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id),
+    ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length))}:{})});
 }
 export function workspaceMoveLink(current,id,direction){
   current=workspaceValidate(current);
@@ -207,4 +222,48 @@ export function workspaceToggleTaskStep(current,id,index,makeId){
   const t=workspaceValidate(current).tasks.find(t=>t.id===id);
   if(!t||t.status==='done'||!Number.isInteger(index)||index<0||index>=t.steps.length)throw Error('チェック項目が見つかりません。');
   return workspaceChange(current,'tasks',{steps:t.steps.map((s,i)=>i===index?{...s,done:!s.done}:s)},id,makeId);
+}
+
+// Choose up to three EXISTING, actionable tasks for a day. This does not change their due dates.
+export function workspaceToggleFocus(current,day,taskId){
+  current=workspaceValidate(current);
+  if(!validDay(day))throw Error('日付が不正です。');
+  const task=current.tasks.find(t=>t.id===taskId);
+  if(!task||['done','waiting','someday'].includes(task.status))throw Error('着手できるタスクを選んでください。');
+  const ids=(current.focusDays[day]||[]).filter(id=>current.tasks.some(t=>t.id===id&&!['done','waiting','someday'].includes(t.status))),index=ids.indexOf(taskId);
+  if(index>=0)ids.splice(index,1);else{if(ids.length>=3)throw Error('今日やるタスクは最大3件です。');ids.push(taskId);}
+  const focusDays={...current.focusDays};if(ids.length)focusDays[day]=ids;else delete focusDays[day];
+  return workspaceValidate({...current,focusDays});
+}
+export function calendarPeriod(view,day){
+  if(!validDay(day))throw Error('カレンダーの日付が不正です。');
+  const d=toUTC(day);
+  if(view==='month'){d.setUTCDate(1);d.setUTCDate(d.getUTCDate()-d.getUTCDay());const start=fromUTC(d);d.setUTCDate(d.getUTCDate()+41);return {start,end:fromUTC(d)};}
+  if(view==='week'){d.setUTCDate(d.getUTCDate()-d.getUTCDay());const start=fromUTC(d);d.setUTCDate(d.getUTCDate()+6);return {start,end:fromUTC(d)};}
+  throw Error('表示範囲が不正です。');
+}
+export function calendarItems(current,start,end,{tasks=true,events=true,habits=true,today=null}={}){
+  current=workspaceValidate(current);if(!validDay(start)||!validDay(end)||start>end)throw Error('表示範囲が不正です。');
+  const days={},insert=(day,item)=>{if(day>=start&&day<=end)(days[day]??=[]).push(item);};
+  if(tasks)for(const t of current.tasks){
+    if(['waiting','someday'].includes(t.status)){if(t.reviewDate)insert(t.reviewDate,{kind:'review',id:t.id,title:t.title});continue;}
+    if(t.due)insert(t.due,{kind:'task',id:t.id,title:t.title,done:t.status==='done',virtual:false});
+    // Future recurrences are previews only. No additional tasks are saved to storage.
+    if(t.repeat&&t.due&&t.status!=='done'){
+      const first=toUTC(t.due>start?t.due:start);
+      for(let d=first;fromUTC(d)<=end;d.setUTCDate(d.getUTCDate()+1)){
+        const date=fromUTC(d);if(date===t.due)continue;
+        const rule=t.repeat,monthLast=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();
+        const matches=rule.type==='daily'||rule.type==='weekly'&&rule.days.includes(d.getUTCDay())||rule.type==='monthly'&&d.getUTCDate()===Math.min(rule.monthDay,monthLast);
+        if(matches)insert(date,{kind:'task',id:t.id,title:t.title,done:false,virtual:true});
+      }
+    }
+  }
+  if(events)for(const e of current.events)insert(e.date,{kind:'event',id:e.id,title:e.title,time:e.allDay?'':e.time,allDay:e.allDay});
+  if(habits){
+    const now=new Date(),currentDay=today||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;for(let d=toUTC(start);fromUTC(d)<=end;d.setUTCDate(d.getUTCDate()+1)){
+      const day=fromUTC(d);if(day<=currentDay)insert(day,{kind:'habit',count:(current.habits[day]||[]).length,total:HABITS.length});
+    }
+  }
+  return days;
 }

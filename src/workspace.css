@@ -150,3 +150,86 @@
 @media(max-width:600px){.work-link-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.work-link-tile{min-height:110px;font-size:13px}.work-link-manage-row{display:grid;gap:10px}.work-link-controls .button{flex:1}.work-wait-settings{padding:10px}}
 
 #workspace-wait-fields[hidden]{display:none!important}
+
+/* Calendar and selected daily focus (no fixed header, light surfaces). */
+.work-today-focus,.work-today-events{margin:0 0 18px}
+.work-today-focus .panel-heading,.work-today-events .panel-heading{margin-bottom:9px}
+.work-focus-list,.work-focus-pick{display:grid;gap:7px;margin-top:12px}
+.work-focus-pick{border-top:1px solid #e3eee5;padding-top:12px}
+.work-focus-pick summary{cursor:pointer;color:#296744;font-weight:700;font-size:13px}
+.work-focus-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f5faf6;border:1px solid #e4eee7;border-radius:10px;padding:10px}
+.work-focus-row>button:first-child{border:0;background:transparent;color:#245c40;text-align:left;font-weight:700;cursor:pointer;font:inherit}
+.work-focus-row>span,.work-focus-row>button:first-child{min-width:0;overflow-wrap:anywhere;flex:1}
+.work-focus-row small{display:block;color:#648171}
+.work-focus-row .button{flex:none}
+.work-event-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid #e8f0ea}
+.work-event-row strong{flex:1;min-width:100px;overflow-wrap:anywhere;font-size:13px}
+.work-event-row small{color:#63806f}
+.work-type-dot{width:9px;height:9px;border-radius:100%;background:#bb9245}
+.work-calendar{margin-bottom:20px}
+.work-calendar-toolbar,.work-calendar-controls,.work-calendar-filters{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.work-calendar-toolbar{justify-content:space-between}
+.work-calendar-controls strong{font-size:15px;color:#365944}
+.work-calendar-controls .button{min-height:35px;padding:6px 12px}
+.work-calendar-filters{margin:18px 0 14px}
+.work-calendar-filter{display:inline-flex;align-items:center;gap:6px;border:1px solid #dbe9df;border-radius:50px;background:#fbfdfa;padding:7px 12px;font-size:12px;font-weight:700;color:#35634a;cursor:pointer}
+.work-calendar-filter input{accent-color:#327d53}
+.work-calendar-filter.events{color:#805820;border-color:#e5d5b5}
+.work-calendar-filter.habits{color:#467b69}
+.work-calendar-grid,.work-habit-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.work-calendar-weekday{padding:7px 0;text-align:center;color:#6e8778;font-size:11px;font-weight:700}
+.work-calendar-day{min-width:0;min-height:69px;border:1px solid #e2ebe4;border-radius:9px;background:#fcfefd;color:#305640;padding:6px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:9px;font:inherit}
+.work-calendar-day.outside{opacity:.52;background:#f5f8f5}
+.work-calendar-day.today>strong{background:#327655;color:white;border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.work-calendar-day.selected{outline:2px solid #6fb68c;background:#eaf6ed;border-color:#6fb68c}
+.work-calendar-day strong{font-size:13px}
+.work-calendar-day small{font-size:10px;color:#607767}
+.work-calendar-dots{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.work-calendar-dots i{width:7px;height:7px;border-radius:50%;background:#387db0}
+.work-calendar-dots i.event{background:#c18d42}
+.work-calendar-dots i.habit{background:#56a47a}
+.work-calendar-dots i.review{background:#9e7eaf}
+.work-calendar-details{margin-top:20px;padding-top:16px;border-top:1px solid #e3eee5}
+.work-calendar-details .work-section-head{align-items:center;flex-wrap:wrap}
+.work-calendar-details h2{font-size:17px}
+.work-calendar-details .workspace-actions{margin:0}
+.work-calendar-entry{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #e5ede8;border-left:4px solid #4184ae;border-radius:10px;padding:10px 12px;margin:9px 0;background:white}
+.work-calendar-entry.event{border-left-color:#c18d42}
+.work-calendar-entry.review{border-left-color:#9e7eaf}
+.work-calendar-entry.habit{border-left-color:#56a47a}
+.work-calendar-entry>span{font-size:11px;color:#697d70;white-space:nowrap}
+.work-calendar-entry>strong{font-size:13px;flex:1;min-width:120px;overflow-wrap:anywhere}
+.work-calendar-entry>small{color:#687f70}
+.work-calendar-entry>.button{font-size:11px;padding:5px 9px;min-height:30px}
+.work-calendar-entry>p{width:100%;font-size:12px;line-height:1.7;overflow-wrap:anywhere;margin:2px 0}
+.work-calendar-entry>a{font-weight:700;color:#327655}
+.work-habit-month{margin:18px 0}
+.work-habit-month-grid{margin-top:13px}
+.habit-month-day{min-width:0;min-height:56px;display:grid;gap:3px;place-content:center;justify-items:center;background:#f7fbf8;border:1px solid #e0eae3;border-radius:8px;cursor:pointer;color:#375b45;font:inherit}
+.habit-month-day strong{font-size:12px}
+.habit-month-day.future{opacity:.6}
+.habit-month-day.selected{background:#e5f5e9;border:2px solid #5da775}
+.habit-blank{min-height:56px}
+.work-event-all-day{display:flex!important;align-items:center;gap:8px}
+.work-event-all-day input{width:auto!important}
+#work-event-time[hidden],#life-form-tabs[hidden],[data-life-form-section][hidden],[data-life-field][hidden]{display:none!important}
+.life-form-mode{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.life-form-mode span{font-size:12px}
+.work-focus-btn{min-height:36px}
+@media(max-width:600px){
+ .work-calendar{padding:14px 10px!important}
+ .work-calendar-toolbar{gap:14px}
+ .work-calendar-controls{width:100%;justify-content:space-between}
+ .work-calendar-controls strong{font-size:12px;flex:1;text-align:center}
+ .work-calendar-controls .button{padding:5px 7px;font-size:11px;min-height:34px}
+ .work-calendar-grid,.work-habit-month-grid{gap:3px}
+ .work-calendar-day{min-height:58px;padding:5px 1px;gap:5px}
+ .work-calendar-day strong{font-size:12px}
+ .work-calendar-dots{gap:2px}
+ .work-calendar-dots i{width:5px;height:5px}
+ .work-calendar-details .workspace-actions{gap:5px}
+ .work-calendar-entry{gap:6px}
+ .work-calendar-entry>strong{min-width:80px}
+ .sidebar nav>a{font-size:9px}
+ .habit-month-day{min-height:48px}
+}
