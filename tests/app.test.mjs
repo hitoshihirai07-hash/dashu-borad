@@ -26,9 +26,9 @@ function harness(initial, defaults, blockedStorage=false){
 }
 const values={date:'2026-09-18',field:'プロ野球',project:'スプレッドシート・自動化',activity:'実践',minutes:'90',note:'CSVの並び替え'};
 test('form saves fields; defaults and classification-only edits persist',async()=>{const h=harness();await h.add(values);assert.equal(h.read().records[0].project,'スプレッドシート・自動化');assert.equal(h.read().records[0].field,'プロ野球');await h.click({action:'add'});assert.equal(h.el('#record-form').elements.field.value,'プロ野球');assert.equal(h.el('#record-form').elements.project.value,'スプレッドシート・自動化');await h.click({edit:h.read().records[0].id});h.el('#record-form').elements.project.value='運営管理';h.el('#record-form').events.submit({preventDefault(){},currentTarget:h.el('#record-form')});assert.equal(h.read().records[0].project,'運営管理');assert.equal(h.read().records[0].parents.length,1);});
-test('field/period switches render matching totals, records and project/activity breakdowns',async()=>{const h=harness();await h.add(values);await h.add({...values,field:'その他',project:'PlayerLens',activity:'機能更新',minutes:'60'});await h.add({...values,field:'その他',project:'未分類',minutes:'30'});assert.match(h.html(),/合計の時間[\s\S]*?<strong>3<\/strong>/);await h.click({field:'プロ野球'});assert.match(h.html(),/合計の時間[\s\S]*?<strong>1.5<\/strong>/);await h.click({breakdown:'activity'});assert.match(h.html(),/活動の内訳/);assert(!h.html().includes('PlayerLens'));await h.click({breakdown:'project'});assert.match(h.html(),/スプレッドシート・自動化/);for(const mode of ['day','month','week']){await h.click({mode});assert.match(h.html(),/合計の時間[\s\S]*?<strong>1.5<\/strong>/);}});
+test('field/period switches render matching totals, records and project/activity breakdowns',async()=>{const h=harness();await h.add(values);await h.add({...values,field:'その他',project:'PlayerLens',activity:'機能更新',minutes:'60'});await h.add({...values,field:'その他',project:'未分類',minutes:'30'});h.nav('#records');assert.match(h.html(),/合計の時間[\s\S]*?<strong>3<\/strong>/);await h.click({field:'プロ野球'});assert.match(h.html(),/合計の時間[\s\S]*?<strong>1.5<\/strong>/);await h.click({breakdown:'activity'});assert.match(h.html(),/活動の内訳/);assert(!h.html().includes('PlayerLens'));await h.click({breakdown:'project'});assert.match(h.html(),/スプレッドシート・自動化/);for(const mode of ['day','month','week']){await h.click({mode});assert.match(h.html(),/合計の時間[\s\S]*?<strong>1.5<\/strong>/);}});
 test('JSON and CSV exports include all fields and records regardless of active tab',async()=>{const h=harness();await h.add(values);await h.add({...values,field:'プロ野球',project:'SNS',note:'a,"b"\n改行'});await h.click({field:'プロ野球'});await h.click({action:'export'});const json=JSON.parse(await h.downloads.at(-1).text());assert.equal(json.version,2);assert.equal(json.records.length,2);await h.click({action:'csv'});const csv=await h.downloads.at(-1).text();assert.match(csv,/"分野","プロジェクト"/);assert.match(csv,/"プロ野球","スプレッドシート・自動化"/);assert.match(csv,/"プロ野球","SNS"/);assert.match(csv,/"a,""b""\n改行"/);});
-test('legacy local storage loads without rewriting identity and imports are idempotent',async()=>{const h=harness(legacy);h.change('anchor-date','2026-09-18');assert.match(h.html(),/その他 · 未分類/);assert.equal(h.read().version,1);await h.import(legacy);assert.equal(h.read().version,2);assert.equal(h.read().records[0].rev,'r1');assert.equal(h.read().records[0].project,'未分類');await h.import(legacy);assert.equal(h.read().records.length,1);});
+test('legacy local storage loads without rewriting identity and imports are idempotent',async()=>{const h=harness(legacy);h.nav('#records');h.change('anchor-date','2026-09-18');assert.match(h.html(),/その他 · 未分類/);assert.equal(h.read().version,1);await h.import(legacy);assert.equal(h.read().version,2);assert.equal(h.read().records[0].rev,'r1');assert.equal(h.read().records[0].project,'未分類');await h.import(legacy);assert.equal(h.read().records.length,1);});
 test('delete, stale JSON import and restore preserve classified record',async()=>{const h=harness();await h.add(values);const backup=h.read(),id=backup.records[0].id;await h.click({delete:id});h.el('#delete-apply').events.click();assert.equal(h.read().records[0].deleted,true);await h.import(backup);assert.equal(h.read().records[0].deleted,true);await h.click({restore:id});assert.equal(h.read().records[0].deleted,false);assert.equal(h.read().records[0].project,'スプレッドシート・自動化');});
 test('invalid imports and stale-tab writes do not overwrite stored data',async()=>{const h=harness();await h.add(values);const before=h.storage.get('toki-records-v1');await h.el('#import-file').events.change({target:{files:[{size:10,text:async()=>'broken'}]}});assert.equal(h.storage.get('toki-records-v1'),before);await h.click({edit:h.read().records[0].id});const remote=h.read();remote.records[0].note='別のタブ';h.storage.set('toki-records-v1',JSON.stringify(remote));h.el('#record-form').elements.note.value='古い画面';h.el('#record-form').events.submit({preventDefault(){},currentTarget:h.el('#record-form')});assert.equal(h.read().records[0].note,'別のタブ');assert.match(h.el('#form-error').textContent,/別のタブ/);});
 
@@ -53,7 +53,7 @@ test('new entry excludes Python even after loading defaults or editing an old Py
   assert.equal(h.el('field').value,'プロ野球');
 });
 test('historical Python and old project records survive import, export, edit, delete and device merge',async()=>{
-  const h=harness();await h.import(oldPython);
+  const h=harness();await h.import(oldPython);h.nav('#records');
   await h.add({...values,project:'データ整理・分析'});
   assert.match(h.html(),/Python · CSV処理/);
   assert.match(h.html(),/データ整理・分析/);
@@ -72,7 +72,7 @@ test('historical Python and old project records survive import, export, edit, de
 test('project summary counts unique projects and follows day/week/month, shifts and field filters',async()=>{
   const h=harness();
   for(const [date,project] of [['2026-09-18','プロ野球観戦メモ'],['2026-09-18','SNS'],['2026-09-18','SNS'],['2026-09-18','PlayerLens'],['2026-09-18','スプレッドシート・自動化'],['2026-09-19','データ分析'],['2026-09-01','運営管理'],['2026-08-01','その他']])await h.add({...values,date,project});
-  h.change('anchor-date','2026-09-18');
+  h.nav('#records');h.change('anchor-date','2026-09-18');
   for(const [mode,want] of [['day',4],['week',5],['month',6]]){await h.click({mode});assert.equal(projectCount(h),want);}
   await h.click({shift:'-1'});assert.equal(projectCount(h),1);
   await h.click({shift:'-1'});assert.equal(projectCount(h),0);
@@ -109,15 +109,28 @@ test('blocked browser storage still renders time dashboard and protected life lo
 });
 
 
-test('dashboard reminds when today has no time record and recent activity can be logged in one click',async()=>{
+test('dashboard shows only today total and the time records page keeps quick-record presets',async()=>{
  const h=harness(),todayDate=localDate(),prior=new Date(`${todayDate}T12:00:00`);prior.setDate(prior.getDate()-2);
  await h.add({...values,date:localDate(prior),activity:'記事作成',project:'プロ野球観戦メモ',minutes:'90'});
- assert.match(h.html(),/今日はまだ時間記録がありません/);
+ assert.match(h.html(),/今日の合計<\/span><strong>0分/);
+ assert.doesNotMatch(h.html(),/最近の記録|時間の推移|最近の活動をすぐ記録/);
+ h.nav('#records');assert.match(h.html(),/今日はまだ時間記録がありません/);
  assert.match(h.html(),/記事作成/);
  await h.click({quickRecord:'0'});
  const today=h.read().records.find(r=>r.date===todayDate);
  assert.equal(today.activity,'記事作成');assert.equal(today.project,'プロ野球観戦メモ');assert.equal(today.minutes,90);assert.equal(today.note,'');
- assert.doesNotMatch(h.html(),/今日はまだ時間記録がありません/);
+ h.nav('#dashboard');assert.match(h.html(),/今日の合計<\/span><strong>1時間30分/);
+});
+
+test('dashboard places only five daily-use panels in order, with links and no in-home histories',()=>{
+ const h=harness(),html=h.html();
+ const names=['よく使うリンク','ひとことメモ</h2>','今日の習慣','進行中のタスク','時間の記録</h2>'];
+ const positions=names.map(x=>html.indexOf(x));
+ assert(positions.every(x=>x>=0));assert(positions.every((x,i)=>i===0||x>positions[i-1]));
+ assert.match(html,/href="#quick-notes"/);assert.match(html,/href="#records"/);
+ assert.match(html,/data-workspace-quick-form/);assert.match(html,/data-workspace-habit/);
+ assert.match(html,/data-action="add"/);
+ for(const removed of ['最近のメモ','最近の記録','時間の推移','今日やる3件','今日の予定','期間の集計'])assert.doesNotMatch(html,new RegExp(removed));
 });
 
 test('life sleep presets save by weekday and apply previous-night bedtime; yesterday copy only fills sleep times',async()=>{

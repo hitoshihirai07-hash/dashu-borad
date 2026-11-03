@@ -362,3 +362,57 @@
 .work-quick-search{display:grid;gap:7px;margin-bottom:18px;font-size:.88rem;font-weight:600}
 .work-quick-search input{padding:11px 13px}
 @media (max-width:600px){.work-quick-form-foot{align-items:stretch}.work-quick-form-foot .button{width:100%;justify-content:center}.work-quick-card{padding:12px}.work-quick-card-foot .button{flex:0 0 auto}}
+
+
+/* Compact daily home: links first, then memo/habits/tasks/time (2x2 on wide screens). */
+#main:has(.home-dashboard){padding-top:18px;padding-bottom:10px}
+.home-dashboard{display:grid;gap:12px;align-content:start}
+.home-dashboard .panel{margin:0;padding:15px 17px;box-shadow:0 2px 6px #1f533006}
+.home-dashboard .panel-heading{margin-bottom:8px;min-height:29px}
+.home-dashboard .panel-heading h2{font-size:15px;line-height:1.35}
+.home-dashboard .panel-heading .text-button{white-space:nowrap;font-size:11px;padding:4px 2px}
+.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing time';gap:12px;align-items:stretch}
+.home-dashboard-grid > *{min-width:0}
+.home-dashboard .home-memo{grid-area:memo}
+.home-dashboard .habit-home{grid-area:habits}
+.home-dashboard .home-doing{grid-area:doing}
+.home-dashboard .home-time{grid-area:time}
+.home-dashboard .home-links{min-width:0}
+.home-links-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.home-link-tile{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;min-height:42px;padding:8px 11px;border-radius:8px;border:1px solid #d8e9dd;background:#f5faf6;color:#2d6147;font-size:12px;font-weight:700;text-decoration:none}
+.home-link-tile:hover{background:#eaf6ed;border-color:#96bea4;text-decoration:none}
+.home-link-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.home-link-arrow{flex:none;color:#59866b;font-size:14px}
+.home-links-empty{font-size:12px}
+.home-memo .work-quick-form{gap:7px}
+.home-memo .work-quick-form textarea{resize:vertical;min-height:55px;height:55px;padding:8px 11px;border-radius:8px;font-size:12px;line-height:1.4}
+.home-memo .work-quick-form-foot{gap:6px}
+.home-memo .work-quick-form-foot small{font-size:10px;color:#768c7c}
+.home-memo .work-quick-form-foot .button{min-height:32px;padding:6px 11px;font-size:11px}
+.home-memo .work-quick-form-foot .button svg{width:14px;height:14px}
+.home-dashboard .habit-home .panel-heading{margin-bottom:8px}
+.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr));margin:0;gap:7px}
+.home-dashboard .habit-item{padding:6px 10px;gap:7px;font-size:12px;border-radius:8px;min-height:35px}
+.home-dashboard .habit-item input{flex:none}
+.home-dashboard .home-doing-list{display:grid;gap:4px}
+.home-doing-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;width:100%;padding:5px 3px;border:0;border-bottom:1px solid #edf2ee;background:transparent;text-align:left;color:#245840;min-height:30px}
+.home-doing-item:hover{background:#f2f8f3}
+.home-doing-title{font-size:12px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.home-doing-project{font-size:10px;color:#6b8373;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36%}
+.home-doing-empty{font-size:12px;padding:10px 0}
+.home-card-actions{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px}
+.home-card-actions .text-button{padding:3px 0;font-size:11px}
+.home-card-actions .muted{font-size:10px}
+.home-time{display:flex;flex-direction:column}
+.home-time-summary{display:flex;flex-direction:column;gap:0;margin:auto 0 8px}
+.home-time-summary span{color:#617c6c;font-size:12px}
+.home-time-summary strong{font-size:27px;font-weight:750;letter-spacing:-.015em;line-height:1.45;font-variant-numeric:tabular-nums}
+.home-time-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
+.home-time-add svg{width:15px;height:15px}
+@media(max-width:1120px) and (min-width:761px){.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-dashboard .habit-item{font-size:11px;padding-inline:7px}}
+@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
+@media(max-width:380px){.home-dashboard .panel-heading h2{font-size:14px}.home-links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-memo .work-quick-form-foot small{display:none}}
+
+/* Keep the quick capture button in the same row on narrow phones; do not add an extra full-width row. */
+@media(max-width:760px){.home-memo .work-quick-form-foot{align-items:center;flex-wrap:nowrap}.home-memo .work-quick-form-foot .button{width:auto;flex:0 0 auto;margin-left:auto}}
+@media(max-width:760px){.home-dashboard{gap:7px}.home-dashboard-grid{gap:7px}.home-dashboard .panel{padding:10px 12px}.home-dashboard .panel-heading{min-height:25px;margin-bottom:6px}.home-dashboard .habit-item{min-height:34px;padding-block:5px}}

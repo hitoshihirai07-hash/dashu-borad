@@ -128,7 +128,29 @@ test('navigation and dashboard expose the memo page while keeping existing route
    const start=shell.indexOf(`<nav class="${item}"`),end=shell.indexOf('</nav>',start);
    assert.match(shell.slice(start,end),/href="#quick-notes" data-nav="quick-notes"/);
  }
- assert.match(app,/workspace\.quickHome\(\)/);
+ assert.match(app,/workspace\.quickHome\(true\)/);
  assert.match(app,/'quick-notes':workspace\.quickNotesPage/);
  assert.match(shell,/id="quick-note-edit-form"/);
+});
+
+
+test('compact home limits links and doing tasks, and does not preview saved memo bodies',()=>{
+ const h=uiHarness();try{
+   let w=workspaceFresh();
+   for(let n=0;n<8;n++)w=workspaceChange(w,'links',{title:`リンク${n+1}`,url:`https://example.com/${n+1}`},'',uid);
+   for(let n=0;n<5;n++)w=workspaceChange(w,'tasks',{title:`進行タスク${n+1}`,project:'Player Lens',status:'doing',priority:'normal',due:''},'',uid);
+   w=workspaceChange(w,'quickNotes',{body:'この本文は一覧だけで見る'},'',uid);
+   h.saved.setItem(WORKSPACE_KEY,JSON.stringify(w));h.ui.reload();
+   const links=h.ui.linksHome(true),tasks=h.ui.home(true),memo=h.ui.quickHome(true);
+   assert.equal((links.match(/class="home-link-tile"/g)||[]).length,6);
+   assert.doesNotMatch(links,/リンク7|リンク8/);
+   assert.match(links,/href="#links"/);
+   assert.equal((tasks.match(/class="home-doing-item"/g)||[]).length,3);
+   assert.match(tasks,/進行中のタスク <small>5件/);
+   assert.doesNotMatch(tasks,/進行タスク4|進行タスク5|今日やる3件|今日の予定/);
+   assert.match(memo,/href="#quick-notes"/);
+   assert.doesNotMatch(memo,/この本文は一覧だけで見る|最近のメモ/);
+   assert.match(h.ui.quickNotesPage(),/この本文は一覧だけで見る/);
+   assert.equal(h.ui.get().links.length,8);assert.equal(h.ui.get().tasks.length,5);
+ }finally{h.restore();}
 });
