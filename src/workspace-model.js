@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],focusDays:{},habits:{},hiddenProjects:[]
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -90,6 +90,17 @@ export function workspaceValidate(value){
       return {...base,body:str(item.body??'',15000),category:str(item.category??'',80),pinned:(()=>{if(typeof(item.pinned??false)!=='boolean')throw Error('プロンプトの固定設定が不正です。');return item.pinned??false;})()};
     });
   }
+  // Standalone, title-free short notes. Optional so pre-update cloud backups stay valid.
+  const quickRows=value.quickNotes??[];
+  if(!Array.isArray(quickRows)||quickRows.length>10000)throw Error('ひとことメモの件数が不正です。');
+  const quickIds=new Set();
+  out.quickNotes=quickRows.map(item=>{
+    if(!item||typeof item!=='object'||Array.isArray(item))throw Error('ひとことメモの内容が不正です。');
+    const id=str(item.id,160,true),body=str(item.body,4000,true),createdAt=str(item.createdAt,40,true),updatedAt=str(item.updatedAt,40,true),taskId=str(item.taskId??'',160);
+    if(quickIds.has(id)||!Number.isFinite(Date.parse(createdAt))||!Number.isFinite(Date.parse(updatedAt)))throw Error('ひとことメモのIDまたは日時が不正です。');
+    quickIds.add(id);
+    return {id,body,createdAt,updatedAt,taskId};
+  });
   const raw=value.habits??{};
   if(!raw||typeof raw!=='object'||Array.isArray(raw)||Object.keys(raw).length>5000)throw Error('習慣の履歴が不正です。');
   const allowed=new Set(HABITS.map(x=>x.id)),habits={};
@@ -116,20 +127,26 @@ export function validLinkUrl(value){
   if(typeof value!=='string'||value.length>2048||!value.trim())return false;
   try{const url=new URL(value);return ['https:','http:'].includes(url.protocol)&&!!url.hostname&&!url.username&&!url.password;}catch{return false;}
 }
+// Task titles come from the first nonempty line; the complete note becomes task detail.
+export function quickNoteTaskTitle(body){
+  if(typeof body!=='string'||!body.trim())throw Error('メモを入力してください。');
+  return (body.split(/\r?\n/).find(line=>line.trim())||'').trim().slice(0,160);
+}
 export function workspaceChange(current,type,payload,id,makeId){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,quickNotes:1},type))throw Error('種類が不正です。');
   const old=id?current[type].find(x=>x.id===id):null;
   if(id&&!old)throw Error('編集対象が見つかりません。再読み込みしてください。');
+  if(type==='quickNotes'&&(!old||Object.hasOwn(payload,'body'))&&(!payload.body||!payload.body.trim()))throw Error('メモを入力してください。');
   const now=new Date().toISOString();
   const item={...old,...payload,id:old?.id||makeId(),createdAt:old?.createdAt||now,updatedAt:now};
   return workspaceValidate({...current,[type]:old?current[type].map(x=>x.id===id?item:x):[...current[type],item]});
 }
 export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,quickNotes:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id),
-    ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length))}:{})});
+    ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length)),quickNotes:current.quickNotes.map(n=>n.taskId===id?{...n,taskId:'',updatedAt:new Date().toISOString()}:n)}:{})});
 }
 export function workspaceMoveLink(current,id,direction){
   current=workspaceValidate(current);

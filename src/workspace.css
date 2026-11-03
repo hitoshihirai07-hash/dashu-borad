@@ -314,3 +314,51 @@
 .work-copy-section>.button{min-height:40px}
 .work-copy-section>.button svg{width:16px;height:16px}
 @media(max-width:600px){.work-stage-top{align-items:flex-start}.work-stage-item>.button{width:100%}.work-copy-section>.button{width:100%}}
+
+/* Standalone quick notes inside ときの記録 */
+.work-quick-panel{min-width:0}
+.work-quick-panel .panel-heading{align-items:center}
+.work-quick-form{display:grid;gap:10px}
+.work-quick-form textarea,.work-quick-search input{box-sizing:border-box;width:100%;font:inherit;background:#fff;border:1px solid #bdcfc4;border-radius:12px;color:#243f32}
+.work-quick-form textarea{min-height:82px;padding:13px 15px;resize:vertical;line-height:1.6}
+.work-quick-form textarea:focus,.work-quick-search input:focus{outline:3px solid #b5e9cb;outline-offset:1px}
+.work-quick-form-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.work-quick-form-foot small{color:#546c5e}
+.work-quick-recent{margin-top:22px;border-top:1px solid #e5ede6;padding-top:16px}
+.work-quick-recent>h3{font-size:1rem;margin:0 0 12px}
+.work-quick-list,.work-quick-recent{display:grid;gap:12px}
+.work-quick-card{border:1px solid #dbe9dd;border-radius:14px;padding:15px;background:#fbfdfa;min-width:0}
+.work-quick-card-head,.work-quick-card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.work-quick-card-head time{font-size:.81rem;color:#617669}
+.work-quick-card .workspace-inline{display:flex;gap:4px}
+.work-quick-text{margin:10px 0 14px;line-height:1.7;overflow-wrap:anywhere;white-space:normal}
+.work-quick-card-foot{flex-wrap:wrap}
+.work-quick-state{font-size:.82rem;color:#55745d}
+.work-quick-archive{margin-top:16px}
+.work-quick-search{display:grid;gap:7px;margin-bottom:18px;font-size:.88rem;font-weight:600}
+.work-quick-search input{padding:11px 13px}
+@media (max-width:600px){.work-quick-form-foot{align-items:stretch}.work-quick-form-foot .button{width:100%;justify-content:center}.work-quick-card{padding:12px}.work-quick-card-foot .button{flex:0 0 auto}}
+
+/* Standalone quick notes inside ときの記録 */
+.work-quick-panel{min-width:0}
+.work-quick-panel .panel-heading{align-items:center}
+.work-quick-form{display:grid;gap:10px}
+.work-quick-form textarea,.work-quick-search input{box-sizing:border-box;width:100%;font:inherit;background:#fff;border:1px solid #bdcfc4;border-radius:12px;color:#243f32}
+.work-quick-form textarea{min-height:82px;padding:13px 15px;resize:vertical;line-height:1.6}
+.work-quick-form textarea:focus,.work-quick-search input:focus{outline:3px solid #b5e9cb;outline-offset:1px}
+.work-quick-form-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.work-quick-form-foot small{color:#546c5e}
+.work-quick-recent{margin-top:22px;border-top:1px solid #e5ede6;padding-top:16px}
+.work-quick-recent>h3{font-size:1rem;margin:0 0 12px}
+.work-quick-list,.work-quick-recent{display:grid;gap:12px}
+.work-quick-card{border:1px solid #dbe9dd;border-radius:14px;padding:15px;background:#fbfdfa;min-width:0}
+.work-quick-card-head,.work-quick-card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.work-quick-card-head time{font-size:.81rem;color:#617669}
+.work-quick-card .workspace-inline{display:flex;gap:4px}
+.work-quick-text{margin:10px 0 14px;line-height:1.7;overflow-wrap:anywhere;white-space:normal}
+.work-quick-card-foot{flex-wrap:wrap}
+.work-quick-state{font-size:.82rem;color:#55745d}
+.work-quick-archive{margin-top:16px}
+.work-quick-search{display:grid;gap:7px;margin-bottom:18px;font-size:.88rem;font-weight:600}
+.work-quick-search input{padding:11px 13px}
+@media (max-width:600px){.work-quick-form-foot{align-items:stretch}.work-quick-form-foot .button{width:100%;justify-content:center}.work-quick-card{padding:12px}.work-quick-card-foot .button{flex:0 0 auto}}

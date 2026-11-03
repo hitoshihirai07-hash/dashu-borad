@@ -1,7 +1,7 @@
-import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest} from './workspace-model.js';
+import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,quickNoteTaskTitle,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest} from './workspace-model.js';
 
 export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
-  let value=workspaceFresh(),error='',filter='',search='',formType='tasks',formId='';
+  let value=workspaceFresh(),error='',filter='',search='',quickSearch='',quickEditId='',pendingQuickNoteId='',formType='tasks',formId='';
   let selectedProject='',selectedTask='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),calendarDate=localDate(),calendarView='month',calendarFlags={tasks:true,events:true,habits:true},savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート',links:'毎日使うリンク',events:'個人予定'};
   const clean=t=>esc(t||'').replace(/\n/g,'<br>');
@@ -132,6 +132,25 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>タスク一覧</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${selectedTask?'':'selected'}" data-workspace-overview="1">プロジェクトのメモ・概要を見る</button>${taskList(projectTasks,'このプロジェクトにはまだタスクがありません。')}</section>
       ${selectedProject?(selectedTask?detailTask(visibleTask(selectedTask)):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
   }
+  const latestQuickNotes=()=>[...value.quickNotes].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
+  const noteDate=iso=>new Date(iso).toLocaleString('ja-JP',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  function quickInput(id){
+    return `<form class="work-quick-form" data-workspace-quick-form="1"><label class="visually-hidden" for="${id}">ひとことメモの本文</label><textarea id="${id}" name="body" maxlength="4000" rows="3" required placeholder="思いついたことをひとこと。プロジェクトは決めなくてOK"></textarea><div class="work-quick-form-foot"><small>タイトル不要・日時は自動保存</small><button type="submit" class="button primary">${icon('plus')}メモを保存</button></div></form>`;
+  }
+  function quickCard(note){
+    const linked=value.tasks.find(t=>t.id===note.taskId);
+    return `<article class="work-quick-card"><div class="work-quick-card-head"><time datetime="${esc(note.createdAt)}">${esc(noteDate(note.createdAt))}</time><div class="workspace-inline"><button class="icon-button" type="button" data-workspace-quick-edit="${esc(note.id)}" aria-label="メモを編集">${icon('edit')}</button><button class="icon-button" type="button" data-workspace-quick-delete="${esc(note.id)}" aria-label="メモを削除">${icon('trash')}</button></div></div><p class="work-quick-text">${clean(note.body)}</p><div class="work-quick-card-foot"><span class="work-quick-state">${linked?'タスク化済み ・ '+esc(linked.project||'未分類'):'メモ'}</span>${linked?`<button type="button" class="button secondary" data-workspace-quick-open-task="${esc(linked.id)}">タスクを開く</button>`:`<button type="button" class="button secondary" data-workspace-quick-to-task="${esc(note.id)}">${icon('plus')}タスクにする</button>`}</div></article>`;
+  }
+  function quickHome(){
+    const latest=latestQuickNotes().slice(0,3);
+    return `<section class="panel work-quick-panel" aria-label="ひとことメモ"><div class="panel-heading"><h2>ひとことメモ</h2><a class="text-button" href="#quick-notes">すべて見る${value.quickNotes.length?'（'+value.quickNotes.length+'件）':''}</a></div>${quickInput('work-quick-home-input')}${latest.length?`<div class="work-quick-recent"><h3>最近のメモ</h3>${latest.map(quickCard).join('')}</div>`:''}</section>`;
+  }
+  function quickNotesPage(){
+    const terms=quickSearch.trim().toLocaleLowerCase(),matched=latestQuickNotes().filter(n=>!terms||n.body.toLocaleLowerCase().includes(terms));
+    return `<header class="page-heading"><div><h1>ひとことメモ</h1><p>思いついたことをすぐ保存。必要になったらプロジェクトを選んでタスク化できます。</p></div></header>${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
+      <section class="panel work-quick-panel"><div class="panel-heading"><h2>メモを書く</h2><small>プロジェクト指定なし</small></div>${quickInput('work-quick-page-input')}</section>
+      <section class="panel work-quick-panel work-quick-archive"><div class="panel-heading"><h2>メモ一覧 <small>${matched.length}件</small></h2></div><label class="work-quick-search">メモを検索<input id="work-quick-search" type="search" value="${esc(quickSearch)}" placeholder="メモの内容を検索"></label><div class="work-quick-list">${matched.map(quickCard).join('')||`<p class="muted">${terms?'一致するメモはありません。':'メモはまだありません。思いついたことを書いてみましょう。'}</p>`}</div></section>`;
+  }
   function home(){
     const today=localDate(),b=taskBuckets(value.tasks,today),focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
     const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
@@ -193,7 +212,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   function open(type,id='',prefill=null){
     const item=prefill||value[type].find(x=>x.id===id),dialog=document.querySelector('#workspace-dialog'),f=document.querySelector('#workspace-form');
     if(!Object.hasOwn(titles,type))throw Error('入力種類が不正です。');
-    formType=type;formId=prefill?'':id;f.reset();document.querySelector('#workspace-title').textContent=`${id?'編集':'追加'}：${titles[type]}`;
+    pendingQuickNoteId='';formType=type;formId=prefill?'':id;f.reset();document.querySelector('#workspace-title').textContent=`${id?'編集':'追加'}：${titles[type]}`;
     f.elements.title.value=item?.title||'';f.elements.project.innerHTML=projectOptions(item?.project||'');f.elements.project.value=item?.project||'';
     f.elements.description.value=item?.description||'';if(f.elements.goal)f.elements.goal.value=item?.goal||'';if(f.elements.doneCriteria)f.elements.doneCriteria.value=item?.doneCriteria||'';if(f.elements.stages)f.elements.stages.value=(item?.stages||[]).join('\n');f.elements.body.value=item?.body||'';f.elements.detail.value=item?.detail||'';
     f.elements.memo.value=item?.memo||'';f.elements.due.value=item?.due||'';f.elements.priority.value=item?.priority||'normal';f.elements.status.value=item?.status||'todo';f.elements.category.value=item?.category||'';
@@ -259,6 +278,24 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function click(button){
     try{
+      if(button.dataset.workspaceQuickEdit){
+        const note=value.quickNotes.find(n=>n.id===button.dataset.workspaceQuickEdit);if(!note)throw Error('メモが見つかりません。');
+        quickEditId=note.id;const form=document.querySelector('#quick-note-edit-form');form.elements.body.value=note.body;document.querySelector('#quick-note-form-error').textContent='';document.querySelector('#quick-note-dialog').showModal();return true;
+      }
+      if(button.dataset.workspaceQuickDelete){
+        const note=value.quickNotes.find(n=>n.id===button.dataset.workspaceQuickDelete);if(!note)throw Error('メモが見つかりません。');
+        if(!confirm('このひとことメモを削除しますか？関連するタスクは削除されません。'))return true;
+        save(workspaceDelete(value,'quickNotes',note.id));toast('メモを削除しました。');return true;
+      }
+      if(button.dataset.workspaceQuickToTask){
+        const note=value.quickNotes.find(n=>n.id===button.dataset.workspaceQuickToTask);if(!note)throw Error('メモが見つかりません。');
+        if(note.taskId&&value.tasks.some(t=>t.id===note.taskId))throw Error('既にタスク化されています。');
+        open('tasks','',{title:quickNoteTaskTitle(note.body),detail:note.body});pendingQuickNoteId=note.id;return true;
+      }
+      if(button.dataset.workspaceQuickOpenTask){
+        const t=visibleTask(button.dataset.workspaceQuickOpenTask);if(!t)throw Error('関連タスクが見つかりません。');
+        selectedTask=t.id;filter='';search='';location.hash='#tasks';render();return true;
+      }
       if(button.dataset.workspaceFocus){save(workspaceToggleFocus(value,localDate(),button.dataset.workspaceFocus));toast('今日やる3件を更新しました。');return true;}
       if(button.dataset.workspaceNewEvent){calendarDate=button.dataset.workspaceNewEvent;open('events','',{date:calendarDate});return true;}
       if(button.dataset.workspaceNewDatedTask){open('tasks','',{due:button.dataset.workspaceNewDatedTask});return true;}
@@ -330,6 +367,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     return false;
   }
   function input(target){
+    if(target.id==='work-quick-search'){quickSearch=target.value;const cursor=target.selectionStart;render();const field=document.querySelector('#work-quick-search');if(field){field.focus();field.setSelectionRange(cursor,cursor);}return true;}
     if(target.id!=='workspace-search')return false;
     search=target.value;const cursor=target.selectionStart;render();const field=document.querySelector('#workspace-search');if(field){field.focus();field.setSelectionRange(cursor,cursor);}return true;
   }
@@ -376,14 +414,31 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
           next=workspaceAdvanceTask(next,id,localDate(),uid);
         }
       }
+      if(formType==='tasks'&&pendingQuickNoteId){
+        const source=value.quickNotes.find(n=>n.id===pendingQuickNoteId);
+        if(!source||source.taskId&&value.tasks.some(t=>t.id===source.taskId))throw Error('元のメモが変更されました。メモ一覧からやり直してください。');
+        const created=next.tasks.at(-1);if(!created)throw Error('タスクを作成できませんでした。');
+        next=workspaceChange(next,'quickNotes',{taskId:created.id},source.id,uid);
+      }
       if(formType==='tasks'){selectedTask=next.tasks.find(t=>t.id===formId&&t.status!=='done')?.id||next.tasks.at(-1)?.id||'';if(payload.project)selectedProject=payload.project;}
       if(formType==='projects')selectedProject=payload.title;
       if(formType==='events')calendarDate=payload.date;
-      save(next);document.querySelector('#workspace-dialog').close();toast('保存しました。');
+      save(next);pendingQuickNoteId='';document.querySelector('#workspace-dialog').close();toast('保存しました。');
     }catch(e){document.querySelector('#workspace-form-error').textContent=e.message;}
   });
   document.addEventListener('submit',event=>{
-    const form=event.target;if(!form.matches('[data-workspace-save-note]'))return;
+    const form=event.target;
+    if(form.dataset?.workspaceQuickForm!==undefined&&form.matches('[data-workspace-quick-form]')){
+      event.preventDefault();try{
+        save(workspaceChange(value,'quickNotes',{body:form.elements.body.value},'',uid));toast('ひとことメモを保存しました。');
+      }catch(e){toast(e.message);}return;
+    }
+    if(form.id==='quick-note-edit-form'){
+      event.preventDefault();try{
+        save(workspaceChange(value,'quickNotes',{body:form.elements.body.value},quickEditId,uid));document.querySelector('#quick-note-dialog').close();quickEditId='';toast('メモを更新しました。');
+      }catch(e){document.querySelector('#quick-note-form-error').textContent=e.message;}return;
+    }
+    if(!form.matches('[data-workspace-save-note]'))return;
     event.preventDefault();try{
       const text=form.elements.memo.value,type=form.dataset.workspaceSaveNote;
       if(type==='tasks'){
@@ -396,5 +451,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,linksHome,links,tasks,projects,habitHome,habits,calendar,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,quickHome,quickNotesPage,linksHome,links,tasks,projects,habitHome,habits,calendar,prompts,templates,click,change,input};
 }
