@@ -290,3 +290,27 @@
   .sidebar .desktop-nav { display:none; }
   .sidebar .mobile-nav { display:flex; }
 }
+
+/* Goal, work-stage and progress details live inside the existing project view. */
+.work-progress-section .work-section-head small{font-size:11px;color:#64816d}
+.work-progress-count{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin:8px 0}
+.work-progress-count strong{font-size:25px;color:#267348;line-height:1.2;font-variant-numeric:tabular-nums}
+.work-progress-count span,.work-progress-meta{font-size:12px;color:#5f806a}
+.work-progress-track{height:9px;width:100%;background:#e1efe4;overflow:hidden;border-radius:15px}
+.work-progress-track>span{display:block;height:100%;background:#45a477;border-radius:inherit;transition:width .2s ease}
+.work-progress-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin:11px 0}
+.work-progress-section .muted,.work-stage-list+.muted{font-size:11px;line-height:1.6;margin-top:10px}
+.work-stage-list{display:grid;gap:10px;margin-top:12px}
+.work-stage-item{border:1px solid #dcebe0;background:#f8fbf8;padding:11px;border-radius:10px}
+.work-stage-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:9px;font-size:12px;color:#355d45}
+.work-stage-top strong{min-width:0;overflow-wrap:anywhere}
+.work-stage-top span{color:#64816e;font-size:11px;flex:0 0 auto}
+.work-stage-item>.button{margin-top:10px;font-size:11px;padding:7px 9px;min-height:32px}
+.work-stage-item .work-progress-track{height:6px}
+.work-copy-section .muted{font-size:12px;line-height:1.6;margin:8px 0 14px}
+.work-copy-controls{display:grid;gap:10px;margin-bottom:12px}
+.work-copy-controls label{display:block;font-weight:600;font-size:12px;color:#3b6450}
+.work-copy-controls select{display:block;width:100%;margin-top:6px;min-height:39px;padding:7px 9px;border-radius:9px;border:1px solid #b9d7c4;background:#fff;color:#315c42;font:inherit;font-size:13px}
+.work-copy-section>.button{min-height:40px}
+.work-copy-section>.button svg{width:16px;height:16px}
+@media(max-width:600px){.work-stage-top{align-items:flex-start}.work-stage-item>.button{width:100%}.work-copy-section>.button{width:100%}}

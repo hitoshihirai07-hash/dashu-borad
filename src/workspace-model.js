@@ -76,9 +76,15 @@ export function workspaceValidate(value){
         const routineId=str(item.routineId??'',160),completedAt=str(item.completedAt??'',40);
         if(completedAt&&!Number.isFinite(Date.parse(completedAt)))throw Error('タスクの完了日時が不正です。');
         if(typeof(item.skipped??false)!=='boolean')throw Error('スキップ状態が不正です。');
-        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
-      if(type==='projects')return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000)};
+      if(type==='projects'){
+        const stages=item.stages??[];
+        if(!Array.isArray(stages)||stages.length>12)throw Error('作業段階は12件までです。');
+        const checked=stages.map(stage=>str(stage,100,true).trim());
+        if(new Set(checked).size!==checked.length)throw Error('同じ名前の作業段階は登録できません。');
+        return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000),goal:str(item.goal??'',1600),doneCriteria:str(item.doneCriteria??'',1600),stages:checked};
+      }
       // Keep legacy notes; they appear inside the relevant project, never as a standalone notebook.
       if(type==='notes')return {...base,body:str(item.body??'',10000)};
       return {...base,body:str(item.body??'',15000),category:str(item.category??'',80),pinned:(()=>{if(typeof(item.pinned??false)!=='boolean')throw Error('プロンプトの固定設定が不正です。');return item.pinned??false;})()};
@@ -171,6 +177,54 @@ export const taskBuckets=(tasks,today)=>({
   review:tasks.filter(x=>['waiting','someday'].includes(x.status)&&x.reviewDate&&x.reviewDate<=today),
   done:tasks.filter(x=>x.status==='done')
 });
+
+// Task progress counts one current occurrence per routine; completed recurring history
+// must not inflate the completion percentage. 'Done' is a task metric, not goal attainment.
+export function projectTaskStats(current,project,records=[]){
+  const groups=new Map();
+  for(const t of current.tasks.filter(t=>t.project===project)){
+    const key=t.routineId||t.id,prev=groups.get(key);
+    if(!prev||prev.status==='done'&&t.status!=='done'||(prev.status===t.status&&t.updatedAt>prev.updatedAt))groups.set(key,t);
+  }
+  const tasks=[...groups.values()],done=tasks.filter(t=>t.status==='done'&&!t.skipped).length;
+  const waiting=tasks.filter(t=>t.status==='waiting'||t.status==='someday').length;
+  const minutes=records.reduce((sum,r)=>sum+(Number.isFinite(r.minutes)?r.minutes:0),0);
+  const lastDay=records.map(r=>r.date).filter(v=>/^\d{4}-\d{2}-\d{2}$/.test(v)).sort().at(-1)||'';
+  const projectRow=current.projects.find(p=>p.title===project);
+  const stages=(projectRow?.stages||[]).map(title=>{
+    const own=tasks.filter(t=>t.stage===title),complete=own.filter(t=>t.status==='done'&&!t.skipped).length;
+    return {title,total:own.length,done:complete,percent:own.length?Math.round(complete/own.length*100):0};
+  });
+  return {total:tasks.length,done,waiting,percent:tasks.length?Math.round(done/tasks.length*100):0,minutes,lastDay,stages,unassigned:tasks.filter(t=>!t.stage||!stages.some(s=>s.title===t.stage)).length};
+}
+
+// Build plain text locally for pasting into ChatGPT or Codex. Nothing is sent to AI.
+export function buildWorkspaceRequest({workspace,project,taskId='',promptId='',linkId=''}){
+  const p=workspace.projects.find(row=>row.title===project),t=taskId?workspace.tasks.find(row=>row.id===taskId&&row.project===project):null;
+  if((!project&&!taskId)||(taskId&&!t))throw Error('依頼文の対象が見つかりません。');
+  const prompt=promptId?workspace.prompts.find(row=>row.id===promptId&&row.project===project):null;
+  const link=linkId?workspace.links.find(row=>row.id===linkId):null;
+  const lines=['【プロジェクト】',project||'未分類'];
+  if(p?.goal)lines.push('','【今回の目標】',p.goal);
+  if(p?.doneCriteria)lines.push('','【完了条件】',p.doneCriteria);
+  if(p?.description)lines.push('','【プロジェクト概要】',p.description);
+  if(t){
+    lines.push('','【作業するタスク】',t.title,'【状態】',({todo:'未着手',doing:'進行中',waiting:'待機中',someday:'いつかやる',done:'完了'}[t.status]||t.status));
+    if(t.stage)lines.push('【作業段階】',t.stage);
+    if(t.due)lines.push('【予定日】',t.due);
+    if(t.detail)lines.push('【作業内容】',t.detail);
+    if(t.steps?.length)lines.push('【チェック項目】',...t.steps.map(s=>(s.done?'[完了] ':'[未完了] ')+s.text));
+    if(t.memo)lines.push('【作業メモ】',t.memo);
+    if(t.waitingFor)lines.push('【待機理由】',t.waitingFor);
+    if(t.startCondition)lines.push('【開始条件】',t.startCondition);
+  }else{
+    if(p?.stages?.length)lines.push('','【作業段階】',...p.stages.map(s=>`・${s}`));
+    if(p?.memo)lines.push('','【プロジェクトメモ】',p.memo);
+  }
+  if(prompt)lines.push('','【保存済みプロンプト：'+prompt.title+'】',prompt.body);
+  if(link)lines.push('','【関連リンク：'+link.title+'】',link.url);
+  return lines.join('\n').trim();
+}
 
 // All dates are local calendar dates represented as YYYY-MM-DD (UTC arithmetic prevents DST drift).
 const toUTC=day=>new Date(day+'T00:00:00Z');
