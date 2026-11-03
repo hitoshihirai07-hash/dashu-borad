@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[]
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],reviews:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[]
 });
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
@@ -17,14 +17,14 @@ const validDay = v => {
 };
 export function workspaceValidate(value){
   if(!value||value.format!=='toki-workspace'||value.version!==1)throw Error('作業管理データの形式が正しくありません。');
-  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000,links:100,events:3000};
+  const limits={projects:500,tasks:10000,notes:10000,prompts:2000,templates:2000,links:100,events:3000,reviews:5000};
   const all=new Set(),out={format:'toki-workspace',version:1};
   const str=(v,max,required=false)=>{
     if(typeof v!=='string'||v.length>max||(required&&!v.trim()))throw Error('作業管理の文字数または入力内容が不正です。');
     return v;
   };
   for(const type of Object.keys(limits)){
-    const rows=['templates','links','events'].includes(type)?(value[type]??[]):value[type];
+    const rows=['templates','links','events','reviews'].includes(type)?(value[type]??[]):value[type];
     if(!Array.isArray(rows)||rows.length>limits[type])throw Error('作業管理の件数が上限を超えています。');
     out[type]=rows.map(item=>{
       if(!item||typeof item!=='object')throw Error('作業管理の行が不正です。');
@@ -50,11 +50,16 @@ export function workspaceValidate(value){
         if(!validLinkUrl(url))throw Error('リンクはhttp/httpsの有効なURLを入力してください。');
         return {...base,project:'',url};
       }
+      if(type==='reviews'){
+        return {...base,taskId:str(item.taskId??'',160),outcome:str(item.outcome??'',6000,true),decisions:str(item.decisions??'',4000),issues:str(item.issues??'',4000),nextAction:str(item.nextAction??'',1000),verified:(()=>{const checked=item.verified??false;if(typeof checked!=='boolean')throw Error('振り返りの確認状態が不正です。');return checked;})()};
+      }
       if(type==='events'){
         const date=str(item.date??'',10,true),time=str(item.time??'',5),note=str(item.note??'',2000);
         const allDay=item.allDay??false;
         if(!validDay(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||typeof allDay!=='boolean'||(allDay&&time))throw Error('予定の日付・時刻の形式が不正です。');
-        return {...base,project:'',date,time,allDay,note};
+        const status=str(item.status??'todo',12),completedAt=str(item.completedAt??'',40);
+        if(!['todo','done'].includes(status)||(completedAt&&!Number.isFinite(Date.parse(completedAt))))throw Error('予定の完了状態が不正です。');
+        return {...base,project:'',date,time,allDay,note,status,completedAt};
       }
       if(type==='tasks'){
         const due=str(item.due??'',10),status=str(item.status,15),priority=str(item.priority,15),detail=str(item.detail??'',4000);
@@ -83,7 +88,7 @@ export function workspaceValidate(value){
         if(!Array.isArray(stages)||stages.length>12)throw Error('作業段階は12件までです。');
         const checked=stages.map(stage=>str(stage,100,true).trim());
         if(new Set(checked).size!==checked.length)throw Error('同じ名前の作業段階は登録できません。');
-        return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000),goal:str(item.goal??'',1600),doneCriteria:str(item.doneCriteria??'',1600),stages:checked};
+        return {...base,description:str(item.description??'',2000),memo:str(item.memo??'',10000),goal:str(item.goal??'',1600),doneCriteria:str(item.doneCriteria??'',1600),currentState:str(item.currentState??'',4000),stages:checked};
       }
       // Keep legacy notes; they appear inside the relevant project, never as a standalone notebook.
       if(type==='notes')return {...base,body:str(item.body??'',10000)};
@@ -134,7 +139,7 @@ export function quickNoteTaskTitle(body){
 }
 export function workspaceChange(current,type,payload,id,makeId){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,quickNotes:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,reviews:1,quickNotes:1},type))throw Error('種類が不正です。');
   const old=id?current[type].find(x=>x.id===id):null;
   if(id&&!old)throw Error('編集対象が見つかりません。再読み込みしてください。');
   if(type==='quickNotes'&&(!old||Object.hasOwn(payload,'body'))&&(!payload.body||!payload.body.trim()))throw Error('メモを入力してください。');
@@ -144,7 +149,7 @@ export function workspaceChange(current,type,payload,id,makeId){
 }
 export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
-  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,quickNotes:1},type))throw Error('種類が不正です。');
+  if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,reviews:1,quickNotes:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id),
     ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length)),quickNotes:current.quickNotes.map(n=>n.taskId===id?{...n,taskId:'',updatedAt:new Date().toISOString()}:n)}:{})});
 }
@@ -215,18 +220,52 @@ export function projectTaskStats(current,project,records=[]){
   return {total:tasks.length,done,waiting,percent:tasks.length?Math.round(done/tasks.length*100):0,minutes,lastDay,stages,unassigned:tasks.filter(t=>!t.stage||!stages.some(s=>s.title===t.stage)).length};
 }
 
+// A schedule is completed only by an explicit user action; passing its date is not proof.
+export function workspaceSetEventStatus(current,id,status,makeId){
+  current=workspaceValidate(current);
+  if(!['todo','done'].includes(status))throw Error('予定の完了状態が不正です。');
+  const event=current.events.find(e=>e.id===id);
+  if(!event)throw Error('予定が見つかりません。');
+  return event.status===status?current:workspaceChange(current,'events',{status,completedAt:status==='done'?new Date().toISOString():''},id,makeId);
+}
+// Save the retrospective, optionally complete its task and/or turn next action into a task, atomically.
+export function workspaceRecordReview(current,{project,taskId='',outcome,decisions='',issues='',nextAction='',verified=false,completeTask=false,createNextTask=false},today,makeId){
+  current=workspaceValidate(current);
+  if(!project||typeof project!=='string'||project.length>80)throw Error('振り返りのプロジェクトを選んでください。');
+  if(!current.projects.some(p=>p.title===project)&&!current.tasks.some(t=>t.project===project))throw Error('プロジェクトが見つかりません。');
+  const t=taskId?current.tasks.find(t=>t.id===taskId&&t.project===project):null;
+  if(taskId&&!t)throw Error('関連タスクが見つかりません。');
+  if(completeTask&&(!t||t.status==='done'))throw Error('完了にできるタスクを選んでください。');
+  if(createNextTask&&(!nextAction.trim()||nextAction.trim().length>160))throw Error('次のタスク名は1〜160文字で入力してください。');
+  if(!outcome?.trim())throw Error('実施したこと・結果を入力してください。');
+  let result=workspaceChange(current,'reviews',{project,title:`振り返り：${t?.title||project}`.slice(0,160),taskId,outcome,decisions,issues,nextAction,verified},'',makeId);
+  if(completeTask)result=workspaceSetTaskStatus(result,taskId,'done',today,makeId);
+  if(createNextTask)result=workspaceChange(result,'tasks',{title:nextAction.trim(),project,status:'todo',priority:'normal',detail:'振り返りから登録した次の一手'},'',makeId);
+  return result;
+}
+
 // Build plain text locally for pasting into ChatGPT or Codex. Nothing is sent to AI.
-export function buildWorkspaceRequest({workspace,project,taskId='',promptId='',linkId=''}){
+export function buildWorkspaceRequest({workspace,project,taskId='',promptId='',linkId='',instruction=''}){
+  workspace=workspaceValidate(workspace);
   const p=workspace.projects.find(row=>row.title===project),t=taskId?workspace.tasks.find(row=>row.id===taskId&&row.project===project):null;
   if((!project&&!taskId)||(taskId&&!t))throw Error('依頼文の対象が見つかりません。');
   const prompt=promptId?workspace.prompts.find(row=>row.id===promptId&&row.project===project):null;
   const link=linkId?workspace.links.find(row=>row.id===linkId):null;
-  const lines=['【プロジェクト】',project||'未分類'];
-  if(p?.goal)lines.push('','【今回の目標】',p.goal);
-  if(p?.doneCriteria)lines.push('','【完了条件】',p.doneCriteria);
-  if(p?.description)lines.push('','【プロジェクト概要】',p.description);
+  const related=workspace.tasks.filter(row=>row.project===project),pending=related.filter(row=>row.status!=='done');
+  const stats=projectTaskStats(workspace,project);
+  const history=workspace.reviews.filter(r=>r.project===project&&(r.taskId===''||!taskId||r.taskId===taskId))
+    .sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,3);
+  const labels={todo:'未着手',doing:'進行中',waiting:'待機中',someday:'いつかやる',done:'完了'};
+  const suggested=t?.title||history.find(r=>r.nextAction.trim())?.nextAction||pending.find(x=>x.status==='doing')?.title||pending[0]?.title||'目標・完了条件を確認し、次に着手する具体的な作業を提案する';
+  const lines=['【プロジェクト】',project||'未分類','', '【ゴール】',p?.goal||'未設定','【完了条件】',p?.doneCriteria||'未設定',
+    '','【現在地（記録に基づく）】',`タスク進捗：${stats.done}/${stats.total}件完了（${stats.percent}%）。待機：${stats.waiting}件`,
+    `進行中：${pending.filter(x=>x.status==='doing').map(x=>x.title).join('、')||'なし'}`,`未着手：${pending.filter(x=>x.status==='todo').slice(0,8).map(x=>x.title).join('、')||'なし'}`,
+    `待機中：${pending.filter(x=>['waiting','someday'].includes(x.status)).slice(0,5).map(x=>x.title).join('、')||'なし'}`];
+  if(p?.currentState)lines.push('【現在の課題・状況（入力済み）】',p.currentState);
+  if(p?.description)lines.push('【プロジェクト概要】',p.description);
+  if(p?.memo)lines.push('【継続して守る方針・メモ】',p.memo);
   if(t){
-    lines.push('','【作業するタスク】',t.title,'【状態】',({todo:'未着手',doing:'進行中',waiting:'待機中',someday:'いつかやる',done:'完了'}[t.status]||t.status));
+    lines.push('','【対象タスク】',t.title,'【状態】',labels[t.status]||t.status);
     if(t.stage)lines.push('【作業段階】',t.stage);
     if(t.due)lines.push('【予定日】',t.due);
     if(t.detail)lines.push('【作業内容】',t.detail);
@@ -234,12 +273,15 @@ export function buildWorkspaceRequest({workspace,project,taskId='',promptId='',l
     if(t.memo)lines.push('【作業メモ】',t.memo);
     if(t.waitingFor)lines.push('【待機理由】',t.waitingFor);
     if(t.startCondition)lines.push('【開始条件】',t.startCondition);
-  }else{
-    if(p?.stages?.length)lines.push('','【作業段階】',...p.stages.map(s=>`・${s}`));
-    if(p?.memo)lines.push('','【プロジェクトメモ】',p.memo);
-  }
+  }else if(p?.stages?.length)lines.push('','【作業段階】',...p.stages.map(s=>`・${s}`));
+  if(history.length)lines.push('','【最近の作業結果・判断・引き継ぎ】',...history.flatMap(r=>[
+    `■ ${r.createdAt.slice(0,10)}：${r.title}${r.verified?'（確認済み）':'（未確認を含む）'}`,
+    `結果：${r.outcome}`,...(r.decisions?[`決定事項：${r.decisions}`]:[]),...(r.issues?[`問題・未解決：${r.issues}`]:[]),...(r.nextAction?[`次の一手：${r.nextAction}`]:[])
+  ]));
   if(prompt)lines.push('','【保存済みプロンプト：'+prompt.title+'】',prompt.body);
   if(link)lines.push('','【関連リンク：'+link.title+'】',link.url);
+  lines.push('','【今回AIに依頼すること】',(typeof instruction==='string'&&instruction.trim())?instruction.trim():suggested,
+    '','【進め方】','上記の目標・現在地・過去の判断に基づいて作業してください。未確認事項は事実と区別し、頼んでいない機能追加はしないでください。','終わったら「実施したこと・確認した結果・未完了・次の一手」を簡潔に報告してください。');
   return lines.join('\n').trim();
 }
 
@@ -330,7 +372,7 @@ export function calendarItems(current,start,end,{tasks=true,events=true,habits=t
       }
     }
   }
-  if(events)for(const e of current.events)insert(e.date,{kind:'event',id:e.id,title:e.title,time:e.allDay?'':e.time,allDay:e.allDay});
+  if(events)for(const e of current.events)insert(e.date,{kind:'event',id:e.id,title:e.title,time:e.allDay?'':e.time,allDay:e.allDay,done:e.status==='done'});
   if(habits){
     const now=new Date(),currentDay=today||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;for(let d=toUTC(start);fromUTC(d)<=end;d.setUTCDate(d.getUTCDate()+1)){
       const day=fromUTC(d);if(day<=currentDay)insert(day,{kind:'habit',count:(current.habits[day]||[]).length,total:HABITS.length});

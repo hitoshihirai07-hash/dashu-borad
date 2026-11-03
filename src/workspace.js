@@ -1,8 +1,8 @@
-import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,quickNoteTaskTitle,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest} from './workspace-model.js';
+import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,quickNoteTaskTitle,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,workspaceSetEventStatus,workspaceRecordReview,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest} from './workspace-model.js';
 
 export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord}){
   let value=workspaceFresh(),error='',filter='',search='',quickSearch='',quickEditId='',pendingQuickNoteId='',formType='tasks',formId='';
-  let selectedProject='',selectedTask='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),calendarDate=localDate(),calendarView='month',calendarFlags={tasks:true,events:true,habits:true},savedSnapshot=JSON.stringify(workspaceFresh());
+  let selectedProject='',selectedTask='',reviewProject='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),calendarDate=localDate(),calendarView='month',calendarFlags={tasks:true,events:true,habits:true},savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート',links:'毎日使うリンク',events:'個人予定'};
   const clean=t=>esc(t||'').replace(/\n/g,'<br>');
   const suggestedLinks=[{title:'プロ野球観戦メモ',url:'https://pro-baseball-watch-guide.com/'},{title:'Notion',url:'https://www.notion.so/'},{title:'ベンチからの一手',url:'https://bench-first.pages.dev/'},{title:'Player Lens',url:'https://pro-baseball-watch-guide.com/player-lens/'}];
@@ -60,11 +60,30 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   function visibleTask(id){return value.tasks.find(t=>t.id===id);}
   const progressBar=(done,total)=>`<div class="work-progress-track" role="progressbar" aria-valuenow="${total?Math.round(done/total*100):0}" aria-valuemin="0" aria-valuemax="100" aria-label="タスク完了率"><span style="width:${total?Math.round(done/total*100):0}%"></span></div>`;
   function copyPanel(project,taskId=''){
-    const prompts=value.prompts.filter(p=>p.project===project).sort((a,b)=>Number(b.pinned)-Number(a.pinned)),links=value.links;
-    return `<section class="work-detail-section work-copy-section"><h3>AI作業依頼文の一括コピー</h3><p class="muted">プロジェクト${taskId?'・タスク':''}の情報をまとめてコピーします。AIへの自動送信はしません。</p><div class="work-copy-controls">
+    const prompts=value.prompts.filter(p=>p.project===project).sort((a,b)=>Number(b.pinned)-Number(a.pinned));
+    const related=value.tasks.filter(t=>t.project===project).sort((a,b)=>Number(a.status==='done')-Number(b.status==='done')||b.updatedAt.localeCompare(a.updatedAt));
+    const links=value.links;
+    return `<section class="work-detail-section work-copy-section"><h3>AI作業依頼：目標 → 現在地 → 結果</h3><p class="muted">目標・タスクの進捗・直近の振り返りを引き継ぎます。テキストをコピーするだけで、AIに自動送信はしません。</p><div class="work-copy-controls">
+      ${!taskId?`<label>対象タスク<select data-work-copy-task><option value="">プロジェクト全体</option>${related.map(t=>`<option value="${esc(t.id)}">${esc(t.title)}（${esc(completedLabel(t))}）</option>`).join('')}</select></label>`:''}
       <label>追加する保存済みプロンプト<select data-work-copy-prompt><option value="">追加しない</option>${prompts.map(p=>`<option value="${esc(p.id)}" ${p===prompts[0]&&p.pinned?'selected':''}>${esc(p.title)}</option>`).join('')}</select></label>
       <label>関連リンク<select data-work-copy-link><option value="">追加しない</option>${links.map(l=>`<option value="${esc(l.id)}">${esc(l.title)}</option>`).join('')}</select></label>
-      </div><button type="button" class="button secondary" data-workspace-copy-context="${esc(project)}" data-task-id="${esc(taskId)}">${icon('copy')}依頼文をコピー</button></section>`;
+      </div><label class="work-copy-instruction">今回AIに頼む作業（任意）<textarea data-work-copy-instruction maxlength="2000" rows="3" placeholder="省略すると対象タスク・直近の次の一手から自動作成します。自由に指定できます。"></textarea></label>
+      <div class="workspace-actions"><button type="button" class="button primary" data-workspace-copy-context="${esc(project)}" data-task-id="${esc(taskId)}">${icon('copy')}依頼文をコピー</button>${project?`<button type="button" class="button secondary" data-workspace-new-review="${esc(project)}" data-task-id="${esc(taskId)}">作業結果を記録</button>`:''}</div></section>`;
+  }
+  function reviewHistory(project,taskId=''){
+    const rows=value.reviews.filter(r=>r.project===project&&(!taskId||!r.taskId||r.taskId===taskId)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,5);
+    return `<section class="work-detail-section work-review-history"><div class="work-section-head"><h3>作業結果と次への引き継ぎ</h3>${project?`<button class="button secondary" type="button" data-workspace-new-review="${esc(project)}" data-task-id="${esc(taskId)}">＋ 結果を記録</button>`:''}</div>${rows.length?rows.map(r=>`<div class="work-review-entry"><div class="work-review-heading"><strong>${esc(r.createdAt.slice(0,10))} ・ ${esc(r.title)}</strong><span class="${r.verified?'work-verified':''}">${r.verified?'確認済み':'未確認'}</span></div><p><b>結果：</b>${clean(r.outcome)}</p>${r.decisions?`<p><b>決めたこと：</b>${clean(r.decisions)}</p>`:''}${r.issues?`<p><b>残った問題：</b>${clean(r.issues)}</p>`:''}${r.nextAction?`<p><b>次の一手：</b>${clean(r.nextAction)}</p>`:''}<button type="button" class="text-button" data-workspace-delete="reviews:${esc(r.id)}">この記録を削除</button></div>`).join(''):'<p class="muted">まだ結果はありません。作業後に記録すると、次のAI依頼文に引き継がれます。</p>'}</section>`;
+  }
+  function openReview(project,taskId=''){
+    if(!project||!allNames().includes(project))throw Error('先にプロジェクトを選んでください。');
+    const form=document.querySelector('#work-review-form');
+    form.reset();reviewProject=project;form.elements.project.value=project;
+    const related=value.tasks.filter(t=>t.project===project);
+    form.elements.taskId.innerHTML='<option value="">プロジェクト全体</option>'+related.map(t=>`<option value="${esc(t.id)}">${esc(t.title)}</option>`).join('');
+    form.elements.taskId.value=related.some(t=>t.id===taskId)?taskId:'';
+    form.elements.completeTask.disabled=!taskId||value.tasks.find(t=>t.id===taskId)?.status==='done';
+    document.querySelector('#work-review-error').textContent='';
+    document.querySelector('#work-review-dialog').showModal();
   }
   function copyText(text){
     const fallback=()=>{const field=document.createElement('textarea');field.value=text;field.setAttribute('readonly','');field.style.position='fixed';field.style.left='-9999px';document.body.append(field);field.select();const ok=document.execCommand('copy');field.remove();if(!ok)throw Error('コピーできませんでした。');toast('コピーしました。');};
@@ -84,6 +103,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       ${t.routineId?`<section class="work-detail-section"><h3>同じルーチンの履歴</h3><p class="muted">${value.tasks.filter(x=>x.routineId===t.routineId&&x.status==='done').length}回完了・スキップ</p></section>`:''}
       ${value.prompts.filter(p=>p.project===t.project).length?`<section class="work-detail-section"><h3>このプロジェクトのプロンプト</h3>${[...value.prompts.filter(p=>p.project===t.project)].sort((a,b)=>Number(b.pinned)-Number(a.pinned)).map(p=>`<div class="work-linked-prompt"><span>${p.pinned?'★ ':''}${esc(p.title)}</span><button type="button" class="button secondary" data-workspace-copy="${esc(p.id)}">コピー</button></div>`).join('')}</section>`:''}
       ${copyPanel(t.project,t.id)}
+      ${reviewHistory(t.project,t.id)}
       <form class="work-note-form" data-workspace-save-note="tasks" data-id="${esc(t.id)}"><label for="work-task-note">タスクメモ</label><p class="muted">作業途中の気づきや次にやることを残せます。</p><textarea id="work-task-note" name="memo" rows="6" maxlength="10000" placeholder="このタスクについてのメモ">${esc(t.memo||'')}</textarea><button class="button primary" type="submit">メモを保存</button></form>
       <section class="work-detail-section"><div class="work-section-head"><h3>作業時間：${timeText(minutes)}</h3><button type="button" class="button secondary" data-workspace-record="${esc(t.id)}">時間を記録</button></div>${recordHistory(records)}</section>
     </section>`;
@@ -98,11 +118,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     return `<section class="panel work-detail" aria-label="プロジェクト詳細">
       <div class="work-detail-head"><div><span class="work-eyebrow">プロジェクト詳細</span><h2>${esc(project)}</h2><p class="workspace-meta">作業時間 ${timeText(minutes)} ・ タスク ${value.tasks.filter(t=>t.project===project).length}件</p></div>${p?`<button class="button secondary" type="button" data-workspace-edit="projects:${esc(p.id)}">編集</button>`:`<button class="button secondary" type="button" data-workspace-setup-project="${esc(project)}">目標を設定</button>`}</div>
       <section class="work-detail-section work-progress-section"><div class="work-section-head"><h3>進捗サマリー</h3><small>登録タスクを集計</small></div><div class="work-progress-count"><strong>${stats.total?stats.percent+'%':'—'}</strong><span>完了 ${stats.done}/${stats.total}件 ・ 待機 ${stats.waiting}件</span></div>${progressBar(stats.done,stats.total)}<div class="work-progress-meta"><span>作業時間 ${timeText(stats.minutes)}</span><span>最終作業日 ${stats.lastDay?esc(stats.lastDay):'記録なし'}</span></div><p class="muted">完了率はタスク数から計算します。ルーチンの過去の完了は重複集計せず、目標達成率とは区別します。</p></section>
-      ${(p?.goal||p?.doneCriteria)?`<section class="work-detail-section"><h3>今回の目標と完了条件</h3>${p.goal?`<p class="work-long-text"><strong>目標：</strong>${clean(p.goal)}</p>`:''}${p.doneCriteria?`<p class="work-long-text"><strong>完了条件：</strong>${clean(p.doneCriteria)}</p>`:''}</section>`:''}
+      ${(p?.goal||p?.doneCriteria||p?.currentState)?`<section class="work-detail-section"><h3>今回の目標と完了条件</h3>${p.goal?`<p class="work-long-text"><strong>目標：</strong>${clean(p.goal)}</p>`:''}${p.doneCriteria?`<p class="work-long-text"><strong>完了条件：</strong>${clean(p.doneCriteria)}</p>`:''}${p.currentState?`<p class="work-long-text"><strong>現在地・課題：</strong>${clean(p.currentState)}</p>`:''}</section>`:''}
       ${stats.stages.length?`<section class="work-detail-section"><h3>作業段階</h3><p class="muted">段階ごとの完了数は、関連付けたタスクから自動計算されます。</p><div class="work-stage-list">${stats.stages.map((stage,i)=>`<div class="work-stage-item"><div class="work-stage-top"><strong>${i+1}. ${esc(stage.title)}</strong><span>${stage.total?stage.done+'/'+stage.total+'件完了':'タスク未設定'}</span></div>${progressBar(stage.done,stage.total)}<button type="button" class="button secondary" data-workspace-add-stage-task="${esc(stage.title)}" data-project="${esc(project)}">この段階にタスクを追加</button></div>`).join('')}</div>${stats.unassigned?`<p class="muted">段階未設定のタスク：${stats.unassigned}件（既存タスクも編集して関連付けできます）</p>`:''}</section>`:''}
       ${p?.description?`<section class="work-detail-section"><h3>概要</h3><p class="work-long-text">${clean(p.description)}</p></section>`:''}
       <section class="work-detail-section"><div class="work-section-head"><h3>プロジェクト別プロンプト</h3><button type="button" class="button secondary" data-workspace-new-prompt="${esc(project)}">追加</button></div>${value.prompts.filter(x=>x.project===project).length?[...value.prompts.filter(x=>x.project===project)].sort((a,b)=>Number(b.pinned)-Number(a.pinned)).map(x=>`<div class="work-linked-prompt"><span>${x.pinned?'★ ':''}${esc(x.title)}</span><button type="button" class="button secondary" data-workspace-copy="${esc(x.id)}">コピー</button><button type="button" class="button secondary" data-workspace-edit="prompts:${esc(x.id)}">編集</button></div>`).join(''):'<p class="muted">まだプロンプトはありません。</p>'}</section>
       ${copyPanel(project)}
+      ${reviewHistory(project)}
       <form class="work-note-form" data-workspace-save-note="projects" data-project="${esc(project)}"><label for="work-project-note">プロジェクトメモ</label><p class="muted">目的・更新方針・今後の予定など。</p><textarea id="work-project-note" name="memo" rows="7" maxlength="10000" placeholder="このプロジェクトで覚えておきたいこと">${esc(p?.memo||'')}</textarea><button class="button primary" type="submit">メモを保存</button></form>
       ${oldNotes.length?`<section class="work-detail-section"><h3>以前のメモ（${oldNotes.length}件）</h3><p class="muted">旧クイックメモを削除せず、このプロジェクト内に表示しています。</p>${oldNotes.map(n=>`<div class="work-legacy-note"><strong>${esc(n.title)}</strong><p class="work-long-text">${clean(n.body)}</p><button type="button" class="button secondary" data-workspace-edit="notes:${esc(n.id)}">編集・移動</button><button type="button" class="button secondary" data-workspace-convert="${esc(n.id)}">タスクにする</button></div>`).join('')}</section>`:''}
       <section class="work-detail-section"><div class="work-section-head"><h3>最近の作業記録</h3><button class="button secondary" type="button" data-workspace-record-project="${esc(project)}">時間を記録</button></div>${recordHistory(records)}</section>
@@ -153,6 +174,13 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       <section class="panel work-quick-panel"><div class="panel-heading"><h2>メモを書く</h2><small>プロジェクト指定なし</small></div>${quickInput('work-quick-page-input')}</section>
       <section class="panel work-quick-panel work-quick-archive"><div class="panel-heading"><h2>メモ一覧 <small>${matched.length}件</small></h2></div><label class="work-quick-search">メモを検索<input id="work-quick-search" type="search" value="${esc(quickSearch)}" placeholder="メモの内容を検索"></label><div class="work-quick-list">${matched.map(quickCard).join('')||`<p class="muted">${terms?'一致するメモはありません。':'メモはまだありません。思いついたことを書いてみましょう。'}</p>`}</div></section>`;
   }
+  function homeEvents(){
+    const today=localDate(),upcoming=value.events.filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+    // At most one overdue item, so old unchecked events never bury today's upcoming plans.
+    const overdue=value.events.filter(e=>e.date<today&&e.status!=='done').sort((a,b)=>b.date.localeCompare(a.date)).slice(0,1);
+    const visible=[...overdue,...upcoming].slice(0,3);
+    return `<section class="panel home-card home-events" aria-label="予定"><div class="panel-heading"><h2>予定 <small>${value.events.filter(e=>e.status!=='done').length}件</small></h2><a class="text-button" href="#calendar">カレンダーへ</a></div><div class="home-events-list">${visible.map(e=>`<div class="home-event-row ${e.status==='done'?'is-done':''}"><div class="home-event-text"><strong>${esc(e.title)}</strong><small>${esc(e.date.slice(5).replace('-','/'))} ${e.allDay?'終日':esc(e.time||'時刻なし')} ・ ${e.status==='done'?'完了':e.date<today?'日付経過':'予定'}</small></div><button type="button" class="button secondary" data-workspace-event-status="${esc(e.id)}" data-status="${e.status==='done'?'todo':'done'}" aria-label="${esc(e.title)}を${e.status==='done'?'予定に戻す':'完了にする'}">${e.status==='done'?'戻す':'完了'}</button></div>`).join('')||'<p class="muted">予定はありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new-event="${today}">＋ 予定を追加</button></div></section>`;
+  }
   function home(compact=false){
     if(compact){
       const doing=value.tasks.filter(t=>t.status==='doing').sort((a,b)=>(a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')||Number(b.priority==='high')-Number(a.priority==='high')||a.title.localeCompare(b.title,'ja'));
@@ -163,12 +191,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
     const personal=value.events.filter(e=>e.date===today).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     return `<section class="panel work-today-focus"><div class="panel-heading"><h2>今日やる3件 <small>${picked.length}/3</small></h2><a class="text-button" href="#tasks">タスクを探す</a></div><p class="muted">期限とは別に、今日集中するタスクを選びます。選んでも予定日は変わりません。</p>${picked.length?`<div class="work-focus-list">${picked.map(t=>`<div class="work-focus-row"><button type="button" data-workspace-select-task="${esc(t.id)}">${esc(t.title)}</button><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">外す</button></div>`).join('')}</div>`:'<p class="work-empty muted">まだ選んでいません。下から選択できます。</p>'}${picked.length<3&&candidates.length?`<details class="work-focus-pick" ${picked.length?'':'open'}><summary>候補から選ぶ（最大3件）</summary>${candidates.map(t=>`<div class="work-focus-row"><span>${esc(t.title)}<small>${esc(t.project||'未分類')}</small></span><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">選ぶ</button></div>`).join('')}</details>`:''}</section>
-    <section class="panel work-today-events"><div class="panel-heading"><h2>今日の予定</h2><a class="text-button" href="#calendar">カレンダーを見る</a></div>${personal.length?personal.map(e=>`<div class="work-event-row"><span class="work-type-dot event"></span><strong>${esc(e.title)}</strong><small>${e.allDay?'終日':esc(e.time||'時刻なし')}</small></div>`).join(''):'<p class="muted">今日の個人予定はありません。</p>'}<button type="button" class="button secondary" data-workspace-new-event="${today}">＋予定を追加</button></section>
+    <section class="panel work-today-events"><div class="panel-heading"><h2>今日の予定</h2><a class="text-button" href="#calendar">カレンダーを見る</a></div>${personal.length?personal.map(e=>`<div class="work-event-row ${e.status==='done'?'is-done':''}"><span class="work-type-dot event"></span><strong>${esc(e.title)}</strong><small>${e.status==='done'?'完了':e.allDay?'終日':esc(e.time||'時刻なし')}</small><button type="button" class="button secondary" data-workspace-event-status="${esc(e.id)}" data-status="${e.status==='done'?'todo':'done'}">${e.status==='done'?'戻す':'完了'}</button></div>`).join(''):'<p class="muted">今日の個人予定はありません。</p>'}<button type="button" class="button secondary" data-workspace-new-event="${today}">＋予定を追加</button></section>
     <section class="panel workspace-home"><div class="panel-heading"><h2>期限・進行中のタスク</h2><a class="text-button" href="#tasks">タスク一覧へ</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${b.review.length?`<div class="work-review-reminder"><strong>確認目安が来た待機タスク ${b.review.length}件</strong><p>情報が出たか確認して、作業できるようになったら「未着手」に戻してください。</p>${taskList(b.review.slice(0,3))}<a href="#tasks" class="text-button">待機タスクを確認する</a></div>`:''}${focus.length?taskList(focus):'<p class="muted">今日のタスクはありません。やることを追加できます。</p>'}<div class="workspace-actions"><button type="button" class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><a class="button secondary" href="#projects">プロジェクトを開く</a></div></section>`;
   }
   function calendar(){
     const period=calendarPeriod(calendarView,calendarDate),days=daySequence(period.start,period.end),items=calendarItems(value,period.start,period.end,{...calendarFlags,today:localDate()}),picked=items[calendarDate]||[],today=localDate();
-    const formatItem=x=>x.kind==='habit'?`<div class="work-calendar-entry habit"><span>習慣</span><strong>${x.count}/${x.total} 達成</strong><a href="#habits">確認</a></div>`:x.kind==='event'?`<div class="work-calendar-entry event"><span>予定</span><strong>${esc(x.title)}</strong><small>${x.allDay?'終日':esc(x.time||'時刻なし')}</small><button class="button secondary" data-workspace-edit="events:${esc(x.id)}">編集</button><button class="button secondary" data-workspace-delete="events:${esc(x.id)}">削除</button>${value.events.find(e=>e.id===x.id)?.note?`<p>${clean(value.events.find(e=>e.id===x.id).note)}</p>`:''}</div>`:x.kind==='review'?`<div class="work-calendar-entry review"><span>確認目安</span><strong>${esc(x.title)}</strong><button class="button secondary" data-workspace-select-task="${esc(x.id)}">タスクを開く</button></div>`:`<div class="work-calendar-entry task"><span>${x.virtual?'ルーチン予定（予測）':x.done?'完了したタスク':'タスク'}</span><strong>${esc(x.title)}</strong><button class="button secondary" data-workspace-select-task="${esc(x.id)}">確認</button></div>`;
+    const formatItem=x=>x.kind==='habit'?`<div class="work-calendar-entry habit"><span>習慣</span><strong>${x.count}/${x.total} 達成</strong><a href="#habits">確認</a></div>`:x.kind==='event'?`<div class="work-calendar-entry event"><span>${x.done?'完了した予定':'予定'}</span><strong class="${x.done?'is-done':''}">${esc(x.title)}</strong><small>${x.allDay?'終日':esc(x.time||'時刻なし')}</small><button class="button secondary" data-workspace-event-status="${esc(x.id)}" data-status="${x.done?'todo':'done'}">${x.done?'予定に戻す':'完了にする'}</button><button class="button secondary" data-workspace-edit="events:${esc(x.id)}">編集</button><button class="button secondary" data-workspace-delete="events:${esc(x.id)}">削除</button>${value.events.find(e=>e.id===x.id)?.note?`<p>${clean(value.events.find(e=>e.id===x.id).note)}</p>`:''}</div>`:x.kind==='review'?`<div class="work-calendar-entry review"><span>確認目安</span><strong>${esc(x.title)}</strong><button class="button secondary" data-workspace-select-task="${esc(x.id)}">タスクを開く</button></div>`:`<div class="work-calendar-entry task"><span>${x.virtual?'ルーチン予定（予測）':x.done?'完了したタスク':'タスク'}</span><strong>${esc(x.title)}</strong><button class="button secondary" data-workspace-select-task="${esc(x.id)}">確認</button></div>`;
     return `<header class="page-heading"><div><h1>カレンダー</h1><p>タスク・個人予定・習慣を一緒に確認。予定はタスクと別に保存します。</p></div><button type="button" class="button primary" data-workspace-new-event="${esc(calendarDate)}">${icon('plus')}予定を登録</button></header>${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
     <section class="panel work-calendar"><div class="work-calendar-toolbar"><div class="segmented">${[['month','月'],['week','週']].map(([x,l])=>`<button type="button" data-workspace-calendar-view="${x}" class="${calendarView===x?'active':''}" aria-pressed="${calendarView===x}">${l}</button>`).join('')}</div><div class="work-calendar-controls"><button class="button secondary" type="button" data-workspace-calendar-shift="-1">前へ</button><strong>${esc(calendarView==='month'?calendarDate.slice(0,7).replace('-','年')+'月':period.start+' 〜 '+period.end)}</strong><button class="button secondary" type="button" data-workspace-calendar-shift="1">次へ</button><button class="button secondary" type="button" data-workspace-calendar-today="1">今日</button></div></div>
     <div class="work-calendar-filters">${[['tasks','タスク'],['events','予定'],['habits','習慣']].map(([key,label])=>`<label class="work-calendar-filter ${key}"><input type="checkbox" data-workspace-calendar-filter="${key}" ${calendarFlags[key]?'checked':''}> ${label}</label>`).join('')}</div>
@@ -222,7 +250,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(!Object.hasOwn(titles,type))throw Error('入力種類が不正です。');
     pendingQuickNoteId='';formType=type;formId=prefill?'':id;f.reset();document.querySelector('#workspace-title').textContent=`${id?'編集':'追加'}：${titles[type]}`;
     f.elements.title.value=item?.title||'';f.elements.project.innerHTML=projectOptions(item?.project||'');f.elements.project.value=item?.project||'';
-    f.elements.description.value=item?.description||'';if(f.elements.goal)f.elements.goal.value=item?.goal||'';if(f.elements.doneCriteria)f.elements.doneCriteria.value=item?.doneCriteria||'';if(f.elements.stages)f.elements.stages.value=(item?.stages||[]).join('\n');f.elements.body.value=item?.body||'';f.elements.detail.value=item?.detail||'';
+    f.elements.description.value=item?.description||'';if(f.elements.goal)f.elements.goal.value=item?.goal||'';if(f.elements.doneCriteria)f.elements.doneCriteria.value=item?.doneCriteria||'';if(f.elements.currentState)f.elements.currentState.value=item?.currentState||'';if(f.elements.stages)f.elements.stages.value=(item?.stages||[]).join('\n');f.elements.body.value=item?.body||'';f.elements.detail.value=item?.detail||'';
     f.elements.memo.value=item?.memo||'';f.elements.due.value=item?.due||'';f.elements.priority.value=item?.priority||'normal';f.elements.status.value=item?.status||'todo';f.elements.category.value=item?.category||'';
     f.elements.steps.value=(item?.steps||[]).map(s=>s.text).join('\n');
     f.elements.repeatType.value=item?.repeat?.type||'none';f.elements.monthDay.value=String(item?.repeat?.monthDay||1);
@@ -235,7 +263,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(f.elements.eventDate)f.elements.eventDate.value=item?.date||calendarDate;
     if(f.elements.allDay)f.elements.allDay.checked=item?.allDay??false;
     if(f.elements.eventTime)f.elements.eventTime.value=item?.time||'';
-    if(f.elements.eventNote)f.elements.eventNote.value=item?.note||'';
+    if(f.elements.eventNote)f.elements.eventNote.value=item?.note||'';if(f.elements.eventStatus)f.elements.eventStatus.value=item?.status||'todo';
     updateRepeatFields();
     updateWaitFields();
     for(const wrap of f.querySelectorAll('[data-workspace-types]'))wrap.hidden=!wrap.dataset.workspaceTypes.split(',').includes(type);
@@ -305,6 +333,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
         selectedTask=t.id;filter='';search='';location.hash='#tasks';render();return true;
       }
       if(button.dataset.workspaceFocus){save(workspaceToggleFocus(value,localDate(),button.dataset.workspaceFocus));toast('今日やる3件を更新しました。');return true;}
+      if(button.dataset.workspaceNewReview!==undefined){openReview(button.dataset.workspaceNewReview,button.dataset.taskId||'');return true;}
+      if(button.dataset.workspaceEventStatus){save(workspaceSetEventStatus(value,button.dataset.workspaceEventStatus,button.dataset.status,uid));toast(button.dataset.status==='done'?'予定を完了にしました。':'予定に戻しました。');return true;}
       if(button.dataset.workspaceNewEvent){calendarDate=button.dataset.workspaceNewEvent;open('events','',{date:calendarDate});return true;}
       if(button.dataset.workspaceNewDatedTask){open('tasks','',{due:button.dataset.workspaceNewDatedTask});return true;}
       if(button.dataset.workspaceCalendarDay){calendarDate=button.dataset.workspaceCalendarDay;render();return true;}
@@ -321,8 +351,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(button.dataset.workspaceAddStageTask!==undefined){open('tasks','',{project:button.dataset.project,stage:button.dataset.workspaceAddStageTask});return true;}
       if(button.dataset.workspaceSetupProject!==undefined){open('projects','',{title:button.dataset.workspaceSetupProject});return true;}
       if(button.dataset.workspaceCopyContext!==undefined){
-        const container=button.closest?.('.work-copy-section'),promptId=container?.querySelector?.('[data-work-copy-prompt]')?.value||'',linkId=container?.querySelector?.('[data-work-copy-link]')?.value||'';
-        copyText(buildWorkspaceRequest({workspace:value,project:button.dataset.workspaceCopyContext,taskId:button.dataset.taskId||'',promptId,linkId}));return true;
+        const container=button.closest?.('.work-copy-section'),promptId=container?.querySelector?.('[data-work-copy-prompt]')?.value||'',linkId=container?.querySelector?.('[data-work-copy-link]')?.value||'',taskId=button.dataset.taskId||container?.querySelector?.('[data-work-copy-task]')?.value||'',instruction=container?.querySelector?.('[data-work-copy-instruction]')?.value||'';
+        copyText(buildWorkspaceRequest({workspace:value,project:button.dataset.workspaceCopyContext,taskId,promptId,linkId,instruction}));return true;
       }
       if(button.dataset.workspaceUseTemplate){const t=value.templates.find(x=>x.id===button.dataset.workspaceUseTemplate);if(!t)throw Error('テンプレートがありません。');open('tasks','',{title:t.title,project:t.project,detail:t.detail,priority:t.priority,steps:t.steps});return true;}
       if(button.dataset.workspaceSaveTemplate){const t=visibleTask(button.dataset.workspaceSaveTemplate);if(!t)throw Error('タスクがありません。');open('templates','',{title:t.title,project:t.project,detail:t.detail,priority:t.priority,steps:t.steps});return true;}
@@ -357,6 +387,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(target.id==='workspace-prompt-filter'){promptFilter=target.value;render();return true;}
     if(target.dataset?.workspaceCalendarFilter){calendarFlags[target.dataset.workspaceCalendarFilter]=target.checked;render();return true;}
     if(target.id==='workspace-project-name' || (target.name==='project'&&target.closest?.('#workspace-form'))){updateStageOptions();return true;}
+    if(target.name==='taskId'&&target.closest?.('#work-review-form')){const task=value.tasks.find(t=>t.id===target.value);const f=document.querySelector('#work-review-form');f.elements.completeTask.disabled=!task||task.status==='done';if(f.elements.completeTask.disabled)f.elements.completeTask.checked=false;return true;}
     if(target.name==='allDay'){updateEventTime();return true;}
     if(target.name==='repeatType'){updateRepeatFields();return true;}
     if(target.name==='status'&&formType==='tasks'){updateWaitFields();return true;}
@@ -383,7 +414,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     event.preventDefault();try{
       const f=event.currentTarget,payload={title:f.elements.title.value.trim(),project:f.elements.project.value};
       if(formType==='links'){payload.project='';payload.url=f.elements.url.value.trim();}
-      if(formType==='events'){Object.assign(payload,{project:'',date:f.elements.eventDate.value,allDay:f.elements.allDay.checked,time:f.elements.allDay.checked?'':f.elements.eventTime.value,note:f.elements.eventNote.value});}
+      if(formType==='events'){Object.assign(payload,{project:'',date:f.elements.eventDate.value,allDay:f.elements.allDay.checked,time:f.elements.allDay.checked?'':f.elements.eventTime.value,note:f.elements.eventNote.value,status:f.elements.eventStatus?.value||'todo',completedAt:(f.elements.eventStatus?.value==='done')?(value.events.find(e=>e.id===formId)?.completedAt||new Date().toISOString()):''});}
       if(formType==='tasks'){
         const old=value.tasks.find(t=>t.id===formId);
         const rpt=parseRepeat(f,old);
@@ -394,12 +425,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(formType==='projects'){
         const stages=(f.elements.stages?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
         if(stages.length>12||stages.some(s=>s.length>100)||new Set(stages).size!==stages.length)throw Error('作業段階は12件まで・各100文字以内・同名不可です。');
-        Object.assign(payload,{description:f.elements.description.value,memo:f.elements.memo.value,goal:f.elements.goal?.value||'',doneCriteria:f.elements.doneCriteria?.value||'',stages});
+        Object.assign(payload,{description:f.elements.description.value,memo:f.elements.memo.value,goal:f.elements.goal?.value||'',doneCriteria:f.elements.doneCriteria?.value||'',currentState:f.elements.currentState?.value||'',stages});
       }
       if(formType==='notes'||formType==='prompts')payload.body=f.elements.body.value;
       if(formType==='prompts'){payload.category=f.elements.category.value;payload.pinned=f.elements.pinned.checked;if(!payload.body.trim())throw Error('プロンプトの本文を入力してください。');}
       if(formType==='projects'&&value.projects.some(p=>p.title===payload.title&&p.id!==formId))throw Error('同じ名前のプロジェクトは既にあります。');
-      if(formType==='projects'&&formId){const prev=value.projects.find(p=>p.id===formId);if(prev&&prev.title!==payload.title&&([...value.tasks,...value.notes,...value.prompts,...value.templates].some(x=>x.project===prev.title)||getTimeRecords().some(r=>r.project===prev.title)))throw Error('記録があるプロジェクトの名前は変更できません。');}
+      if(formType==='projects'&&formId){const prev=value.projects.find(p=>p.id===formId);if(prev&&prev.title!==payload.title&&([...value.tasks,...value.notes,...value.prompts,...value.templates,...value.reviews].some(x=>x.project===prev.title)||getTimeRecords().some(r=>r.project===prev.title)))throw Error('記録があるプロジェクトの名前は変更できません。');}
       let next=workspaceChange(value,formType,payload,formId,uid);
       if(formType==='projects'&&formId){
         const before=value.projects.find(p=>p.id===formId),oldStages=before?.stages||[],newStages=payload.stages;
@@ -436,6 +467,13 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   });
   document.addEventListener('submit',event=>{
     const form=event.target;
+    if(form.id==='work-review-form'){
+      event.preventDefault();try{
+        const f=form.elements;
+        const next=workspaceRecordReview(value,{project:reviewProject,taskId:f.taskId.value,outcome:f.outcome.value,decisions:f.decisions.value,issues:f.issues.value,nextAction:f.nextAction.value,verified:f.verified.checked,completeTask:f.completeTask.checked,createNextTask:f.createNextTask.checked},localDate(),uid);
+        save(next);document.querySelector('#work-review-dialog').close();toast('作業結果を保存し、次の依頼に引き継ぎました。');
+      }catch(e){document.querySelector('#work-review-error').textContent=e.message;}return;
+    }
     if(form.dataset?.workspaceQuickForm!==undefined&&form.matches('[data-workspace-quick-form]')){
       event.preventDefault();try{
         save(workspaceChange(value,'quickNotes',{body:form.elements.body.value},'',uid));toast('ひとことメモを保存しました。');
@@ -459,5 +497,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,quickHome,quickNotesPage,linksHome,links,tasks,projects,habitHome,habits,calendar,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
 }

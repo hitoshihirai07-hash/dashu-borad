@@ -371,12 +371,13 @@
 .home-dashboard .panel-heading{margin-bottom:8px;min-height:29px}
 .home-dashboard .panel-heading h2{font-size:15px;line-height:1.35}
 .home-dashboard .panel-heading .text-button{white-space:nowrap;font-size:11px;padding:4px 2px}
-.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing time';gap:12px;align-items:stretch}
+.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing events' 'time time';gap:12px;align-items:stretch}
 .home-dashboard-grid > *{min-width:0}
 .home-dashboard .home-memo{grid-area:memo}
 .home-dashboard .habit-home{grid-area:habits}
 .home-dashboard .home-doing{grid-area:doing}
 .home-dashboard .home-time{grid-area:time}
+.home-dashboard .home-events{grid-area:events}
 .home-dashboard .home-links{min-width:0}
 .home-links-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .home-link-tile{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;min-height:42px;padding:8px 11px;border-radius:8px;border:1px solid #d8e9dd;background:#f5faf6;color:#2d6147;font-size:12px;font-weight:700;text-decoration:none}
@@ -410,9 +411,35 @@
 .home-time-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
 .home-time-add svg{width:15px;height:15px}
 @media(max-width:1120px) and (min-width:761px){.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-dashboard .habit-item{font-size:11px;padding-inline:7px}}
-@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
+@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'events' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
 @media(max-width:380px){.home-dashboard .panel-heading h2{font-size:14px}.home-links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-memo .work-quick-form-foot small{display:none}}
 
 /* Keep the quick capture button in the same row on narrow phones; do not add an extra full-width row. */
 @media(max-width:760px){.home-memo .work-quick-form-foot{align-items:center;flex-wrap:nowrap}.home-memo .work-quick-form-foot .button{width:auto;flex:0 0 auto;margin-left:auto}}
 @media(max-width:760px){.home-dashboard{gap:7px}.home-dashboard-grid{gap:7px}.home-dashboard .panel{padding:10px 12px}.home-dashboard .panel-heading{min-height:25px;margin-bottom:6px}.home-dashboard .habit-item{min-height:34px;padding-block:5px}}
+
+/* Goal / AI handoff / retrospective integration */
+.work-copy-section .work-copy-instruction{display:block;margin:12px 0;max-width:100%}
+.work-copy-instruction textarea{display:block;width:100%;margin-top:5px}
+.work-review-history{min-width:0}
+.work-review-entry{padding:12px 0;border-top:1px solid #e1ece5;overflow-wrap:anywhere}
+.work-review-heading{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#416c4f;font-size:12px}
+.work-review-heading span{background:#fff2db;border-radius:7px;padding:2px 7px;color:#846129}
+.work-review-heading .work-verified{background:#e7f6ea;color:#23704b}
+.work-review-entry p{margin:5px 0;line-height:1.5;font-size:13px}
+.work-review-check{display:flex;gap:7px;align-items:flex-start}
+.work-review-check input{flex:none;margin-top:4px}
+.home-dashboard .home-events .panel-heading{margin-bottom:4px}
+.home-events-list{display:grid;gap:3px}
+.home-event-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e7eee9;min-width:0}
+.home-event-text{display:grid;gap:1px;min-width:0}
+.home-event-text strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-event-text small{font-size:10px;color:#698171}
+.home-event-row .button{font-size:11px;padding:4px 9px;min-height:26px;white-space:nowrap}
+.home-event-row.is-done .home-event-text strong,.work-event-row.is-done strong,.work-calendar-entry .is-done{text-decoration:line-through;color:#89988b}
+.home-events .home-card-actions{margin-top:3px}
+.home-dashboard .home-time{min-height:90px}
+.home-dashboard .home-time-summary{margin:0 0 4px}
+.home-dashboard .home-time-summary strong{font-size:22px}
+
+.work-copy-instruction textarea{border:1px solid #b9d7c4;border-radius:9px;padding:9px 10px;line-height:1.55;font:inherit;font-size:13px;color:#315c42;background:#fff;resize:vertical}

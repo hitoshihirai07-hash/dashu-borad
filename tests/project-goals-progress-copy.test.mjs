@@ -75,7 +75,7 @@ test('workspace project form saves goal and stage linkage, displays progress and
   assert.equal(ui.get().tasks[0].stage,'準備');
   ui.click({dataset:{workspaceOverview:'1'}});
   const html=ui.projects();
-  assert.match(html,/改善/);assert.match(html,/進捗サマリー/);assert.match(html,/最終作業日/);assert.match(html,/AI作業依頼文の一括コピー/);assert.match(html,/新しい画面/);
+  assert.match(html,/改善/);assert.match(html,/進捗サマリー/);assert.match(html,/最終作業日/);assert.match(html,/AI作業依頼：目標/);assert.match(html,/新しい画面/);
   ui.click({dataset:{workspaceEdit:`projects:${ui.get().projects[0].id}`}});
   form.elements.stages.value='調査\n実装';form.handlers.submit({preventDefault(){},currentTarget:form});
   assert.equal(ui.get().tasks[0].stage,'調査');
