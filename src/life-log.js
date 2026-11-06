@@ -161,8 +161,13 @@ export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc
       const plan=healthMerge(healthStore.get(),healthImportData);healthStore.save(plan.data);$life('#health-import-dialog').close();render();toast(`Samsung Healthを取り込みました（追加 ${plan.added}日・更新 ${plan.updated}日）。`);
     }catch(error){$life('#health-import-error').textContent=error.message;}
   });
+  function home(){
+    const today=localDate(),alreadyRecorded=currentRecords().some(r=>r.date===today);
+    return `<section class="panel home-card home-life" aria-label="生活ログの記録"><div class="panel-heading"><h2>生活ログ</h2><a class="text-button" href="#life-log">生活ログを見る</a></div>${store.error()?`<p class="home-life-notice" role="alert">生活ログを読み込めません。生活ログ画面で保存データを確認してください。</p>`:alreadyRecorded?`<p class="home-life-notice is-recorded" role="status">${icon('calendar')}今日の生活ログは記録済みです。</p>`:`<p class="home-life-copy">今日の睡眠・体調・ひとことを記録できます。</p><button type="button" class="button primary home-life-add" data-life="home-today">${icon('plus')}生活ログを記録</button>`}</section>`;
+  }
   return {
     page:pageHTML,
+    home,
     onStorage(event){if(event.key===LIFE_KEY||event.key===SAMSUNG_HEALTH_KEY||event.key===null){store.reload();healthStore.reload();render();}},
     change(target){
       if(target.id==='life-import-unescape'){try{importData=lifeParseCSV(importCSVText,{decodeEscapes:target.checked});importPreview();$life('#life-import-error').textContent='';}catch(error){$life('#life-import-error').textContent=error.message;}return true;}
@@ -188,6 +193,11 @@ export function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc
       if(b.life==='apply-preset'){const f=$life('#life-form'),values=sleepPresetForDate(loadSleepPresets(),f.elements.date.value);if(values.wake)f.elements.wake.value=values.wake;if(values.bed)f.elements.bed.value=values.bed;if(!values.wake&&!values.bed)toast('この曜日の睡眠プリセットはまだ設定されていません。');else toast('睡眠プリセットを入力しました。');}
       if(b.life==='copy-sleep'){const f=$life('#life-form'),values=previousSleepValues(currentRecords(),f.elements.date.value);if(!values)toast('前日の生活ログがないためコピーできません。');else{f.elements.wake.value=values.wake;f.elements.bed.value=values.bed;toast('前日の起床・就寝時間をコピーしました。');}}
       if(b.life==='weekly-md'){const range=lifeRange('week',anchor),md=weeklyMarkdown({range,timeRecords:getTimeRecords(),lifeRecords:store.get().records,healthRecords:healthStore.get().records});download(md,`週まとめ_${range.start}_${range.end}.md`,'text/markdown;charset=utf-8');toast('Obsidian用Markdownを保存します。');}
+      if(b.life==='home-today'){
+        if(store.error())throw Error(store.error());
+        if(currentRecords().some(r=>r.date===localDate()))toast('今日の生活ログは記録済みです。');
+        else openRecord(localDate());
+      }
       if(b.life==='today-edit')openRecord(localDate());
       if(b.life==='add-date')openRecord(anchor);
       if(b.life==='today'){anchor=localDate();render();}

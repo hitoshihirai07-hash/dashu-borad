@@ -134,23 +134,30 @@ test('navigation and dashboard expose the memo page while keeping existing route
 });
 
 
-test('compact home limits links and doing tasks, and does not preview saved memo bodies',()=>{
+test('compact home shows every today task irrespective of status, not unrelated ongoing tasks',()=>{
  const h=uiHarness();try{
    let w=workspaceFresh();
    for(let n=0;n<8;n++)w=workspaceChange(w,'links',{title:`リンク${n+1}`,url:`https://example.com/${n+1}`},'',uid);
-   for(let n=0;n<5;n++)w=workspaceChange(w,'tasks',{title:`進行タスク${n+1}`,project:'Player Lens',status:'doing',priority:'normal',due:''},'',uid);
+   for(const [title,status] of [['今日進行中','doing'],['今日未着手','todo'],['今日待機中','waiting'],['今日完了','done'],['今日いつかやる','someday']])
+     w=workspaceChange(w,'tasks',{title,project:'Player Lens',status,priority:'normal',due:'2026-11-03'},'',uid);
+   w=workspaceChange(w,'tasks',{title:'別日の進行中',project:'Player Lens',status:'doing',priority:'normal',due:'2026-11-04'},'',uid);
+   w=workspaceChange(w,'tasks',{title:'今日やる3件に選択',project:'Player Lens',status:'todo',priority:'normal',due:''},'',uid);
+   w={...w,focusDays:{'2026-11-03':[w.tasks.at(-1).id]}};
    w=workspaceChange(w,'quickNotes',{body:'この本文は一覧だけで見る'},'',uid);
    h.saved.setItem(WORKSPACE_KEY,JSON.stringify(w));h.ui.reload();
    const links=h.ui.linksHome(true),tasks=h.ui.home(true),memo=h.ui.quickHome(true);
    assert.equal((links.match(/class="home-link-tile"/g)||[]).length,6);
    assert.doesNotMatch(links,/リンク7|リンク8/);
    assert.match(links,/href="#links"/);
-   assert.equal((tasks.match(/class="home-doing-item"/g)||[]).length,3);
-   assert.match(tasks,/進行中のタスク <small>5件/);
-   assert.doesNotMatch(tasks,/進行タスク4|進行タスク5|今日やる3件|今日の予定/);
+   assert.equal((tasks.match(/class="home-doing-item /g)||[]).length,6);
+   assert.match(tasks,/今日のタスク <small>6件/);
+   for(const title of ['今日進行中','今日未着手','今日待機中','今日完了','今日いつかやる','今日やる3件に選択'])assert.match(tasks,new RegExp(title));
+   for(const status of ['進行中','未着手','待機中','完了','いつかやる'])assert.match(tasks,new RegExp(`>${status}<`));
+   assert.doesNotMatch(tasks,/別日の進行中|今日の予定/);
+   assert.match(tasks,/data-workspace-new-dated-task="2026-11-03"/);
    assert.match(memo,/href="#quick-notes"/);
    assert.doesNotMatch(memo,/この本文は一覧だけで見る|最近のメモ/);
    assert.match(h.ui.quickNotesPage(),/この本文は一覧だけで見る/);
-   assert.equal(h.ui.get().links.length,8);assert.equal(h.ui.get().tasks.length,5);
+   assert.equal(h.ui.get().links.length,8);assert.equal(h.ui.get().tasks.length,7);
  }finally{h.restore();}
 });

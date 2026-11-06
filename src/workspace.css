@@ -371,12 +371,13 @@
 .home-dashboard .panel-heading{margin-bottom:8px;min-height:29px}
 .home-dashboard .panel-heading h2{font-size:15px;line-height:1.35}
 .home-dashboard .panel-heading .text-button{white-space:nowrap;font-size:11px;padding:4px 2px}
-.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing events' 'time time';gap:12px;align-items:stretch}
+.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing events' 'life time';gap:12px;align-items:stretch}
 .home-dashboard-grid > *{min-width:0}
 .home-dashboard .home-memo{grid-area:memo}
 .home-dashboard .habit-home{grid-area:habits}
 .home-dashboard .home-doing{grid-area:doing}
 .home-dashboard .home-time{grid-area:time}
+.home-dashboard .home-life{grid-area:life}
 .home-dashboard .home-events{grid-area:events}
 .home-dashboard .home-links{min-width:0}
 .home-links-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
@@ -411,7 +412,7 @@
 .home-time-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
 .home-time-add svg{width:15px;height:15px}
 @media(max-width:1120px) and (min-width:761px){.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-dashboard .habit-item{font-size:11px;padding-inline:7px}}
-@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'events' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
+@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'events' 'life' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
 @media(max-width:380px){.home-dashboard .panel-heading h2{font-size:14px}.home-links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-memo .work-quick-form-foot small{display:none}}
 
 /* Keep the quick capture button in the same row on narrow phones; do not add an extra full-width row. */
@@ -443,3 +444,20 @@
 .home-dashboard .home-time-summary strong{font-size:22px}
 
 .work-copy-instruction textarea{border:1px solid #b9d7c4;border-radius:9px;padding:9px 10px;line-height:1.55;font:inherit;font-size:13px;color:#315c42;background:#fff;resize:vertical}
+
+/* Today's tasks include pending and completed items; status is visible without opening them. */
+.home-task-status{flex:none;font-size:10px;font-weight:700;border-radius:5px;padding:2px 5px;background:#e8f3eb;color:#33644a}
+.home-task-status[data-status="doing"]{background:#e1f1ec;color:#1b6b53}
+.home-task-status[data-status="waiting"],.home-task-status[data-status="someday"]{background:#f9efdc;color:#826127}
+.home-task-status[data-status="done"]{background:#edf1ed;color:#667c6c}
+.home-doing-item.is-done .home-doing-title{color:#84988a;text-decoration:line-through}
+.home-doing-project{max-width:30%}
+/* Quick daily life entry; once saved, show a status instead of a second input button. */
+.home-life{display:flex;flex-direction:column;justify-content:flex-start}
+.home-life-copy{margin:3px 0 9px;font-size:12px;color:#587661;line-height:1.5}
+.home-life-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
+.home-life-add svg{width:15px;height:15px}
+.home-life-notice{margin:7px 0 0;padding:10px 11px;border-radius:8px;background:#fff7e9;color:#825b27;font-size:12px;line-height:1.5}
+.home-life-notice.is-recorded{display:flex;align-items:center;gap:7px;background:#eaf5ec;color:#2d6b48}
+.home-life-notice svg{flex:none;width:15px;height:15px}
+@media(max-width:760px){.home-life-add{width:100%}.home-doing-project{max-width:28%}}

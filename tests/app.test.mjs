@@ -122,14 +122,14 @@ test('dashboard shows only today total and the time records page keeps quick-rec
  h.nav('#dashboard');assert.match(h.html(),/今日の合計<\/span><strong>1時間30分/);
 });
 
-test('dashboard places only five daily-use panels in order, with links and no in-home histories',()=>{
+test('dashboard retains compact order with a life-log entry and no in-home histories',()=>{
  const h=harness(),html=h.html();
- const names=['よく使うリンク','ひとことメモ</h2>','今日の習慣','進行中のタスク','時間の記録</h2>'];
+ const names=['よく使うリンク','ひとことメモ</h2>','今日の習慣','今日のタスク','生活ログ</h2>','時間の記録</h2>'];
  const positions=names.map(x=>html.indexOf(x));
  assert(positions.every(x=>x>=0));assert(positions.every((x,i)=>i===0||x>positions[i-1]));
  assert.match(html,/href="#quick-notes"/);assert.match(html,/href="#records"/);
  assert.match(html,/data-workspace-quick-form/);assert.match(html,/data-workspace-habit/);
- assert.match(html,/data-action="add"/);
+ assert.match(html,/data-action="add"/);assert.match(html,/data-life="home-today"/);
  for(const removed of ['最近のメモ','最近の記録','時間の推移','今日やる3件','今日の予定','期間の集計'])assert.doesNotMatch(html,new RegExp(removed));
 });
 
@@ -159,4 +159,23 @@ test('life log page reminds about missing time record and links back to dashboar
  const h=harness();h.nav('#life-log');
  assert.match(h.html(),/今日の時間記録はまだありません/);
  assert.match(h.html(),/href="#dashboard"/);
+});
+
+test('home life-log button opens today, then shows a completed notice without duplicate entry',async()=>{
+ const h=harness(),today=localDate();
+ assert.match(h.html(),/data-life="home-today"/);
+ await h.click({life:'home-today'});
+ assert.equal(h.el('#life-dialog').open,true);
+ assert.equal(h.el('#life-form').elements.date.value,today);
+ h.el('#life-form').elements.sleep.value='7';
+ h.el('#life-form').elements.oneLine.value='今日も記録した';
+ h.submitLife();
+ assert.equal(h.el('#life-form-error').textContent,'');
+ assert.equal(h.readLife().records.find(r=>r.date===today).sleep,7);
+ assert.match(h.html(),/今日の生活ログは記録済みです/);
+ assert.doesNotMatch(h.html(),/data-life="home-today"/);
+ // A click issued from a stale UI also must not open a second input.
+ await h.click({life:'home-today'});
+ assert.equal(h.el('#life-dialog').open,false);
+ assert.equal(h.readLife().records.length,1);
 });

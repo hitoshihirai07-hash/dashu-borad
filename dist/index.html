@@ -394,12 +394,13 @@
 .home-dashboard .panel-heading{margin-bottom:8px;min-height:29px}
 .home-dashboard .panel-heading h2{font-size:15px;line-height:1.35}
 .home-dashboard .panel-heading .text-button{white-space:nowrap;font-size:11px;padding:4px 2px}
-.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing events' 'time time';gap:12px;align-items:stretch}
+.home-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'memo habits' 'doing events' 'life time';gap:12px;align-items:stretch}
 .home-dashboard-grid > *{min-width:0}
 .home-dashboard .home-memo{grid-area:memo}
 .home-dashboard .habit-home{grid-area:habits}
 .home-dashboard .home-doing{grid-area:doing}
 .home-dashboard .home-time{grid-area:time}
+.home-dashboard .home-life{grid-area:life}
 .home-dashboard .home-events{grid-area:events}
 .home-dashboard .home-links{min-width:0}
 .home-links-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
@@ -434,7 +435,7 @@
 .home-time-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
 .home-time-add svg{width:15px;height:15px}
 @media(max-width:1120px) and (min-width:761px){.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.home-dashboard .habit-item{font-size:11px;padding-inline:7px}}
-@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'events' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
+@media(max-width:760px){#main:has(.home-dashboard){padding-top:12px}.home-dashboard{gap:9px}.home-dashboard .panel{padding:12px 13px}.home-dashboard-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:'memo' 'habits' 'doing' 'events' 'life' 'time';gap:9px}.home-links-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.home-link-tile{min-height:36px;padding:6px 8px;font-size:11px}.home-memo .work-quick-form textarea{min-height:51px;height:51px}.home-dashboard .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-dashboard .home-doing-list{gap:2px}.home-time-summary{margin:0 0 8px}.home-time-summary strong{font-size:24px}.home-time-add{width:100%}}
 @media(max-width:380px){.home-dashboard .panel-heading h2{font-size:14px}.home-links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-memo .work-quick-form-foot small{display:none}}
 
 /* Keep the quick capture button in the same row on narrow phones; do not add an extra full-width row. */
@@ -466,6 +467,23 @@
 .home-dashboard .home-time-summary strong{font-size:22px}
 
 .work-copy-instruction textarea{border:1px solid #b9d7c4;border-radius:9px;padding:9px 10px;line-height:1.55;font:inherit;font-size:13px;color:#315c42;background:#fff;resize:vertical}
+
+/* Today's tasks include pending and completed items; status is visible without opening them. */
+.home-task-status{flex:none;font-size:10px;font-weight:700;border-radius:5px;padding:2px 5px;background:#e8f3eb;color:#33644a}
+.home-task-status[data-status="doing"]{background:#e1f1ec;color:#1b6b53}
+.home-task-status[data-status="waiting"],.home-task-status[data-status="someday"]{background:#f9efdc;color:#826127}
+.home-task-status[data-status="done"]{background:#edf1ed;color:#667c6c}
+.home-doing-item.is-done .home-doing-title{color:#84988a;text-decoration:line-through}
+.home-doing-project{max-width:30%}
+/* Quick daily life entry; once saved, show a status instead of a second input button. */
+.home-life{display:flex;flex-direction:column;justify-content:flex-start}
+.home-life-copy{margin:3px 0 9px;font-size:12px;color:#587661;line-height:1.5}
+.home-life-add{align-self:flex-start;min-height:33px;padding:6px 14px;font-size:12px}
+.home-life-add svg{width:15px;height:15px}
+.home-life-notice{margin:7px 0 0;padding:10px 11px;border-radius:8px;background:#fff7e9;color:#825b27;font-size:12px;line-height:1.5}
+.home-life-notice.is-recorded{display:flex;align-items:center;gap:7px;background:#eaf5ec;color:#2d6b48}
+.home-life-notice svg{flex:none;width:15px;height:15px}
+@media(max-width:760px){.home-life-add{width:100%}.home-doing-project{max-width:28%}}
 </style></head>
 <body><div id="auth-screen" class="auth-screen" role="region" aria-label="ログイン"><div class="auth-card"><h1>ときの記録</h1><p>本人専用ログイン</p><form id="auth-form"><label>メールアドレス<input type="email" name="email" autocomplete="username" maxlength="254" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" required></label><p id="auth-error" class="error" role="alert"></p><button class="button primary auth-submit" type="submit">ログイン</button></form><p id="auth-loading" class="muted">ログイン状態を確認中…</p></div></div><a href="#main" class="skip">本文へ移動</a><aside class="sidebar" inert>
   <a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a>
@@ -1036,8 +1054,13 @@ function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc,getTim
       const plan=healthMerge(healthStore.get(),healthImportData);healthStore.save(plan.data);$life('#health-import-dialog').close();render();toast(`Samsung Healthを取り込みました（追加 ${plan.added}日・更新 ${plan.updated}日）。`);
     }catch(error){$life('#health-import-error').textContent=error.message;}
   });
+  function home(){
+    const today=localDate(),alreadyRecorded=currentRecords().some(r=>r.date===today);
+    return `<section class="panel home-card home-life" aria-label="生活ログの記録"><div class="panel-heading"><h2>生活ログ</h2><a class="text-button" href="#life-log">生活ログを見る</a></div>${store.error()?`<p class="home-life-notice" role="alert">生活ログを読み込めません。生活ログ画面で保存データを確認してください。</p>`:alreadyRecorded?`<p class="home-life-notice is-recorded" role="status">${icon('calendar')}今日の生活ログは記録済みです。</p>`:`<p class="home-life-copy">今日の睡眠・体調・ひとことを記録できます。</p><button type="button" class="button primary home-life-add" data-life="home-today">${icon('plus')}生活ログを記録</button>`}</section>`;
+  }
   return {
     page:pageHTML,
+    home,
     onStorage(event){if(event.key===LIFE_KEY||event.key===SAMSUNG_HEALTH_KEY||event.key===null){store.reload();healthStore.reload();render();}},
     change(target){
       if(target.id==='life-import-unescape'){try{importData=lifeParseCSV(importCSVText,{decodeEscapes:target.checked});importPreview();$life('#life-import-error').textContent='';}catch(error){$life('#life-import-error').textContent=error.message;}return true;}
@@ -1063,6 +1086,11 @@ function createLifeLog({storage,render,toast,download,icon,escapeHTML:esc,getTim
       if(b.life==='apply-preset'){const f=$life('#life-form'),values=sleepPresetForDate(loadSleepPresets(),f.elements.date.value);if(values.wake)f.elements.wake.value=values.wake;if(values.bed)f.elements.bed.value=values.bed;if(!values.wake&&!values.bed)toast('この曜日の睡眠プリセットはまだ設定されていません。');else toast('睡眠プリセットを入力しました。');}
       if(b.life==='copy-sleep'){const f=$life('#life-form'),values=previousSleepValues(currentRecords(),f.elements.date.value);if(!values)toast('前日の生活ログがないためコピーできません。');else{f.elements.wake.value=values.wake;f.elements.bed.value=values.bed;toast('前日の起床・就寝時間をコピーしました。');}}
       if(b.life==='weekly-md'){const range=lifeRange('week',anchor),md=weeklyMarkdown({range,timeRecords:getTimeRecords(),lifeRecords:store.get().records,healthRecords:healthStore.get().records});download(md,`週まとめ_${range.start}_${range.end}.md`,'text/markdown;charset=utf-8');toast('Obsidian用Markdownを保存します。');}
+      if(b.life==='home-today'){
+        if(store.error())throw Error(store.error());
+        if(currentRecords().some(r=>r.date===localDate()))toast('今日の生活ログは記録済みです。');
+        else openRecord(localDate());
+      }
       if(b.life==='today-edit')openRecord(localDate());
       if(b.life==='add-date')openRecord(anchor);
       if(b.life==='today'){anchor=localDate();render();}
@@ -1734,9 +1762,16 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   }
   function home(compact=false){
     if(compact){
-      const doing=value.tasks.filter(t=>t.status==='doing').sort((a,b)=>(a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')||Number(b.priority==='high')-Number(a.priority==='high')||a.title.localeCompare(b.title,'ja'));
-      const top=doing.slice(0,3);
-      return `<section class="panel home-card home-doing" aria-label="進行中のタスク"><div class="panel-heading"><h2>進行中のタスク <small>${doing.length}件</small></h2><a class="text-button" href="#tasks">すべて見る</a></div><div class="home-doing-list">${top.map(t=>`<button type="button" class="home-doing-item" data-workspace-select-task="${esc(t.id)}" title="${esc(t.title)}"><span class="home-doing-title">${esc(t.title)}</span><span class="home-doing-project">${esc(t.project||'未分類')}${t.due?' ・ '+esc(t.due.slice(5).replace('-','/')):''}</span></button>`).join('')||'<p class="muted home-doing-empty">進行中のタスクはありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new="tasks">＋ タスクを追加</button>${doing.length>3?`<span class="muted">ほか ${doing.length-3}件</span>`:''}</div></section>`;
+      const today=localDate(),focused=new Set(focusIds());
+      // Show every task planned for today, regardless of status. A task selected
+      // in "今日やる3件" also belongs here, even without a due date.
+      const todayTasks=value.tasks.filter(t=>t.due===today||focused.has(t.id)).sort((a,b)=>
+        Number(focused.has(b.id))-Number(focused.has(a.id))||
+        Number(b.status==='doing')-Number(a.status==='doing')||
+        Number(a.status==='done')-Number(b.status==='done')||
+        Number(b.priority==='high')-Number(a.priority==='high')||
+        a.title.localeCompare(b.title,'ja'));
+      return `<section class="panel home-card home-doing" aria-label="今日のタスク"><div class="panel-heading"><h2>今日のタスク <small>${todayTasks.length}件</small></h2><a class="text-button" href="#tasks">すべて見る</a></div><div class="home-doing-list">${todayTasks.map(t=>`<button type="button" class="home-doing-item ${t.status==='done'?'is-done':''}" data-workspace-select-task="${esc(t.id)}" title="${esc(t.title)}"><span class="home-doing-title">${esc(t.title)}</span><span class="home-task-status" data-status="${esc(t.status)}">${esc(completedLabel(t))}</span><span class="home-doing-project">${esc(t.project||'未分類')}</span></button>`).join('')||'<p class="muted home-doing-empty">今日のタスクはありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new-dated-task="${today}">＋ 今日のタスクを追加</button></div></section>`;
     }
     const today=localDate(),b=taskBuckets(value.tasks,today),focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
     const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
@@ -2122,7 +2157,7 @@ function dashboard(){
   // One compact operational home; detailed histories, charts and filters remain on their own pages.
   const today=localDate(),todayMinutes=activeRecords(data).filter(r=>r.date===today).reduce((sum,r)=>sum+r.minutes,0);
   const todayTime=todayMinutes?`${Math.floor(todayMinutes/60)?Math.floor(todayMinutes/60)+'時間':''}${todayMinutes%60?todayMinutes%60+'分':''}`:'0分';
-  return `<div class="home-dashboard"><h1 class="visually-hidden">今日の作業と記録</h1>${workspace.linksHome(true)}<div class="home-dashboard-grid">${workspace.quickHome(true)}${workspace.habitHome()}${workspace.home(true)}${workspace.homeEvents()}<section class="panel home-card home-time" aria-label="時間の記録"><div class="panel-heading"><h2>時間の記録</h2><a class="text-button" href="#records">記録を確認</a></div><div class="home-time-summary"><span>今日の合計</span><strong>${todayTime}</strong></div><button type="button" class="button primary home-time-add" data-action="add">${icon('plus')}時間を記録</button></section></div></div>`;
+  return `<div class="home-dashboard"><h1 class="visually-hidden">今日の作業と記録</h1>${workspace.linksHome(true)}<div class="home-dashboard-grid">${workspace.quickHome(true)}${workspace.habitHome()}${workspace.home(true)}${workspace.homeEvents()}${lifeLog.home()}<section class="panel home-card home-time" aria-label="時間の記録"><div class="panel-heading"><h2>時間の記録</h2><a class="text-button" href="#records">記録を確認</a></div><div class="home-time-summary"><span>今日の合計</span><strong>${todayTime}</strong></div><button type="button" class="button primary home-time-add" data-action="add">${icon('plus')}時間を記録</button></section></div></div>`;
 }
 function timeReport(){const range=periodRange(mode,anchor),records=inRange(byField(activeRecords(data),selectedField),range),total=records.reduce((s,r)=>s+r.minutes,0),days=new Set(records.map(r=>r.date)).size;let label=mode==='month'?`${anchor.slice(0,4)}年${Number(anchor.slice(5,7))}月`:mode==='day'?`${anchor.replaceAll('-','/')}（${['日','月','火','水','木','金','土'][new Date(anchor+'T12:00:00').getDay()]}）`:`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`;
   return `<section class="time-report"><div class="panel-heading"><h2>時間の集計・グラフ</h2><small>期間を切り替えて振り返る</small></div>`+fieldTabs()+quickRecordPanel()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div></section>`;

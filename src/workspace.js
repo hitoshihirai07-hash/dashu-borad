@@ -183,9 +183,16 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function home(compact=false){
     if(compact){
-      const doing=value.tasks.filter(t=>t.status==='doing').sort((a,b)=>(a.due||'9999-12-31').localeCompare(b.due||'9999-12-31')||Number(b.priority==='high')-Number(a.priority==='high')||a.title.localeCompare(b.title,'ja'));
-      const top=doing.slice(0,3);
-      return `<section class="panel home-card home-doing" aria-label="進行中のタスク"><div class="panel-heading"><h2>進行中のタスク <small>${doing.length}件</small></h2><a class="text-button" href="#tasks">すべて見る</a></div><div class="home-doing-list">${top.map(t=>`<button type="button" class="home-doing-item" data-workspace-select-task="${esc(t.id)}" title="${esc(t.title)}"><span class="home-doing-title">${esc(t.title)}</span><span class="home-doing-project">${esc(t.project||'未分類')}${t.due?' ・ '+esc(t.due.slice(5).replace('-','/')):''}</span></button>`).join('')||'<p class="muted home-doing-empty">進行中のタスクはありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new="tasks">＋ タスクを追加</button>${doing.length>3?`<span class="muted">ほか ${doing.length-3}件</span>`:''}</div></section>`;
+      const today=localDate(),focused=new Set(focusIds());
+      // Show every task planned for today, regardless of status. A task selected
+      // in "今日やる3件" also belongs here, even without a due date.
+      const todayTasks=value.tasks.filter(t=>t.due===today||focused.has(t.id)).sort((a,b)=>
+        Number(focused.has(b.id))-Number(focused.has(a.id))||
+        Number(b.status==='doing')-Number(a.status==='doing')||
+        Number(a.status==='done')-Number(b.status==='done')||
+        Number(b.priority==='high')-Number(a.priority==='high')||
+        a.title.localeCompare(b.title,'ja'));
+      return `<section class="panel home-card home-doing" aria-label="今日のタスク"><div class="panel-heading"><h2>今日のタスク <small>${todayTasks.length}件</small></h2><a class="text-button" href="#tasks">すべて見る</a></div><div class="home-doing-list">${todayTasks.map(t=>`<button type="button" class="home-doing-item ${t.status==='done'?'is-done':''}" data-workspace-select-task="${esc(t.id)}" title="${esc(t.title)}"><span class="home-doing-title">${esc(t.title)}</span><span class="home-task-status" data-status="${esc(t.status)}">${esc(completedLabel(t))}</span><span class="home-doing-project">${esc(t.project||'未分類')}</span></button>`).join('')||'<p class="muted home-doing-empty">今日のタスクはありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new-dated-task="${today}">＋ 今日のタスクを追加</button></div></section>`;
     }
     const today=localDate(),b=taskBuckets(value.tasks,today),focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
     const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
