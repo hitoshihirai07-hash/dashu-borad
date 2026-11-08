@@ -1,0 +1,101 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {workspaceFresh,workspaceChange,workspaceValidate,workspaceSetAiState,dailyPlanner,workspaceAdvanceTask} from '../src/workspace-model.js';
+import {collectCloudData,validateCloudData} from '../src/cloud-schema.js';
+import {createWorkspace} from '../src/workspace.js';
+let seq=0;const id=()=>`planner-${++seq}`;
+const add=(w,type,item)=>workspaceChange(w,type,item,'',id);
+const base=()=>{
+  let w=workspaceFresh();
+  w=add(w,'tasks',{title:'記事を確認する',project:'観戦メモ',due:'2026-11-08',startTime:'09:00',endTime:'10:00',assignee:'self',status:'doing',priority:'high'});
+  w=add(w,'tasks',{title:'分析をAIに依頼',project:'観戦メモ',due:'2026-11-08',assignee:'ai',aiService:'ChatGPT',aiState:'requested',aiRequestedAt:'2026-11-08T02:30:00.000Z',status:'todo',priority:'normal'});
+  w=add(w,'events',{title:'外出',date:'2026-11-08',time:'12:00',endTime:'13:00'});
+  return w;
+};
+test('legacy tasks and events remain valid with safe self-only defaults',()=>{
+  let w=base();w.tasks[0]={...w.tasks[0]};for(const k of ['assignee','aiService','aiState','aiRequestedAt','aiCheckedAt','startTime','endTime'])delete w.tasks[0][k];delete w.events[0].endTime;
+  w=workspaceValidate(w);
+  assert.deepEqual([w.tasks[0].assignee,w.tasks[0].aiState,w.tasks[0].startTime,w.events[0].endTime],['self','not_requested','','']);
+  assert.deepEqual(workspaceValidate(JSON.parse(JSON.stringify(w))),w);
+});
+test('AI states track request/review without inventing execution time',()=>{
+  let w=base();const t=w.tasks[1],requested=t.aiRequestedAt;
+  w=workspaceSetAiState(w,t.id,'review',id,'2026-11-08T03:00:00.000Z');
+  assert.equal(w.tasks[1].aiRequestedAt,requested);
+  assert.equal(w.tasks[1].aiCheckedAt,'');
+  w=workspaceSetAiState(w,t.id,'done',id,'2026-11-08T04:00:00.000Z');
+  assert.equal(w.tasks[1].aiCheckedAt,'2026-11-08T04:00:00.000Z');
+  w=workspaceSetAiState(w,t.id,'revision',id,'2026-11-08T05:00:00.000Z');
+  assert.equal(w.tasks[1].aiRequestedAt,'2026-11-08T05:00:00.000Z');
+  assert.equal(w.tasks[1].aiCheckedAt,'');
+  assert.throws(()=>workspaceSetAiState(w,w.tasks[0].id,'requested',id),/不正/);
+  assert.throws(()=>workspaceSetAiState(w,t.id,'other',id),/不正/);
+});
+test('3 lanes render assigned tasks, AI requests and events; only manual records count as work',()=>{
+  const w=base();const aiTask=w.tasks[1];
+  const records=[{date:'2026-11-08',minutes:30,deleted:false,taskId:w.tasks[0].id},{date:'2026-11-08',minutes:30,deleted:false,taskId:aiTask.id},{date:'2026-11-08',minutes:120,deleted:true},{date:'2026-11-07',minutes:480,deleted:false}];
+  const p=dailyPlanner(w,'2026-11-08',records);
+  assert.equal(p.selfMinutes,60,'time for prompting or reviewing an AI task is still human work if entered manually');
+  assert.deepEqual(p.lanes.self.map(x=>x.title),['記事を確認する']);
+  assert.deepEqual(p.lanes.ai.map(x=>x.title),['分析をAIに依頼']);
+  assert.equal(p.lanes.ai[0].timeType,'依頼');
+  assert.deepEqual(p.lanes.events.map(x=>x.endTime),['13:00']);
+  assert.equal(dailyPlanner(w,'2026-11-08',[]).selfMinutes,0,'AI waiting is never included as work');
+  const pending=add(w,'tasks',{title:'AIの返信を待つ',assignee:'ai',aiState:'requested',aiRequestedAt:'2026-11-06T03:00:00.000Z',status:'todo',priority:'normal'});
+  assert.equal(dailyPlanner(pending,'2026-11-08',[],{today:'2026-11-08'}).lanes.ai.length,2,'pending requests are visible on today regardless of their original date');
+});
+test('planned times are valid and strictly same-day; old cloud backups remain syncable',()=>{
+  const w=base();assert.throws(()=>add(w,'events',{title:'誤り',date:'2026-11-08',time:'12:00',endTime:'11:00'}),/不正/);
+  assert.throws(()=>add(w,'tasks',{title:'日付なし時間',status:'todo',priority:'normal',startTime:'10:00'}),/不正/);
+  assert.throws(()=>add(w,'tasks',{title:'人間の作業',status:'todo',priority:'normal',assignee:'self',aiState:'requested'}),/不正/);
+  assert.throws(()=>add(w,'events',{title:'終日',date:'2026-11-08',allDay:true,time:'12:00',endTime:'13:00'}),/不正/);
+  const data=collectCloudData({getItem:key=>key==='toki-workspace-v1'?JSON.stringify(w):null});validateCloudData(data);
+  assert.equal(JSON.parse(data.sections['toki-workspace-v1']).tasks[1].aiService,'ChatGPT');
+});
+test('next recurrence keeps AI assignment but clears prior AI request timestamps',()=>{
+  let w=workspaceFresh();w=add(w,'tasks',{title:'定例AI下書き',project:'観戦メモ',assignee:'ai',aiService:'ChatGPT',aiState:'requested',aiRequestedAt:'2026-11-08T02:30:00.000Z',priority:'normal',status:'todo',due:'2026-11-08',startTime:'10:00',repeat:{type:'weekly',days:[0],monthDay:null}});
+  w=workspaceAdvanceTask(w,w.tasks[0].id,'2026-11-08',id);
+  assert.equal(w.tasks[1].due,'2026-11-15');
+  assert.equal(w.tasks[1].aiState,'not_requested');
+  assert.equal(w.tasks[1].aiRequestedAt,'');
+  assert.equal(w.tasks[1].assignee,'ai');
+  const planned=dailyPlanner(w,'2026-11-22',[]);
+  assert.equal(planned.lanes.ai[0].virtual,true,'future recurring tasks appear as predictions, not saved rows');
+});
+test('calendar day tab and AI state picker work without changing existing task status',()=>{
+  const w=base(),nodes=new Map(),listeners={};
+  const element=()=>({value:'',checked:false,innerHTML:'',textContent:'',hidden:false,reset(){},addEventListener(name,fn){this.callbacks??={};this.callbacks[name]=fn;},querySelectorAll(){return [];},showModal(){},close(){}});
+  for(const key of ['#workspace-form','#workspace-dialog','#workspace-title','#workspace-form-error','#work-task-stage-field','#workspace-ai-settings'])nodes.set(key,element());
+  const form=nodes.get('#workspace-form');form.elements={};
+  for(const name of ['title','project','description','memo','body','detail','due','priority','status','category','steps','repeatType','monthDay','pinned','reviewDate','waitingFor','startCondition','eventDate','eventTime','eventEndTime','eventNote','eventStatus','allDay','assignee','aiState','aiService','startTime','endTime'])form.elements[name]=element();
+  const old={document:globalThis.document,window:globalThis.window,location:globalThis.location};
+  globalThis.document={querySelector:key=>nodes.get(key)||null,addEventListener:(name,fn)=>{listeners[name]=fn;}};
+  globalThis.window={innerWidth:1400};globalThis.location={hash:'#calendar'};
+  try{
+    const storage=new Map([['toki-workspace-v1',JSON.stringify(w)]]);
+    const ui=createWorkspace({storage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},render(){},toast(){},escapeHTML:v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),icon:()=>'',getTimeRecords:()=>[{date:'2026-11-08',minutes:30,deleted:false}],uid:id,localDate:()=> '2026-11-08',startRecord(){}});
+    assert.match(ui.calendar(),/月/);
+    ui.click({dataset:{workspaceCalendarView:'day'}});
+    let html=ui.calendar();
+    for(const label of ['1日手帳','予定','自分の作業','AIに依頼','分析をAIに依頼','自分の作業記録：0時間30分'])assert(html.includes(label),label);
+    assert.match(html,/data-workspace-ai-status/);
+    assert.match(html,/12:00/);
+    assert.match(html,/09:00/);
+    ui.change({dataset:{workspaceAiStatus:w.tasks[1].id},value:'review'});
+    assert.equal(ui.get().tasks[1].aiState,'review');
+    assert.equal(ui.get().tasks[1].status,'todo');
+    ui.click({dataset:{workspaceCalendarShift:'1'}});
+    assert.match(ui.calendar(),/2026-11-09/);
+    ui.click({dataset:{workspaceNewAiTask:'2026-11-08'}});
+    assert.equal(form.elements.assignee.value,'ai');
+    assert.equal(form.elements.due.value,'2026-11-08');
+    form.elements.title.value='新しいAI作業';
+    form.elements.aiService.value='Claude';
+    form.elements.aiState.value='requested';
+    form.callbacks.submit({preventDefault(){},currentTarget:form});
+    const created=ui.get().tasks.at(-1);
+    assert.equal(created.title,'新しいAI作業');
+    assert.equal(created.aiService,'Claude');
+    assert.match(created.aiRequestedAt,/T/);
+  }finally{Object.assign(globalThis,old);}
+});

@@ -461,3 +461,55 @@
 .home-life-notice.is-recorded{display:flex;align-items:center;gap:7px;background:#eaf5ec;color:#2d6b48}
 .home-life-notice svg{flex:none;width:15px;height:15px}
 @media(max-width:760px){.home-life-add{width:100%}.home-doing-project{max-width:28%}}
+
+/* 3-lane daily planner: schedule and AI status are independent of logged minutes. */
+.work-ai-marker{background:#e6f0fa;color:#2e6086}
+.work-ai-inline{display:grid;gap:4px;font-size:11px;font-weight:650;color:#37667e;min-width:110px}
+.work-ai-inline select,.work-planner-ai-select{width:100%;min-height:34px;background:#f1f8ff;color:#285b77;border:1px solid #b7d3e4;border-radius:8px;padding:5px;font:inherit;font-size:12px}
+.work-task-row>.work-ai-inline{max-width:118px;flex:0 0 118px}
+.work-ai-details{border-left:3px solid #83b2d6;padding-left:12px}
+.work-ai-detail-line{display:flex;align-items:center;flex-wrap:wrap;gap:12px;color:#4e6e7c;font-size:12px}
+.work-ai-detail-line .work-ai-inline{min-width:150px}
+.work-ai-details .muted{font-size:12px;line-height:1.7;margin-top:9px}
+.work-ai-form{padding:13px;border-radius:12px;border:1px solid #c5dced;background:#f6fbff;display:grid;gap:9px}
+.work-ai-form .muted,.work-task-time-fields .muted{font-size:12px;line-height:1.6;margin:0}
+.work-ai-form input,.work-ai-form select{margin-top:5px}
+.work-task-time-fields{display:grid;gap:9px}
+#workspace-ai-settings[hidden]{display:none}
+.work-day-planner{display:grid;gap:14px}
+.work-day-summary{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.work-day-summary>span{background:#f1f8f3;border:1px solid #d9e8dd;border-radius:9px;padding:9px 12px;color:#315f46;font-size:12px}
+.work-day-planner>.muted{font-size:12px;line-height:1.7;margin:0}
+.work-planner-scroll{border:1px solid #d6e5db;border-radius:12px;overflow-x:auto;overscroll-behavior-x:contain;background:#fff}
+.work-planner-grid{min-width:630px;display:grid;grid-template-columns:65px repeat(3,minmax(185px,1fr))}
+.work-planner-heading{position:sticky;top:0;z-index:2;padding:11px 8px;background:#e8f4eb;border-bottom:2px solid #bddbc6;border-right:1px solid #d4e4d8;color:#285a40;text-align:center;font-size:12px;font-weight:750}
+.work-planner-heading:last-of-type{background:#e7f2fb;color:#2a607f}
+.work-planner-hour,.work-planner-cell{min-height:53px;border-right:1px solid #e6eee7;border-bottom:1px solid #e8eee8}
+.work-planner-hour{padding:10px 4px;background:#f8fbf8;font-size:11px;color:#688071;font-variant-numeric:tabular-nums;text-align:center;font-weight:700}
+.work-planner-cell{padding:4px 6px;display:grid;align-content:start;gap:4px;min-width:0}
+.work-planner-cell[data-lane="ai"]{background:#fbfdff}
+.work-planner-card{padding:9px;border-radius:8px;border:1px solid #cae3d2;border-left:4px solid #5d9f79;background:#eff8f1;display:grid;align-content:start;gap:5px;min-width:0}
+.work-planner-card.is-event{background:#fff8e9;border-color:#ead9b6;border-left-color:#c59a57}
+.work-planner-card.is-ai{background:#ecf5fd;border-color:#cbddeb;border-left-color:#669cc6}
+.work-planner-card.is-done{opacity:.7}
+.work-planner-card.is-done .work-planner-open strong{text-decoration:line-through}
+.work-planner-open{text-align:left;cursor:pointer;min-width:0;background:none;border:0;padding:0;color:#24533e;font:inherit;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.work-planner-open strong{display:block}
+.work-planner-card.is-ai .work-planner-open{color:#2b5b7b}
+.work-planner-card small{font-size:11px;color:#5b7469;line-height:1.4;overflow-wrap:anywhere}
+.work-planner-card.is-ai small{color:#51758d}
+.work-planner-action{justify-self:start;padding:4px 9px;border-radius:7px;border:1px solid #d7bf96;background:#fff;color:#7b592a;font-size:11px;cursor:pointer}
+.work-planner-unscheduled-title{font-size:14px;color:#315844;margin:7px 0 0}
+.work-planner-unscheduled{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.work-planner-unscheduled-lane{min-width:0;background:#fbfdfb;border:1px solid #e3ece5;border-radius:10px;padding:9px;display:grid;align-content:start;gap:8px}
+.work-planner-unscheduled-lane:nth-child(3){background:#f7fbfe}
+.work-planner-unscheduled-lane h4{font-size:12px;color:#4c7058;margin:0 0 2px}
+.work-planner-unscheduled-lane>.muted{font-size:12px;margin:0}
+.work-planner-add{margin-top:0}
+@media(max-width:800px){.work-task-row{flex-wrap:wrap}.work-task-select{flex:1 1 calc(100% - 130px)}.work-task-row>.work-ai-inline{flex:1 1 100%;max-width:none;display:flex;align-items:center;gap:9px}.work-task-row>.work-ai-inline select{max-width:210px}.work-planner-unscheduled{grid-template-columns:1fr}}
+@media(max-width:600px){.work-planner-grid{min-width:660px}.work-planner-scroll{margin:0 -2px}.work-day-summary>span{width:100%;padding:8px 10px}.work-planner-unscheduled-lane{padding:8px}.work-ai-form .classification-fields{display:grid;grid-template-columns:1fr}.work-calendar .segmented{max-width:100%}}
+
+/* AI task rows keep their controls usable even in the narrow desktop task column. */
+.work-task-row:has(>.work-ai-inline){flex-wrap:wrap}
+.work-task-row>.work-ai-inline{flex:1 1 100%;max-width:none;display:flex;align-items:center;gap:10px}
+.work-task-row>.work-ai-inline select{max-width:240px}

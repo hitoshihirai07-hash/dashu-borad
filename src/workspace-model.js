@@ -10,6 +10,10 @@ export const HABITS = Object.freeze([
 export const workspaceFresh = () => ({
   format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],reviews:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[]
 });
+const validClock = v => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+const validTimestamp = v => !v || Number.isFinite(Date.parse(v));
+const AI_STATES = ['not_requested','requested','review','revision','done'];
+const validSpan = (start,end) => validClock(start)&&validClock(end)&&(!end||(!!start&&end>start));
 const validDay = v => {
   if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
   const d = new Date(v+'T12:00:00');
@@ -54,15 +58,22 @@ export function workspaceValidate(value){
         return {...base,taskId:str(item.taskId??'',160),outcome:str(item.outcome??'',6000,true),decisions:str(item.decisions??'',4000),issues:str(item.issues??'',4000),nextAction:str(item.nextAction??'',1000),verified:(()=>{const checked=item.verified??false;if(typeof checked!=='boolean')throw Error('振り返りの確認状態が不正です。');return checked;})()};
       }
       if(type==='events'){
-        const date=str(item.date??'',10,true),time=str(item.time??'',5),note=str(item.note??'',2000);
+        const date=str(item.date??'',10,true),time=str(item.time??'',5),endTime=str(item.endTime??'',5),note=str(item.note??'',2000);
         const allDay=item.allDay??false;
-        if(!validDay(date)||(time&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))||typeof allDay!=='boolean'||(allDay&&time))throw Error('予定の日付・時刻の形式が不正です。');
+        if(!validDay(date)||!validSpan(time,endTime)||typeof allDay!=='boolean'||(allDay&&(time||endTime)))throw Error('予定の日付・時刻の形式が不正です。');
         const status=str(item.status??'todo',12),completedAt=str(item.completedAt??'',40);
         if(!['todo','done'].includes(status)||(completedAt&&!Number.isFinite(Date.parse(completedAt))))throw Error('予定の完了状態が不正です。');
-        return {...base,project:'',date,time,allDay,note,status,completedAt};
+        return {...base,project:'',date,time,endTime,allDay,note,status,completedAt};
       }
       if(type==='tasks'){
         const due=str(item.due??'',10),status=str(item.status,15),priority=str(item.priority,15),detail=str(item.detail??'',4000);
+        const startTime=str(item.startTime??'',5),endTime=str(item.endTime??'',5);
+        if(!validSpan(startTime,endTime)||(startTime&&!due))throw Error('タスクの予定時刻・予定日の形式が不正です。');
+        const assignee=str(item.assignee??'self',8),aiService=str(item.aiService??'',80),aiState=str(item.aiState??'not_requested',16);
+        const aiRequestedAt=str(item.aiRequestedAt??'',40),aiCheckedAt=str(item.aiCheckedAt??'',40);
+        if(!['self','ai'].includes(assignee)||!AI_STATES.includes(aiState)||!validTimestamp(aiRequestedAt)||!validTimestamp(aiCheckedAt)||
+          (assignee==='self'&&(aiService||aiState!=='not_requested'||aiRequestedAt||aiCheckedAt))||
+          (aiCheckedAt&&(!aiRequestedAt||Date.parse(aiCheckedAt)<Date.parse(aiRequestedAt))))throw Error('AIタスクの設定・日時が不正です。');
         if((due&&!validDay(due))||!['todo','doing','waiting','someday','done'].includes(status)||!['high','normal','low'].includes(priority))throw Error('タスクの日付・状態が不正です。');
         const repeat=item.repeat??null;
         let rule=null;
@@ -81,7 +92,7 @@ export function workspaceValidate(value){
         const routineId=str(item.routineId??'',160),completedAt=str(item.completedAt??'',40);
         if(completedAt&&!Number.isFinite(Date.parse(completedAt)))throw Error('タスクの完了日時が不正です。');
         if(typeof(item.skipped??false)!=='boolean')throw Error('スキップ状態が不正です。');
-        return {...base,due,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        return {...base,due,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects'){
         const stages=item.stages??[];
@@ -319,9 +330,23 @@ export function workspaceAdvanceTask(current,id,today,makeId,skip=false){
   // Never create duplicates for a series, including when undoing historical completions.
   if(old.repeat&&!tasks.some(t=>t.id!==id&&t.routineId===group&&t.status!=='done')){
     const due=nextRoutineDate(old.repeat,old.due>today?old.due:today);
-    tasks.push({...old,id:makeId(),due,status:'todo',memo:'',steps:old.steps.map(s=>({...s,done:false})),routineId:group,skipped:false,completedAt:'',createdAt:now,updatedAt:now});
+    tasks.push({...old,id:makeId(),due,status:'todo',memo:'',steps:old.steps.map(s=>({...s,done:false})),aiState:'not_requested',aiRequestedAt:'',aiCheckedAt:'',routineId:group,skipped:false,completedAt:'',createdAt:now,updatedAt:now});
   }
   return workspaceValidate({...current,tasks});
+}
+// AI依頼の経過は作業時間と別のメタデータ。AIの実稼働時間は計測しません。
+export function workspaceAiPatch(task,nextState,at=new Date().toISOString()){
+  if(task.assignee!=='ai'||!AI_STATES.includes(nextState)||!validTimestamp(at))throw Error('AIタスクの状態が不正です。');
+  if(nextState===task.aiState)return {};
+  if(nextState==='not_requested')return {aiState:nextState,aiRequestedAt:'',aiCheckedAt:''};
+  if(nextState==='requested'||nextState==='revision')return {aiState:nextState,aiRequestedAt:at,aiCheckedAt:''};
+  if(nextState==='review')return {aiState:nextState,aiRequestedAt:task.aiRequestedAt||at,aiCheckedAt:''};
+  return {aiState:nextState,aiRequestedAt:task.aiRequestedAt||at,aiCheckedAt:at};
+}
+export function workspaceSetAiState(current,id,nextState,makeId,at=new Date().toISOString()){
+  const t=workspaceValidate(current).tasks.find(row=>row.id===id);
+  if(!t)throw Error('AIタスクが見つかりません。');
+  return workspaceChange(current,'tasks',workspaceAiPatch(t,nextState,at),id,makeId);
 }
 export function workspaceSetTaskStatus(current,id,status,today,makeId){
   if(!['todo','doing','waiting','someday','done'].includes(status))throw Error('タスクの状態が不正です。');
@@ -379,4 +404,32 @@ export function calendarItems(current,start,end,{tasks=true,events=true,habits=t
     }
   }
   return days;
+}
+
+// Builds the 3 lanes without treating AI waiting time as logged work.
+export function dailyPlanner(current,day,records=[],{today=day,showTasks=true,showEvents=true}={}){
+  current=workspaceValidate(current);
+  if(!validDay(day))throw Error('手帳の日付が不正です。');
+  const lanes={events:[],self:[],ai:[]};
+  const localTime=timestamp=>{const d=new Date(timestamp);return Number.isFinite(+d)?{day:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}:null;};
+  if(showEvents)for(const e of current.events){
+    if(e.date!==day)continue;
+    lanes.events.push({kind:'event',id:e.id,title:e.title,time:e.allDay?'':e.time,endTime:e.endTime,allDay:e.allDay,done:e.status==='done'});
+  }
+  const virtuals=showTasks?new Set((calendarItems(current,day,day,{events:false,habits:false,today})[day]||[]).filter(x=>x.virtual).map(x=>x.id)):new Set();
+  if(showTasks)for(const t of current.tasks){
+    const requested=t.aiRequestedAt?localTime(t.aiRequestedAt):null;
+    const due=t.due===day;
+    const requestedToday=t.assignee==='ai'&&requested?.day===day;
+    const focus=(current.focusDays[day]||[]).includes(t.id);
+    const pendingToday=day===today&&t.assignee==='ai'&&['requested','review','revision'].includes(t.aiState)&&t.status!=='done'&&!due;
+    const predicted=virtuals.has(t.id);
+    if(!due&&!requestedToday&&!focus&&!pendingToday&&!predicted)continue;
+    const time=(due||predicted)&&t.startTime?t.startTime:(requestedToday?requested.time:'');
+    const timeType=(due||predicted)&&t.startTime?'予定':requestedToday?'依頼':'未設定';
+    lanes[t.assignee].push({kind:'task',id:t.id,title:t.title,time,endTime:(due||predicted)?t.endTime:'',timeType,done:t.status==='done',virtual:predicted&&!due,assignee:t.assignee,aiState:predicted&&!due?'not_requested':t.aiState,aiService:t.aiService,aiRequestedAt:predicted&&!due?'':t.aiRequestedAt,aiCheckedAt:predicted&&!due?'':t.aiCheckedAt});
+  }
+  for(const lane of Object.values(lanes))lane.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||a.title.localeCompare(b.title,'ja'));
+  const selfMinutes=records.filter(r=>!r.deleted&&r.date===day).reduce((sum,r)=>sum+(Number.isFinite(r.minutes)&&r.minutes>0?r.minutes:0),0);
+  return {day,lanes,selfMinutes};
 }
