@@ -468,9 +468,16 @@
 .work-ai-inline select,.work-planner-ai-select{width:100%;min-height:34px;background:#f1f8ff;color:#285b77;border:1px solid #b7d3e4;border-radius:8px;padding:5px;font:inherit;font-size:12px}
 .work-task-row>.work-ai-inline{max-width:118px;flex:0 0 118px}
 .work-ai-details{border-left:3px solid #83b2d6;padding-left:12px}
-.work-ai-detail-line{display:flex;align-items:center;flex-wrap:wrap;gap:12px;color:#4e6e7c;font-size:12px}
-.work-ai-detail-line .work-ai-inline{min-width:150px}
-.work-ai-details .muted{font-size:12px;line-height:1.7;margin-top:9px}
+/* AI status, request time and check time must remain readable in narrow detail panes. */
+.work-ai-detail-layout{display:grid;gap:12px;min-width:0;max-width:100%}
+.work-ai-detail-status{min-width:0}
+.work-ai-detail-status .work-ai-inline{display:grid;gap:5px;min-width:0;width:min(100%,240px)}
+.work-ai-detail-status .work-ai-inline select{display:block;min-width:0;width:100%;min-height:42px;font-size:14px}
+.work-ai-detail-times{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));gap:8px;min-width:0;color:#4e6e7c;font-size:12px}
+.work-ai-detail-times>span{display:block;min-width:0;padding:7px 10px;background:#f5f9fc;border-radius:8px;overflow-wrap:anywhere}
+.work-ai-detail-times strong{display:block;font-size:11px;font-weight:650;margin-bottom:2px}
+.work-ai-details .muted{font-size:12px;line-height:1.7;margin-top:9px;overflow-wrap:anywhere}
+.work-ai-task-hint{font-size:12px;line-height:1.7;overflow-wrap:anywhere;margin:9px 0 0;color:#42654d;background:#f0f8f1;padding:9px;border-radius:8px}
 .work-ai-form{padding:13px;border-radius:12px;border:1px solid #c5dced;background:#f6fbff;display:grid;gap:9px}
 .work-ai-form .muted,.work-task-time-fields .muted{font-size:12px;line-height:1.6;margin:0}
 .work-ai-form input,.work-ai-form select{margin-top:5px}

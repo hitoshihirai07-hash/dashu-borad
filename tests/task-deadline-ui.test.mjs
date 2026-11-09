@@ -75,3 +75,41 @@ test('task and compact home show overdue warnings; reschedule buttons update wit
    assert.match(h.ui.tasks(),/完了済み/);
  }finally{h.close();}
 });
+
+test('project task list uses the same date grouping, warns for overdue items and allows manual rescheduling',()=>{
+ let w=workspaceFresh();
+ w=add(w,'遅れているタスク','2026-11-08');
+ w=add(w,'古い期限','2026-10-01');
+ w=add(w,'明日のタスク','2026-11-10');
+ w=add(w,'来週のタスク','2026-11-17');
+ const h=makeUI(w);
+ try{
+   const html=h.ui.projects();
+   assert.match(html,/期限を過ぎた未完了タスクが2件あります/);
+   assert.match(html,/期限切れ・直近7日間/);
+   assert.match(html,/古い期限切れ/);
+   assert.match(html,/明日・11月10日（火）/);
+   assert.match(html,/来週以降/);
+   assert.match(html,/data-workspace-reschedule=/);
+   const id=w.tasks.find(t=>t.title==='遅れているタスク').id;
+   h.ui.click({dataset:{workspaceSelectTask:id}});
+   assert.match(h.ui.projects(),/このタスクは期限を1日過ぎています/);
+   assert.equal(h.ui.click({dataset:{workspaceReschedule:id,targetDay:'2026-11-09'}}),true);
+   assert.equal(h.ui.get().tasks.find(t=>t.id===id).due,'2026-11-09');
+   assert.match(h.ui.projects(),/期限を過ぎた未完了タスクが1件あります/);
+   assert.doesNotMatch(h.ui.projects(),/このタスクは期限を1日過ぎています/);
+ }finally{h.close();}
+});
+
+test('AI checked status has a readable detail layout and is not mistaken for task completion',()=>{
+ let w=workspaceFresh();
+ w=workspaceChange(w,'tasks',{title:'AIルーチン',project:'観戦メモ',due:'2026-11-08',status:'todo',priority:'normal',assignee:'ai',aiService:'ChatGPT',aiState:'done',aiRequestedAt:'2026-11-09T12:59:00.000Z',aiCheckedAt:'2026-11-09T12:59:10.000Z',repeat:{type:'daily',days:[],monthDay:null}},'',uid);
+ const h=makeUI(w);
+ try{
+   const html=h.ui.tasks();
+   assert.match(html,/class="work-ai-detail-layout"/);
+   assert.match(html,/class="work-ai-detail-times"/);
+   assert.match(html,/AIの確認は済んでいますが、このタスクはまだ未完了です/);
+   assert.equal(h.ui.get().tasks[0].status,'todo');
+ }finally{h.close();}
+});
