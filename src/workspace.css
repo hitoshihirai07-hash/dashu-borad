@@ -513,3 +513,40 @@
 .work-task-row:has(>.work-ai-inline){flex-wrap:wrap}
 .work-task-row>.work-ai-inline{flex:1 1 100%;max-width:none;display:flex;align-items:center;gap:10px}
 .work-task-row>.work-ai-inline select{max-width:240px}
+
+/* Date-based task list and explicit overdue handling. */
+.work-overdue-notice{border:1px solid #efd1aa;border-radius:11px;background:#fffaf0;padding:12px 14px;margin:12px 0;color:#694a24}
+.work-overdue-notice>strong{display:block;font-size:13px;color:#85541e}
+.work-overdue-notice>p{margin:5px 0 8px;font-size:12px;line-height:1.6}
+.work-overdue-compact{padding:9px 10px;margin:7px 0 10px}
+.work-overdue-compact>strong{font-size:12px}
+.work-overdue-compact>p{font-size:11px;line-height:1.5;margin:4px 0}
+.work-overdue-preview{display:grid;gap:7px;margin:7px 0}
+.work-overdue-preview-item{padding:6px 0;border-top:1px solid #ebdec7;min-width:0}
+.work-overdue-title{border:0;background:transparent;padding:0;text-align:left;font-size:12px;color:#51401c;font-weight:700;cursor:pointer;overflow-wrap:anywhere}
+.work-overdue-preview-item>small{display:block;margin:3px 0;color:#816845;font-size:11px}
+.work-overdue-notice>.text-button{font-size:11px}
+.work-overdue-row{border-bottom:1px solid #e8ede7;padding:5px 0 9px}
+.work-overdue-row:last-child{border-bottom:0}
+.work-overdue-row>.work-task-row{margin-bottom:4px}
+.work-overdue-meta{font-size:11px;color:#94672e;margin:4px 0}
+.work-reschedule-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.work-reschedule-actions>.button,.work-date-choice-inner>.button{min-height:29px;padding:5px 8px;font-size:11px}
+.work-date-choice{position:relative;max-width:100%}
+.work-date-choice>summary{display:inline-block;cursor:pointer;color:#336349;font-size:11px;text-decoration:underline;text-underline-offset:2px;padding:5px 4px}
+.work-date-choice[open]{flex-basis:100%}
+.work-date-choice-inner{display:flex;align-items:end;gap:7px;flex-wrap:wrap;margin-top:6px}
+.work-date-choice-inner label{font-size:11px;color:#5f705f}
+.work-date-choice-inner input{display:block;border:1px solid #b6d1bd;background:white;border-radius:6px;min-height:33px;padding:4px 7px;font:inherit;font-size:13px;color:#254c37}
+.work-task-fold{border-bottom:1px solid #e5ede6;padding-bottom:8px}
+.work-task-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750;color:#305d43;font-size:14px;padding:10px 3px}
+.work-task-fold>summary::-webkit-details-marker{display:none}
+.work-task-fold>summary:before{content:'▸';margin-right:6px;color:#6a9378}
+.work-task-fold[open]>summary:before{content:'▾'}
+.work-task-fold>summary small{margin-left:auto;font-size:11px;font-weight:600;color:#71917c}
+.work-day-section{padding:5px 0 11px;border-top:1px solid #edf1ed}
+.work-day-section h3{font-size:12px;color:#597461;margin:6px 0 8px}
+.work-deadline-history details{margin-top:7px}
+.work-deadline-history summary{font-size:12px;color:#397355;cursor:pointer}
+.work-deadline-history li{font-size:12px;line-height:1.7;color:#536c5b}
+@media(max-width:600px){.work-overdue-notice{padding:10px}.work-reschedule-actions>.button{min-height:36px}.work-date-choice-inner input{font-size:16px}.work-task-fold>summary{min-height:42px}}

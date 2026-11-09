@@ -92,7 +92,16 @@ export function workspaceValidate(value){
         const routineId=str(item.routineId??'',160),completedAt=str(item.completedAt??'',40);
         if(completedAt&&!Number.isFinite(Date.parse(completedAt)))throw Error('タスクの完了日時が不正です。');
         if(typeof(item.skipped??false)!=='boolean')throw Error('スキップ状態が不正です。');
-        return {...base,due,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        // Optional on existing backups; one entry per deliberate due-date change.
+        const history=item.dueHistory??[];
+        if(!Array.isArray(history)||history.length>40)throw Error('期限変更の履歴が不正です。');
+        const dueHistory=history.map(h=>{
+          if(!h||typeof h!=='object'||!validDay(h.from)||(h.to!==''&&!validDay(h.to))||!validTimestamp(h.at)||!h.at)throw Error('期限変更の履歴が不正です。');
+          return {from:h.from,to:h.to,at:h.at};
+        });
+        const originalDue=str(item.originalDue??(dueHistory[0]?.from||''),10);
+        if(originalDue&&!validDay(originalDue))throw Error('元の期限が不正です。');
+        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects'){
         const stages=item.stages??[];
@@ -163,6 +172,16 @@ export function workspaceDelete(current,type,id){
   if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,reviews:1,quickNotes:1},type))throw Error('種類が不正です。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id),
     ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length)),quickNotes:current.quickNotes.map(n=>n.taskId===id?{...n,taskId:'',updatedAt:new Date().toISOString()}:n)}:{})});
+}
+// Changing a deadline is an explicit action; never silently roll tasks forward.
+export function workspaceRescheduleTask(current,id,due,makeId,at=new Date().toISOString()){
+  current=workspaceValidate(current);
+  const task=current.tasks.find(row=>row.id===id);
+  if(!task||task.status==='done'||['waiting','someday'].includes(task.status)||!task.due)throw Error('日付を変更できる未完了タスクがありません。');
+  if(!validDay(due)||!validTimestamp(at)||!at)throw Error('変更先の日付が不正です。');
+  if(task.due===due)return current;
+  const dueHistory=[...task.dueHistory,{from:task.due,to:due,at}].slice(-40);
+  return workspaceChange(current,'tasks',{due,dueHistory,originalDue:task.originalDue||task.due},id,makeId);
 }
 export function workspaceMoveLink(current,id,direction){
   current=workspaceValidate(current);
@@ -330,7 +349,7 @@ export function workspaceAdvanceTask(current,id,today,makeId,skip=false){
   // Never create duplicates for a series, including when undoing historical completions.
   if(old.repeat&&!tasks.some(t=>t.id!==id&&t.routineId===group&&t.status!=='done')){
     const due=nextRoutineDate(old.repeat,old.due>today?old.due:today);
-    tasks.push({...old,id:makeId(),due,status:'todo',memo:'',steps:old.steps.map(s=>({...s,done:false})),aiState:'not_requested',aiRequestedAt:'',aiCheckedAt:'',routineId:group,skipped:false,completedAt:'',createdAt:now,updatedAt:now});
+    tasks.push({...old,id:makeId(),due,dueHistory:[],originalDue:'',status:'todo',memo:'',steps:old.steps.map(s=>({...s,done:false})),aiState:'not_requested',aiRequestedAt:'',aiCheckedAt:'',routineId:group,skipped:false,completedAt:'',createdAt:now,updatedAt:now});
   }
   return workspaceValidate({...current,tasks});
 }
