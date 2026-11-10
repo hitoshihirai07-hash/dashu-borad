@@ -54,8 +54,8 @@ const freshTask=(r,at)=>({
  startCondition:'',dueHistory:[],originalDue:''
 });
 export async function onRequest({request,env}){
- if(request.method!=='POST')return json({error:'POSTのみ対応しています。'},405);
- if(request.headers.get('Origin')!==new URL(request.url).origin)return json({error:'別サイトから同期できません。'},403);
+ if(!['GET','POST'].includes(request.method))return json({error:'GET・POSTのみ対応しています。'},405);
+ if(request.method==='POST'&&request.headers.get('Origin')!==new URL(request.url).origin)return json({error:'別サイトから同期できません。'},403);
  if(!env.DB||!env.NOTION_TOKEN)return json({error:'CloudflareのD1・NOTION_TOKEN設定が必要です。'},503);
  let owner;try{owner=await verifySession(request,env);}catch{return json({error:'認証設定を確認してください。'},503);}
  if(!owner)return json({error:'ログインが必要です。'},401);
@@ -63,6 +63,7 @@ export async function onRequest({request,env}){
  if(!stateRow)return json({error:'まずダッシュボードのクラウド同期を開始してください。'},409);
  const mapKey='__notion_bridge_v1__:'+owner;
  const row=await env.DB.prepare('SELECT revision,payload FROM app_state WHERE owner=?').bind(mapKey).first();
+ if(request.method==='GET')return json({configured:true,initialized:!!row});
  let state;try{state=validateCloudData(JSON.parse(stateRow.payload));}catch{return json({error:'保存データ形式を確認できません。'},409);}
  let workspace;try{workspace=workspaceValidate(JSON.parse(state.sections['toki-workspace-v1']));}catch{return json({error:'タスクデータの形式が不正です。'},409);}
  const links=row?JSON.parse(row.payload):{};
@@ -97,6 +98,7 @@ export async function onRequest({request,env}){
    }else if(rc&&!lc){
     let next;
     if(local.status!==other.status){
+      if(local.repeat&&['waiting','someday'].includes(other.status)){conflicts.push(local.title+'：ルーチンタスクの待機指定は手動確認してください');continue;}
       next=workspaceSetTaskStatus({...workspace,tasks},local.id,other.status,now.slice(0,10),()=>crypto.randomUUID()).tasks;
       const candidate=next.find(x=>x.id===local.id);
       if(!candidate){conflicts.push(local.title+'：ルーチンタスクを同期できません');continue;}
