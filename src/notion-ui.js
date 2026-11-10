@@ -97,7 +97,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
       if(initialized)await sync();
     }
   }catch(e){message=e.message;}
-  setInterval(()=>{if(initialized&&cloud.status()==='ready'&&typeof document!=='undefined'&&!document.hidden)sync();},120000);
+  setInterval(()=>{if(typeof document==='undefined'||document.hidden||cloud.status()!=='ready')return;if(initialized)sync();if(tab==='memos'&&loaded&&!busy)load();},120000);
   if(typeof window!=='undefined')window.addEventListener('focus',()=>{if(initialized&&cloud.status()==='ready')sync();});
  }
  return {page,click,change,input,submit,load,sync,start};
