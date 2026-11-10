@@ -34,7 +34,10 @@ const props=t=>({
  'ダッシュボードID':{rich_text:plain(t.id)}
 });
 async function notion(env,path,method='GET',body){
- const response=await fetch('https://api.notion.com/v1/'+path,{method,headers:{'Authorization':'Bearer '+env.NOTION_TOKEN,'Notion-Version':'2025-09-03','Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+ let response;for(let attempt=0;attempt<3;attempt++){response=await fetch('https://api.notion.com/v1/'+path,{method,headers:{'Authorization':'Bearer '+env.NOTION_TOKEN,'Notion-Version':'2026-03-11','Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+  if(response.status!==429||attempt===2)break;
+  const wait=Math.min(5,Math.max(1,Number(response.headers.get('Retry-After'))||1));
+  await new Promise(resolve=>setTimeout(resolve,wait*1000));}
  const result=await response.json().catch(()=>({}));
  if(!response.ok)throw Error('Notion API ('+response.status+'): '+(result.message||'通信失敗'));
  return result;
@@ -92,6 +95,8 @@ export async function onRequest({request,env}){
    const lc=localHash!==previous.local,rc=remoteHash!==previous.remote;
    if(lc&&rc&&localHash!==remoteHash){conflicts.push(local.title+'：両方で変更されています');continue;}
    if(lc&&!rc){
+    const currentPage=await notion(env,'pages/'+other.notionId);
+    if(currentPage.last_edited_time!==other.notionEdited){conflicts.push(local.title+'：Notionで同期中に変更されました');continue;}
     await notion(env,'pages/'+other.notionId,'PATCH',{properties:props(local)});
     newLinks[local.id]={page:other.notionId,local:localHash,remote:localHash};
     updates.push(local.title+'：Notionへ反映');
