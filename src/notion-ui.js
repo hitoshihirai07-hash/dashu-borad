@@ -1,6 +1,6 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
- let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false;
+ let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false,formDraft=null;
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
  const memoDB='https://app.notion.com/p/4803a7f9e4e549ea809fce5495b3964d';
@@ -33,6 +33,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  function page(){
   const list=memos.filter(x=>(category==='all'||x.category===category)&&(!search||(`${x.title} ${x.body}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
   const note=editing?memos.find(x=>x.id===editing):null;
+  const draftDisplay=formDraft||note;
   return `<header class="page-heading"><div><h1>Notion連携</h1><p>タスクとメモをNotionと共有します。</p></div></header>
    <div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button></div>
    ${tab==='tasks'?`<section class="panel notion-panel"><h2>タスクの双方向同期</h2>
@@ -48,9 +49,9 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     ${conflicts.length?`<section class="panel notion-panel"><h2>要確認：競合</h2><ul>${conflicts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="muted">データは自動で上書きしていません。</p></section>`:''}
     `:`<section class="panel notion-panel"><div class="panel-heading"><h2>Notionのメモ</h2><a href="${memoDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>
     <div class="workspace-actions"><button type="button" class="button secondary" data-notion-action="load" ${busy?'disabled':''}>最新情報を取得</button><button type="button" class="button primary" data-notion-action="new" ${busy?'disabled':''}>新しいメモ</button></div>
-    ${editing!==null&&editing!=='__closed__'?`<form id="notion-memo-form" class="notion-form"><h3>${note?'メモを編集':'新しいメモ'}</h3><label>タイトル<input name="title" maxlength="160" required value="${esc(note?.title||'')}"></label>
-     <label>内容<textarea name="body" maxlength="1900" rows="6">${esc(note?.body||'')}</textarea></label>
-     <label>分類<select name="category">${select(categories,note?.category||'その他')}</select></label>
+    ${editing!==null&&editing!=='__closed__'?`<form id="notion-memo-form" class="notion-form"><h3>${note?'メモを編集':'新しいメモ'}</h3><label>タイトル<input name="title" maxlength="160" required value="${esc(draftDisplay?.title||'')}"></label>
+     <label>内容<textarea name="body" maxlength="1900" rows="6">${esc(draftDisplay?.body||'')}</textarea></label>
+     <label>分類<select name="category">${select(categories,draftDisplay?.category||'その他')}</select></label>
      <div class="workspace-actions"><button class="button primary" type="submit" ${busy?'disabled':''}>保存する</button><button type="button" class="button secondary" data-notion-action="cancel">キャンセル</button></div></form>`:''}
     <div class="notion-filters"><label>検索<input id="notion-search" value="${esc(search)}" placeholder="タイトル・内容"></label><label>分類<select id="notion-category">${select(['all',...categories],category)}</select></label></div>
     ${!loaded?'<p>「最新情報を取得」でNotionのメモを表示できます。</p>':list.length?list.map(x=>`<article class="notion-memo"><div><strong>${esc(x.title)}</strong><span class="muted"> ${esc(x.category)} ・ ${esc(x.createdAt.slice(0,10))}</span></div><p>${esc(x.body)}</p><button type="button" class="button secondary" data-notion-edit="${esc(x.id)}">編集</button></article>`).join(''):'<p class="muted">対象メモはありません。</p>'}
@@ -58,11 +59,11 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
    <p class="notion-message" role="status">${esc(message)}</p>`;
  }
  function click(button){
-  if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';render();if(tab==='memos'&&!loaded)load();return true;}
-  if(button.dataset.notionEdit){editing=button.dataset.notionEdit;render();return true;}
+  if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();if(tab==='memos'&&!loaded)load();return true;}
+  if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;render();return true;}
   const action=button.dataset.notionAction;if(!action)return false;
-  if(action==='sync')sync();else if(action==='load')load();else if(action==='new'){editing='';render();}
-  else if(action==='cancel'){editing='__closed__';render();}
+  if(action==='sync')sync();else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
+  else if(action==='cancel'){editing='__closed__';formDraft=null;render();}
   return true;
  }
  function change(node){
@@ -79,10 +80,10 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   const form=event.target,fd=new FormData(form),item=editing?memos.find(x=>x.id===editing):null;
   const draft={title:String(fd.get('title')||'').trim(),body:String(fd.get('body')||''),category:String(fd.get('category')||'その他'),...(item?{id:item.id,editedAt:item.editedAt}:{})};
   if(!draft.title){toast('タイトルを入力してください。');return true;}
-  busy=true;message='メモを保存中';
+  formDraft=draft;busy=true;message='メモを保存中';
   (async()=>{try{
    await api('/api/notion/memos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(draft)});
-   editing='__closed__';busy=false;await load();toast('Notionにメモを保存しました。');
+   editing='__closed__';formDraft=null;busy=false;await load();toast('Notionにメモを保存しました。');
   }catch(e){message=e.message;toast(e.message);}finally{busy=false;render();}})();
   return true;
  }
