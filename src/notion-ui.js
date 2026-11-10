@@ -39,7 +39,11 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     <p class="muted">初回は未完了のタスクだけ登録します。以降はNotionとダッシュボードで変更・完了を相互反映します。削除は自動同期しません。</p>
     <p>現在の未完了タスク：<strong>${workspace.get().tasks.filter(t=>t.status!=='done').length}件</strong></p>
     <div class="workspace-actions"><button type="button" class="button primary" data-notion-action="sync" ${busy?'disabled':''}>Notionと同期</button><a class="button secondary" target="_blank" rel="noopener noreferrer" href="${taskDB}">Notionで開く</a></div>
-    <p class="muted">同期の前にデータ共有画面からバックアップを保存してください。通信・更新競合時は上書きしません。</p></section>
+    <p class="muted">同期の前にデータ共有画面からバックアップを保存してください。通信・更新競合時は上書きしません。</p>
+    <h3>未完了タスク</h3><div class="notion-task-list">
+     ${workspace.get().tasks.filter(t=>t.status!=='done').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,100).map(t=>`<div class="notion-task-row"><div><strong>${esc(t.title)}</strong><small>${esc(t.project||'未分類')} ・ ${esc(t.due||'日付未定')}</small></div>
+     <select data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}の状態">${[['todo','未着手'],['doing','進行中'],['waiting','待機中'],['someday','いつかやる'],['done','完了']].map(([key,label])=>`<option value="${key}" ${key===t.status?'selected':''}>${label}</option>`).join('')}</select></div>`).join('')||'<p class="muted">未完了タスクはありません。</p>'}</div>
+    </section>
     ${changes.length?`<section class="panel notion-panel"><h2>反映した内容</h2><ul>${changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
     ${conflicts.length?`<section class="panel notion-panel"><h2>要確認：競合</h2><ul>${conflicts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="muted">データは自動で上書きしていません。</p></section>`:''}
     `:`<section class="panel notion-panel"><div class="panel-heading"><h2>Notionのメモ</h2><a href="${memoDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>
@@ -75,10 +79,10 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   const form=event.target,fd=new FormData(form),item=editing?memos.find(x=>x.id===editing):null;
   const draft={title:String(fd.get('title')||'').trim(),body:String(fd.get('body')||''),category:String(fd.get('category')||'その他'),...(item?{id:item.id,editedAt:item.editedAt}:{})};
   if(!draft.title){toast('タイトルを入力してください。');return true;}
-  busy=true;message='メモを保存中';render();
+  busy=true;message='メモを保存中';
   (async()=>{try{
    await api('/api/notion/memos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(draft)});
-   editing='__closed__';await load();toast('Notionにメモを保存しました。');
+   editing='__closed__';busy=false;await load();toast('Notionにメモを保存しました。');
   }catch(e){message=e.message;toast(e.message);}finally{busy=false;render();}})();
   return true;
  }
