@@ -1,6 +1,6 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
- let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='',search='',category='all';
+ let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false;
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
  const memoDB='https://app.notion.com/p/4803a7f9e4e549ea809fce5495b3964d';
@@ -24,6 +24,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
    const result=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    changes=result.updated||[];conflicts=result.conflicts||[];
    message=`同期確認完了：反映 ${changes.length}件、要確認 ${conflicts.length}件`;
+   initialized=true;
    if(result.changed)await cloud.refresh();
    toast(message);
   }catch(e){message=e.message;toast(message);}
@@ -81,5 +82,18 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }catch(e){message=e.message;toast(e.message);}finally{busy=false;render();}})();
   return true;
  }
- return {page,click,change,input,submit,load,sync};
+ async function start(){
+  if(started)return;
+  started=true;
+  try{
+    if(cloud.status()==='ready'){
+      const result=await api('/api/notion/sync');
+      initialized=!!result.initialized;
+      if(initialized)await sync();
+    }
+  }catch(e){message=e.message;}
+  setInterval(()=>{if(initialized&&cloud.status()==='ready'&&typeof document!=='undefined'&&!document.hidden)sync();},120000);
+  if(typeof window!=='undefined')window.addEventListener('focus',()=>{if(initialized&&cloud.status()==='ready')sync();});
+ }
+ return {page,click,change,input,submit,load,sync,start};
 }
