@@ -110,7 +110,7 @@ export async function onRequest({request,env}){
     }else next=tasks;
     const current=next.find(x=>x.id===local.id);
     if(!current){conflicts.push(local.title+'：タスクがありません');continue;}
-    const patched={...current,...canonical(other),updatedAt:now};
+    const patched={...current,...canonical(other),completedAt:other.status==='done'?(other.completedAt||current.completedAt||now):'',updatedAt:now};
     tasks=next.map(x=>x.id===local.id?patched:x);
     changed=true;
     newLinks[local.id]={page:other.notionId,local:fingerprint(patched),remote:remoteHash};
@@ -121,6 +121,7 @@ export async function onRequest({request,env}){
   }
   for(const other of remote){
    if(synced.has(other.id)||original.some(x=>x.id===other.id))continue;
+   if(links[other.id]){conflicts.push(other.title+'：ダッシュボード側で見つかりません。削除確認が必要です');continue;}
    const adopted=freshTask(other,now);
    if(!adopted.title.trim())continue;
    tasks.push(adopted);changed=true;
