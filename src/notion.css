@@ -8,3 +8,11 @@
 .notion-memo p{white-space:pre-wrap;max-height:15rem;overflow:auto}
 .notion-message{margin:1rem 0;color:#327655}
 @media(max-width:600px){.notion-filters{grid-template-columns:1fr}.notion-panel{padding:.85rem}}
+
+.notion-task-list{display:grid;gap:.4rem;margin-top:.7rem}
+.notion-task-row{display:flex;justify-content:space-between;gap:.8rem;align-items:center;padding:.65rem .3rem;border-bottom:1px solid #e2eae4}
+.notion-task-row>div{min-width:0;display:grid;gap:.2rem;overflow-wrap:anywhere}
+.notion-task-row strong{font-weight:650}
+.notion-task-row small{font-size:.75rem;color:#617366}
+.notion-task-row select{border:1px solid #a8c2ae;border-radius:8px;background:white;color:#274b33;font:inherit;padding:.4rem;max-width:140px}
+@media(max-width:600px){.notion-task-row{align-items:flex-start}.notion-task-row select{max-width:112px;min-width:95px}}
