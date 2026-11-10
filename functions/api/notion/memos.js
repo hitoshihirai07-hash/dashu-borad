@@ -6,7 +6,12 @@ const rich=s=>[{type:'text',text:{content:s}}];
 const properties=x=>({'タイトル':{title:rich(x.title)},'内容':{rich_text:rich(x.body)},'分類':{select:{name:x.category}}});
 const decode=p=>({id:p.id,title:plain(p.properties?.['タイトル']?.title),body:plain(p.properties?.['内容']?.rich_text),category:p.properties?.['分類']?.select?.name||'その他',createdAt:p.created_time,editedAt:p.last_edited_time,url:p.url});
 async function notion(env,path,method='GET',data){
- const r=await fetch('https://api.notion.com/v1/'+path,{method,headers:{Authorization:'Bearer '+env.NOTION_TOKEN,'Notion-Version':'2025-09-03','Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});
+ let r;
+ for(let attempt=0;attempt<3;attempt++){
+  r=await fetch('https://api.notion.com/v1/'+path,{method,headers:{Authorization:'Bearer '+env.NOTION_TOKEN,'Notion-Version':'2026-03-11','Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});
+  if(r.status!==429||attempt===2)break;
+  await new Promise(resolve=>setTimeout(resolve,Math.min(5,Math.max(1,Number(r.headers.get('Retry-After'))||1))*1000));
+ }
  const result=await r.json().catch(()=>({}));if(!r.ok)throw Error('Notion API '+r.status+': '+(result.message||'接続に失敗しました'));
  return result;
 }
