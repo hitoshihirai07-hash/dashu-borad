@@ -1,6 +1,6 @@
-import {verifySession} from '../../src/server-auth.js';
-import {workspaceValidate,workspaceFresh,workspaceSetTaskStatus,workspaceChange} from '../../src/workspace-model.js';
-import {validateCloudData} from '../../src/cloud-schema.js';
+import {verifySession} from '../../../src/server-auth.js';
+import {workspaceValidate,workspaceFresh,workspaceSetTaskStatus,workspaceChange} from '../../../src/workspace-model.js';
+import {validateCloudData} from '../../../src/cloud-schema.js';
 
 const TASK_DS='01d03e12-6072-4471-834f-05105134ac65';
 const labels={todo:'未着手',doing:'進行中',waiting:'待機中',someday:'いつか',done:'完了'};
