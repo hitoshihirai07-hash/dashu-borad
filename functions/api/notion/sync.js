@@ -8,7 +8,7 @@ const revLabels=Object.fromEntries(Object.entries(labels).map(([a,b])=>[b,a]));
 const priorities={high:'高',normal:'通常',low:'低'};
 const revPriorities=Object.fromEntries(Object.entries(priorities).map(([a,b])=>[b,a]));
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
-const plain=s=>[{text:{content:String(s??'').slice(0,2000)}}];
+const plain=s=>{const value=String(s??'');return value?Array.from({length:Math.ceil(value.length/1800)},(_,i)=>({text:{content:value.slice(i*1800,(i+1)*1800)}})):[];};
 const text=p=>(p?.rich_text||p?.title||[]).map(x=>x.plain_text??x.text?.content??'').join('');
 const canonical=t=>({title:t.title,status:t.status,due:t.due||'',priority:t.priority||'normal',project:t.project||'',detail:t.detail||'',completedAt:t.completedAt||''});
 const fingerprint=t=>JSON.stringify(canonical(t));
