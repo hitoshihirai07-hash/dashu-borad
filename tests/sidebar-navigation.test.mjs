@@ -21,7 +21,7 @@ test('all existing pages remain reachable on desktop and on mobile',()=>{
 });
 
 test('desktop has a small top-level navigation and accessible grouped pages',()=>{
-  assert.equal([...pcNav.matchAll(/class="sidebar-primary"/g)].length,4);
+  assert.equal([...pcNav.matchAll(/class="sidebar-primary"/g)].length,6);
   assert.equal([...pcNav.matchAll(/class="sidebar-group"/g)].length,2);
   assert.equal([...pcNav.matchAll(/name="desktop-sidebar-groups"/g)].length,2);
   assert.match(pcNav,/<details[^>]+class="sidebar-group">\s*<summary>/);
