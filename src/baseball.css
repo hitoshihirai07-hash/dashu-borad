@@ -1,0 +1,22 @@
+/* 試合管理：既存の明るい配色と固定しない本文レイアウトを継承 */
+.baseball-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.baseball-toolbar label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.baseball-toolbar select,.baseball-fields input,.baseball-fields select{width:100%;min-height:42px;background:#fff;color:#173d32;border:1px solid #cadbd0;border-radius:8px;padding:9px 12px}
+.baseball-layout{display:grid;grid-template-columns:minmax(260px,0.9fr) minmax(0,1.5fr);gap:18px;align-items:start}
+.baseball-list,.baseball-detail{min-height:240px}
+.baseball-row{width:100%;display:grid;text-align:left;gap:4px;background:#fff;border:1px solid #dbe9e0;border-radius:9px;padding:13px 12px;color:var(--green);margin-bottom:9px}
+.baseball-row strong{font-size:14px}.baseball-row span{color:var(--muted);font-size:12px}
+.baseball-row:hover,.baseball-row.is-selected{background:#edf5ef;border-color:#9fc4ae}
+.baseball-example{width:100%;white-space:normal;text-align:center;margin-top:12px}
+.baseball-score{background:#f3f8f5;border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;margin:16px 0}
+.baseball-score strong{font-size:clamp(18px,2.5vw,26px)}.baseball-score span{color:var(--muted);font-size:13px}
+.baseball-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;margin:12px 0 20px}
+.baseball-dl div{border-bottom:1px solid var(--line);padding:10px 0;min-width:0}
+.baseball-dl dt{font-size:12px;color:var(--muted)}.baseball-dl dd{margin:3px 0 0;font-weight:600;overflow-wrap:anywhere}
+.baseball-phase{margin-top:24px;border-top:1px solid var(--line);padding-top:15px}
+.baseball-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:18px 0}
+.baseball-fields label{display:flex;flex-direction:column;gap:6px;color:#335b44;font-weight:600;font-size:13px}
+.baseball-edit .muted{margin-bottom:14px}
+.baseball-actions{display:flex;justify-content:flex-end;margin-top:22px}
+@media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.baseball-toolbar .button{flex:1}.baseball-fields,.baseball-dl{grid-template-columns:1fr}.baseball-score strong{font-size:21px}}
