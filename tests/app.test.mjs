@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {LIFE_KEY,LIFE_FIELDS,lifeFresh,lifeRecord} from '../src/life-model.js';
 import {localDate} from '../src/model.js';
-const script=['model.js','life-model.js','life-store.js','life-log.js','workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js','notion-ui.js','baseball-model.js','baseball-data-model.js','baseball-schedule-2027.js','baseball-notes.js','baseball-data.js','baseball.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
+const script=['model.js','life-model.js','life-store.js','life-log.js','workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js','notion-ui.js','baseball-model.js','baseball-data-model.js','baseball-schedule-2027.js','baseball-notes.js','baseball-data.js','baseball-calendar.js','baseball.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
 const legacy={format:'toki-records',version:1,records:[{id:'legacy',rev:'r1',parents:[],date:'2026-09-18',activity:'旧記録',minutes:30,note:'旧メモ',deleted:false,updatedAt:'2026-09-18T00:00:00Z'}]};
 function harness(initial, defaults, blockedStorage=false){
   const storage=new Map(initial?[['toki-records-v1',JSON.stringify(initial)]]:[]),elements=new Map(),docEvents={},winEvents={},downloads=[];

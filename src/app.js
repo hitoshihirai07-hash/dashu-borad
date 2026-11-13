@@ -2,6 +2,7 @@ import {KEY, localDate, uid, fresh, validate, revise, planMerge, resolveMerge, p
 import {createLifeLog} from './life-log.js';
 import {createWorkspace} from './workspace.js';
 import {createCloudSync} from './cloud-sync.js';
+import {validateCloudData} from './cloud-schema.js';
 import {createNotionUI} from './notion-ui.js';
 import {createBaseball} from './baseball.js';
 const $=s=>document.querySelector(s);
@@ -35,7 +36,16 @@ const lifeLog=createLifeLog({storage:syncedStorage,render,toast,download,icon,es
 const workspace=createWorkspace({storage:syncedStorage,render,toast,download,icon,escapeHTML,getTimeRecords:()=>data.records,uid,localDate,startRecord:options=>openRecord('',options)});
 const notion=createNotionUI({escapeHTML,render,toast,cloud:{status:()=>cloud.status(),refresh:()=>cloud.refresh()},workspace});
 const baseball=createBaseball({escapeHTML,render,toast});
- const cloud=createCloudSync({storage:(()=>{try{return localStorage;}catch{return {getItem(){throw Error('端末保存を利用できません。');},setItem(){throw Error('端末保存を利用できません。');},removeItem(){}};}})(),download,onApply(){
+ const cloud=createCloudSync({storage:(()=>{try{return localStorage;}catch{return {getItem(){throw Error('端末保存を利用できません。');},setItem(){throw Error('端末保存を利用できません。');},removeItem(){}};}})(),download,backupDecorator:async snapshot=>{
+  if(location.protocol==='file:'){
+    toast('オフライン版では試合管理のD1データを取得できません。端末の記録のみ保存しました。');
+    return {...snapshot,exportedAt:new Date().toISOString(),backupNote:'オフライン版のため試合管理のD1データは含みません。'};
+  }
+  const response=await fetch('/api/baseball/archive',{credentials:'same-origin',cache:'no-store'});
+  const baseballArchive=await response.json().catch(()=>({}));
+  if(!response.ok||baseballArchive.format!=='toki-baseball-archive-v1')throw Error(baseballArchive.error||'試合管理を取得できなかったため、全データのバックアップを中止しました。');
+  return {format:'toki-complete-backup-v2',version:2,exportedAt:new Date().toISOString(),cloud:snapshot,baseball:baseballArchive};
+},onApply(){
   try{const raw=localStorage.getItem(KEY);data=raw?validate(JSON.parse(raw)):fresh();savedSnapshot=JSON.stringify(data);storageError='';}
   catch{storageError='クラウドから取得した時間記録を確認できません。書き込みを停止しました。';}
   try{const v=JSON.parse(localStorage.getItem('toki-input-defaults-v2'));if(v&&v.projects)inputDefaults=v;}catch{}
@@ -87,7 +97,7 @@ const sortRecords=records=>[...records].sort((a,b)=>b.date.localeCompare(a.date)
 function matchingRecords(){return sortRecords(byField(data.records,selectedField).filter(r=>r.deleted===showDeleted&&(!activityFilter||r.activity===activityFilter)&&(!query||`${r.field} ${r.project} ${r.activity} ${r.note} ${r.date}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))));}
 function listResults(){const records=matchingRecords();const pages=Math.max(1,Math.ceil(records.length/25));page=Math.min(page,pages);return `<div class="panel-heading"><h2>${showDeleted?'削除済みの記録':'すべての記録'}</h2><small>${records.length}件 ・ ${timeText(records.reduce((s,r)=>s+r.minutes,0))}</small></div>${recordTable(records.slice((page-1)*25,page*25))}${!records.length?emptyTable(query||activityFilter?'条件に合う記録がありません':showDeleted?'削除済みの記録はありません':'まだ記録がありません'):''}${records.length>25?`<div class="pagination"><button class="button secondary" data-page="-1" ${page<=1?'disabled':''}>前へ</button><span>${page} / ${pages} ページ</span><button class="button secondary" data-page="1" ${page>=pages?'disabled':''}>次へ</button></div>`:''}`;}
 function recordsPage(){return heading('時間の記録','記録一覧と時間の集計を確認できます。')+timeReport()+`<div class="list-tools"><div class="search">${icon('search')}<input id="record-search" aria-label="記録を検索" type="search" placeholder="プロジェクト・活動・メモなどで検索" value="${escapeHTML(query)}"></div><select id="activity-filter" aria-label="活動で絞り込み"><option value="">すべての活動</option>${[...new Set(byField(data.records,selectedField).map(r=>r.activity))].sort().map(a=>`<option value="${escapeHTML(a)}" ${a===activityFilter?'selected':''}>${escapeHTML(a)}</option>`).join('')}</select><label><input id="deleted-filter" type="checkbox" ${showDeleted?'checked':''}>削除済みを表示</label></div><section class="panel" id="list-results">${listResults()}</section>`;}
-function sharePage(){return heading('バックアップ・同期','記録を守るためのバックアップとクラウド保存。',false)+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・予定・今日の3件・メモ・習慣・プロンプト・作業結果を1つのJSONに保存できます。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
+function sharePage(){return heading('バックアップ・同期','記録を守るためのバックアップとクラウド保存。',false)+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・予定・メモ・習慣・プロンプトに加え、試合・全選手成績・観戦メモ・Notion連携履歴も1つのJSONへ保存します。試合管理にはログイン済みのCloudflare版が必要です。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">復元前に試合記録の追加・重複・競合を確認し、既存の試合やメモは上書きしません。タスク・生活記録の置換は別途確認します。</p><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
 
 let lastSidebarView=null;
 function syncSidebarGroups(nextView){
@@ -104,6 +114,33 @@ function openRecord(id='',defaults={}){editing=id?data.records.find(r=>r.id===id
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function exportJSON(){download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_${localDate()}_${Date.now()}.json`,'application/json');toast('共有ファイルの保存を開始しました。');}
 function exportCSV(){const cell=v=>'"'+String(v).replace(/^[=+\-@\t\r]/,"'$&").replaceAll('"','""')+'"';const rows=[['日付','活動','時間（分）','メモ','分野','プロジェクト'],...sortRecords(activeRecords(data)).map(r=>[r.date,r.activity,r.minutes,r.note,r.field,r.project])];download('\uFEFF'+rows.map(row=>row.map(cell).join(',')).join('\r\n'),`ときの記録_${localDate()}.csv`,'text/csv;charset=utf-8');toast('CSVの保存を開始しました。');}
+async function restoreCompleteBackup(source){
+  if(source.format!=='toki-complete-backup-v2'||source.version!==2||!source.baseball)
+    throw Error('統合バックアップの形式が正しくありません。');
+  validateCloudData(source.cloud);
+  const request=async action=>{
+    const res=await fetch('/api/baseball/archive',{
+      method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action,archive:source.baseball})
+    });
+    const result=await res.json().catch(()=>({}));
+    if(!res.ok)throw Error(result.error||'試合管理の復元に失敗しました。');
+    return result;
+  };
+  const preview=await request('preview');
+  const {summary}=preview;
+  const confirmation='試合管理バックアップを確認しました。\n'
+    +'新しく追加：'+summary.missing+'件\n同じ内容：'+summary.identical+'件\n内容の違う既存記録：'+summary.conflicts+'件\n'
+    +'既存の試合・成績・メモは上書きせず、未登録分のみ追加します。続行しますか？';
+  if(!confirm(confirmation))return;
+  const restored=await request('restore');
+  toast('試合記録を'+restored.created+'件追加しました。既存データは保持しました。');
+  if(location.hash==='#baseball')baseball.load();
+  if(confirm('このバックアップにはタスク・時間・生活ログも含まれます。\nそれらの既存データをバックアップ内容で置き換えますか？\n※「キャンセル」なら現在のタスク・生活ログを保持します。')){
+    await cloud.restore(source.cloud);
+    toast('試合記録と、選択したタスク・生活ログの復元を処理しました。');
+  }
+}
 async function importFile(file){if(!file)return;try{if(file.size>10*1024*1024)throw Error('ファイルが大きすぎます。10MB以下のJSONを選んでください。');const incoming=validate(JSON.parse(await file.text()));mergePlan=planMerge(data,incoming);mergeSnapshot=JSON.stringify(data);$('#merge-error').textContent='';$('#merge-content').innerHTML=`<div class="merge-summary"><span>追加 <strong>${mergePlan.added}件</strong></span><span>更新 <strong>${mergePlan.updated}件</strong></span><span>変更なし <strong>${mergePlan.unchanged}件</strong></span><span>確認が必要 <strong>${mergePlan.conflicts.length}件</strong></span></div><p class="muted">現在の記録は、保存するまで変更されません。削除状態も統合されます。</p>${mergePlan.conflicts.map((c,i)=>`<section class="conflict"><h3>${i+1}. 同じ記録が両方の端末で変更されています</h3><div class="conflict-options">${[['local','この端末を残す'],['incoming','読み込む方を残す']].map(([key,title])=>{const r=c[key];return `<label><input type="radio" name="conflict-${i}" value="${key}" data-conflict-index="${i}"><strong>${title}</strong><span>${r.deleted?'【削除済み】 ':''}${escapeHTML(r.date)} / ${escapeHTML(r.activity)} / ${timeText(r.minutes)}</span><span>${escapeHTML(r.field)} / ${escapeHTML(r.project)}</span><span>${escapeHTML(r.note)||'メモなし'}</span></label>`;}).join('')}</div></section>`).join('')}`;$('#merge-dialog').showModal();}catch(error){toast(error instanceof SyntaxError?'JSONを読み込めません。書き出した共有ファイルを選んでください。':error.message);}finally{$('#import-file').value='';}}
 document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;
   try{
@@ -140,7 +177,7 @@ document.addEventListener('keydown',event=>{baseball.keydown(event);});
  $('#record-form').addEventListener('submit',event=>{event.preventDefault();try{if(editing&&data.records.find(r=>r.id===editing.id)?.rev!==editing.rev)throw Error('この記録は別のタブで更新されました。閉じてから開き直してください。');const f=event.currentTarget;const values={taskId:f.elements.taskId?.value||'',field:f.elements.field.value,project:(f.elements.project.value==='__custom__'?f.elements.customProject.value:f.elements.project.value).trim(),date:f.elements.date.value,activity:f.elements.activity.value.trim(),minutes:Number(f.elements.minutes.value),note:f.elements.note.value,deleted:false};if(!values.activity)throw Error('活動名を入力してください。');if(values.taskId&&!workspace.get().tasks.some(t=>t.id===values.taskId))throw Error('関連タスクが見つかりません。');const r=revise(editing,values);persist({...data,records:editing?data.records.map(x=>x.id===editing.id?r:x):[...data.records,r]});rememberInput(r.field,r.project);anchor=r.date;render();$('#record-dialog').close();toast(editing?'記録を更新しました。':'時間を記録しました。');}catch(error){$('#form-error').textContent=error.message;}});
 $('#delete-apply').addEventListener('click',()=>{try{if(data.records.find(r=>r.id===deleting.id)?.rev!==deleting.rev)throw Error('この記録は更新されています。閉じてから確認し直してください。');persist({...data,records:data.records.map(r=>r.id===deleting.id?revise(r,{...r,deleted:true}):r)});$('#delete-dialog').close();toast('削除しました。削除済みの一覧から復元できます。');}catch(error){toast(error.message);}});
 $('#import-file').addEventListener('change',event=>importFile(event.target.files[0]));
-$('#cloud-import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>1_800_000)throw Error('一括バックアップは1.8MBまでです。');const source=JSON.parse(await file.text());await cloud.restore(source);}catch(e){toast(e.message);}finally{event.target.value='';}});
+$('#cloud-import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>16_000_000)throw Error('バックアップは16MBまでです。');const source=JSON.parse(await file.text());if(source?.format==='toki-complete-backup-v2')await restoreCompleteBackup(source);else await cloud.restore(source);}catch(e){toast(e.message);}finally{event.target.value='';}});
 $('#merge-apply').addEventListener('click',()=>{try{if(JSON.stringify(data)!==mergeSnapshot)throw Error('確認中に記録が変更されました。閉じて、ファイルを読み込み直してください。');const choices={};$('#merge-content').querySelectorAll('input:checked').forEach(input=>{choices[mergePlan.conflicts[Number(input.dataset.conflictIndex)].local.id]=input.value;});persist(resolveMerge(mergePlan,choices));$('#merge-dialog').close();toast('記録を統合して保存しました。');}catch(error){$('#merge-error').textContent=error.message;}});
 window.addEventListener('hashchange',()=>{const extra=document.querySelector('.mobile-more');if(extra)extra.open=false;render();if(location.hash==='#baseball')baseball.load();window.scrollTo(0,0);});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(view==='dashboard')render();},150);});

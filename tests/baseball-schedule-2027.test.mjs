@@ -147,7 +147,8 @@ test('2027年を選択したときだけ登録し、未定試合に仮の日付�
   await new Promise(resolve=>setTimeout(resolve,5));
   assert.deepEqual(stored,['seed-2027']);
   const page=ui.page();
-  assert.match(page,/2027\/03\/26/);
+  assert.match(page,/2027年3月/);
+  assert.match(page,/中日/);
   assert.match(page,/日程未定の試合（3試合）/);
   ui.click({dataset:{baseball:'pending-2027',pendingIndex:'0'}});
   const draft=ui.page();

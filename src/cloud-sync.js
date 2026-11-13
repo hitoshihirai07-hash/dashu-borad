@@ -1,6 +1,6 @@
 import {CLOUD_KEYS,collectCloudData,nonEmptyCloudData,validateCloudData} from './cloud-schema.js';
 // Conservative synchronization: compare-and-swap on the server; no silent last-writer-wins.
-export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,onUnauthorized,api='/api/state',loc=location}){
+export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApply,onStatus,onUnauthorized,backupDecorator,api='/api/state',loc=location}){
   const revisionKey='toki-sync-ack-revision-v1',pendingKey='toki-sync-pending-v1';
   const online=['https:','http:'].includes(loc.protocol);
   let status=online?'loading':'local',detail='',revision=0,remote=null,acked='',backed=false,dirty=false,posting=false,scheduled=null,refreshing=false;
@@ -35,7 +35,12 @@ export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApp
       if(nonEmptyCloudData(here)){announce('choose','この端末とクラウドの内容が異なります。端末のバックアップを保存してからクラウドを読み込んでください。');return;}
       apply(remote);saveAck();
     }catch(e){announce('error','接続またはログイン状態を確認してください。'+e.message);}}
-  function backup(){const data=localData();download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_全データバックアップ_${new Date().toISOString().slice(0,10)}.json`,'application/json');backed=true;onStatus?.(status,detail);}
+  async function backup(){
+    const data=localData();
+    const content=typeof backupDecorator==='function'?await backupDecorator(data):{...data,exportedAt:new Date().toISOString()};
+    download(JSON.stringify(content,null,2),`ときの記録_全データバックアップ_${new Date().toISOString().slice(0,10)}.json`,'application/json');
+    backed=true;onStatus?.(status,detail);
+  }
   async function start(){if(status!=='setup')throw Error('初回設定の状態ではありません。');const data=localData();if(nonEmptyCloudData(data)&&!backed)throw Error('先に全データのバックアップを書き出してください。');announce('loading','クラウドに初期データを送信中');try{const answer=await request('POST',{baseRevision:0,payload:data});if(!answer.ok){if(answer.statusCode===409){announce('conflict','別の端末で初期登録されています。');return;}throw Error(answer.error||'初回登録が失敗しました。');}revision=answer.revision;remote=data;saveAck();}catch(e){announce('error',e.message);}}
   function useRemote(){if(!['choose','conflict'].includes(status))throw Error('読込操作が必要な状態ではありません。');if(!backed)throw Error('先に端末の全データバックアップを書き出してください。');if(!remote){init();return;}apply(remote);saveAck();}
   async function retry(){if(status==='error'){if(storage.getItem(pendingKey)==='1'){
@@ -64,6 +69,6 @@ export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApp
       if(['error','ready'].includes(status))return `<button class="button secondary" data-cloud="retry">接続・更新を確認</button>`;return '';})();
     return `<section class="panel cloud-panel"><h2>端末間の同期</h2><p role="status"><strong>${({ready:'保存済み',dirty:'送信中',error:'未同期',conflict:'競合',local:'端末内のみ',setup:'初回準備',choose:'内容の確認',loading:'接続中'}[status])}</strong> — ${message.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</p><div class="workspace-actions">${action}</div><p class="muted">${status==='local'?'クラウド同期を使用する場合はCloudflareの設定を完了してください。':'更新競合・通信エラーでは勝手に上書きせず、保存データを保護します。'}</p></section>`;
   };
-  const act=async a=>{if(a==='backup')backup();else if(a==='start')await start();else if(a==='remote')useRemote();else if(a==='retry')await retry();};
+  const act=async a=>{if(a==='backup')await backup();else if(a==='start')await start();else if(a==='remote')useRemote();else if(a==='retry')await retry();};
   return {init,act,panel,setItem,beforeWrite,restore,status:()=>status,detail:()=>detail,isRemote:()=>online&&status!=='local',backup,refresh};
 }
