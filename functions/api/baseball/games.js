@@ -1,5 +1,5 @@
-import {verifySession} from '../../src/server-auth.js';
-import {normalizeBaseballGame} from '../../src/baseball-model.js';
+import {verifySession} from '../../../src/server-auth.js';
+import {normalizeBaseballGame} from '../../../src/baseball-model.js';
 
 const json=(data,status=200)=>new Response(JSON.stringify(data),{
   status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
