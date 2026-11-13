@@ -12,7 +12,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  }
  async function load(){
   if(busy)return;busy=true;message='Notionのメモを読み込み中';render();
-  try{const data=await api('/api/notion/memos');memos=data.items||[];pageBodies.clear();loaded=true;message='Notionから最新のメモを取得しました。';}
+  try{const data=await api('/api/notion/memos');memos=data.items||[];pageBodies.clear();loaded=true;message='Notionから最新のメモを取得しました。';for(const openId of openBodies)if(memos.some(m=>m.id===openId))loadBody(openId,true);}
   catch(e){message=e.message;}
   finally{busy=false;render();}
  }
