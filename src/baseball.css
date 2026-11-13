@@ -41,3 +41,25 @@
 @media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
 @media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
 @media(max-width:600px){.baseball-note-options{grid-template-columns:1fr}.baseball-note-actions .button{width:100%}}
+
+/* 試合詳細: 観戦メモの入力領域を保ちつつ、公式データを右側に表示 */
+.baseball-side{display:grid;gap:16px;min-width:0}
+.baseball-data{min-width:0}
+.baseball-data .panel-heading{align-items:flex-start;flex-wrap:wrap}
+.baseball-data-head-actions{display:flex;flex-wrap:wrap;gap:6px}
+.baseball-data-head-actions .button{padding:7px 10px;min-height:36px}
+.baseball-data h3{font-size:14px;margin:20px 0 8px}
+.baseball-data h3:first-child{margin-top:0}
+.baseball-data-scroll{max-width:100%;overflow:auto;border:1px solid #e0ece4;border-radius:8px;margin-bottom:16px}
+.baseball-data-scroll table{font-size:12px;white-space:nowrap;width:max-content;min-width:100%}
+.baseball-data-scroll th,.baseball-data-scroll td{padding:8px 9px}
+.baseball-data-decisions{padding:12px;background:#f4faf5;border-radius:8px}
+.baseball-data-source{margin-top:15px;font-size:12px}
+.baseball-data-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.baseball-data-fields label{display:grid;gap:5px;min-width:0;font-size:12px;font-weight:650;color:#335b44}
+.baseball-data-fields textarea,.baseball-data-fields input{width:100%;min-width:0;max-width:100%;border-radius:8px;background:#fff;border:1px solid #cadbd0;color:#173d32;padding:9px 10px;font:inherit}
+.baseball-data-fields textarea{font:12px/1.55 ui-monospace,Consolas,monospace;resize:vertical}
+.baseball-data-form>.muted{font-size:12px;margin:9px 0}
+.baseball-data-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px}
+@media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
+@media(max-width:600px){.baseball-data-fields{grid-template-columns:1fr}.baseball-data-actions .button{flex:1}}
