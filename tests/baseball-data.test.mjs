@@ -87,7 +87,7 @@ test('画面: 記録の表示・編集・入力例',async()=>{
  const ui=createBaseballData({escapeHTML:escape,render(){},toast(){},fetcher,draftStorage:storage});
  ui.select(id,{date:'2026-09-27',opponent:'ヤクルト',gameType:'regular',giantsScore:11,opponentScore:0});
  await new Promise(resolve=>setTimeout(resolve,0));
- assert.match(ui.page(),/公式記録を入力例で開く/);
+ assert.match(ui.page(),/検証用入力例を開く/);
  ui.click({dataset:{baseballStats:'fixture'}});
  assert.match(ui.page(),/スタメン/);assert.match(ui.page(),/松本 剛/);
  assert.equal(submits,0);
