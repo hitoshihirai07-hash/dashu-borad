@@ -63,3 +63,17 @@
 .baseball-data-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px}
 @media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
 @media(max-width:600px){.baseball-data-fields{grid-template-columns:1fr}.baseball-data-actions .button{flex:1}}
+
+/* Giants-first compact layout: game list + readable stacked workspace */
+.baseball-layout{grid-template-columns:minmax(180px,230px) minmax(0,1fr)!important;gap:16px}
+.baseball-main{display:flex!important;flex-direction:column;min-width:0;gap:16px}
+.baseball-side{display:contents!important}
+.baseball-detail{order:-1}.baseball-notes{order:0}.baseball-data{order:1}
+.baseball-detail,.baseball-notes,.baseball-data{width:100%;min-width:0}
+.baseball-official-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
+.baseball-official-controls small{color:var(--muted)}
+.baseball-official-preview{border:1px solid #bbd7c8;background:#f4faf5;border-radius:10px;padding:15px;margin:12px 0}
+.baseball-official-preview p{margin:0 0 8px}
+.baseball-official-preview button{margin:6px 8px 2px 0}
+.baseball-data-scroll{max-width:100%;overflow:auto}
+@media(max-width:800px){.baseball-layout{grid-template-columns:1fr!important}.baseball-list{min-height:0}}
