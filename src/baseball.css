@@ -20,3 +20,24 @@
 .baseball-actions{display:flex;justify-content:flex-end;margin-top:22px}
 @media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
 @media(max-width:600px){.baseball-toolbar .button{flex:1}.baseball-fields,.baseball-dl{grid-template-columns:1fr}.baseball-score strong{font-size:21px}}
+
+/* Phase 2: keyboard-first observation notes */
+.baseball-layout{grid-template-columns:minmax(190px,0.7fr) minmax(0,2.3fr)}
+.baseball-main{min-width:0;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,0.9fr);gap:16px;align-items:start}
+.baseball-notes{min-width:0}
+.baseball-note-label{font-weight:700;display:block;margin:8px 0}
+.baseball-notes textarea{display:block;width:100%;min-height:126px;padding:12px;border:1px solid #cadbd0;border-radius:9px;resize:vertical;background:#fff;color:#173d32}
+.baseball-note-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.baseball-note-options label{display:grid;gap:4px;font-size:12px;color:#41624f}
+.baseball-note-options input,.baseball-note-options select{min-width:0;width:100%;min-height:40px;border:1px solid #cadbd0;border-radius:8px;background:white;padding:8px;color:#173d32}
+.baseball-note-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;margin:16px 0 6px}
+.baseball-note-actions small{color:var(--muted)}.baseball-note-history{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
+.baseball-note-item{border:1px solid #e2ece5;border-radius:10px;padding:12px 14px;margin-bottom:11px;background:#fbfdfb}
+.baseball-note-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#557364;font-size:12px}
+.baseball-note-head time{font-weight:750;color:#24634b}.baseball-note-item p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;font-size:14px}
+.baseball-note-controls,.baseball-note-confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.baseball-note-confirm span{margin-right:auto;font-size:12px;color:#a14336}
+.baseball-note-confirm .button{min-height:36px;padding:5px 12px}
+@media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
+@media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.baseball-note-options{grid-template-columns:1fr}.baseball-note-actions .button{width:100%}}

@@ -1,6 +1,8 @@
+import {createBaseballNotes} from './baseball-notes.js';
 import {BASEBALL_OPPONENTS,BASEBALL_TYPES,BASEBALL_STATES,BASEBALL_LOCATIONS,normalizeBaseballGame,baseballTestGame2026} from './baseball-model.js';
 export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
   let items=[],loaded=false,busy=false,error='',season=2026,selected='',editing=false,draft=null;
+  const notes=createBaseballNotes({escapeHTML:esc,render,toast,fetcher});
   const pick=(options,value)=>Object.entries(options).map(([key,label])=>'<option value="'+esc(key)+'"'+(value===key?' selected':'')+'>'+esc(label)+'</option>').join('');
   const opps=value=>BASEBALL_OPPONENTS.map(label=>'<option value="'+esc(label)+'"'+(label===value?' selected':'')+'>'+esc(label)+'</option>').join('');
   const showDate=v=>v?.replaceAll('-','/')||'';
@@ -28,7 +30,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     +formInput('giantsScore','巨人の得点',g.giantsScore,'number','min="0" max="99"')
     +formInput('opponentScore','相手の得点',g.opponentScore,'number','min="0" max="99"')
     +formInput('sourceUrl','参考URL',g.sourceUrl,'url','maxlength="500" placeholder="https://..."')
-    +'</div><p class="muted">勝敗は「試合終了」を選び、両チームの得点を入力すると自動判定します。スタメン・継投・観戦メモは次の段階で追加します。</p>'
+    +'</div><p class="muted">勝敗は「試合終了」を選び、両チームの得点を入力すると自動判定します。スタメン・継投は次の段階で追加します。</p>'
     +(editing&&persisted?'<p class="muted">現在の保存版：'+persisted.revision+'</p>':'')
     +'<div class="baseball-actions"><button class="button primary" type="submit" '+(busy?'disabled':'')+'>'+(editing?'変更を保存':'試合を登録')+'</button></div></form></section>';
   }
@@ -40,7 +42,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       +'<dl class="baseball-dl">'
       +[['試合区分',BASEBALL_TYPES[g.gameType]],['開催区分',BASEBALL_LOCATIONS[g.location]],['球場',g.stadium],['巨人先発',g.giantsStarter],['相手先発',g.opponentStarter],['同日の試合番号',g.gameNumber]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+label(v)+'</dd></div>').join('')
       +'</dl>'+(g.sourceUrl?'<a href="'+esc(g.sourceUrl)+'" target="_blank" rel="noopener noreferrer">参考記録を開く</a>':'')
-      +'<p class="muted baseball-phase">この段階では試合基本情報のみを管理します。スタメン・継投・観戦メモは次の実装対象です。</p></section>';
+      +'<p class="muted baseball-phase">スタメン・継投と試合結果の自動取得は今後の実装対象です。</p></section>';
   }
   function page(){
     const filtered=items.filter(x=>x.game.season===season).sort((a,b)=>b.game.date.localeCompare(a.game.date)||b.game.gameNumber-a.game.gameNumber);
@@ -51,7 +53,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       +(editing||draft?form():!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>':'<div class="baseball-layout"><section class="panel baseball-list"><div class="panel-heading"><h2>試合一覧</h2><small>'+filtered.length+'試合</small></div>'
       +(filtered.length?filtered.map(x=>'<button type="button" class="baseball-row'+(selected===x.id?' is-selected':'')+'" data-baseball-select="'+esc(x.id)+'"><strong>'+esc(title(x.game))+'</strong><span>'+esc(status(x.game))+' ・ '+esc(result(x.game))+'</span></button>').join(''):'<p class="muted">このシーズンの試合はまだありません。</p>')
       +(season===2026?'<button type="button" class="button secondary baseball-example" data-baseball="example">9/27 巨人対ヤクルトを入力例として開く</button>':'')
-      +'</section>'+detail(record()&&record().game.season===season?record():filtered[0])+'</div>');
+      +'</section><div class="baseball-main">'+notes.page()+detail(record()&&record().game.season===season?record():filtered[0])+'</div></div>');
   }
   async function load(){
     if(busy)return;
@@ -63,21 +65,24 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       items=data.items||[];loaded=true;
       if(selected&&!items.some(x=>x.id===selected))selected='';
       if(!selected&&items.some(x=>x.game.season===season))selected=items.find(x=>x.game.season===season).id;
+      notes.select(selected);
     }catch(e){error=e.message;}
     finally{busy=false;render();}
   }
   function click(button){
-    if(button.dataset.baseballSelect!==undefined){selected=button.dataset.baseballSelect;editing=false;draft=null;render();return true;}
+    if(notes.click(button))return true;
+    if(button.dataset.baseballSelect!==undefined){selected=button.dataset.baseballSelect;notes.select(selected);editing=false;draft=null;render();return true;}
     const action=button.dataset.baseball;if(!action)return false;
     if(action==='refresh'){if(!draft)load();return true;}
-    if(action==='new'){selected='';draft={date:season+'-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',location:'home',state:'scheduled'};editing=false;error='';render();return true;}
-    if(action==='example'){selected='';draft=baseballTestGame2026();editing=false;error='';render();return true;}
+    if(action==='new'){selected='';notes.select('');draft={date:season+'-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',location:'home',state:'scheduled'};editing=false;error='';render();return true;}
+    if(action==='example'){selected='';notes.select('');draft=baseballTestGame2026();editing=false;error='';render();return true;}
     if(action==='edit'&&record()){draft={...record().game};editing=true;error='';render();return true;}
     if(action==='cancel'){editing=false;draft=null;error='';render();return true;}
     return false;
   }
   function change(el){
-    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';editing=false;draft=null;render();return true;}
+    if(notes.change(el))return true;
+    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';notes.select(selected);editing=false;draft=null;render();return true;}
     return false;
   }
   async function save(event){
@@ -93,10 +98,10 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       const result=await response.json();
       if(!response.ok)throw Error(result.error||'試合を保存できませんでした。');
       const item=result.item;items=items.filter(x=>x.id!==item.id).concat(item);
-      selected=item.id;season=game.season;editing=false;draft=null;toast('試合を保存しました。');loaded=true;
+      selected=item.id;season=game.season;notes.select(selected);editing=false;draft=null;toast('試合を保存しました。');loaded=true;
     }catch(e){error=e.message;}
     finally{busy=false;render();}
   }
-  function submit(event){if(event.target.id!=='baseball-game-form')return false;event.preventDefault();if(busy)return true;save(event);return true;}
-  return {page,load,click,change,submit};
+  function submit(event){if(notes.submit(event))return true;if(event.target.id!=='baseball-game-form')return false;event.preventDefault();if(busy)return true;save(event);return true;}
+  return {page,load,click,change,submit,input:notes.input,keydown:notes.keydown,clearDrafts:notes.clearDrafts};
 }
