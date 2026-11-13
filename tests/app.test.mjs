@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {LIFE_KEY,LIFE_FIELDS,lifeFresh,lifeRecord} from '../src/life-model.js';
 import {localDate} from '../src/model.js';
-const script=['model.js','life-model.js','life-store.js','life-log.js','workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
+const script=['model.js','life-model.js','life-store.js','life-log.js','workspace-model.js','cloud-schema.js','cloud-sync.js','workspace.js','notion-ui.js','baseball-model.js','baseball.js','app.js'].map(file=>readFileSync(new URL('../src/'+file,import.meta.url),'utf8').replace(/^export /gm,'').replace(/^import .*?;\r?\n/gm,'')).join('\n');
 const legacy={format:'toki-records',version:1,records:[{id:'legacy',rev:'r1',parents:[],date:'2026-09-18',activity:'旧記録',minutes:30,note:'旧メモ',deleted:false,updatedAt:'2026-09-18T00:00:00Z'}]};
 function harness(initial, defaults, blockedStorage=false){
   const storage=new Map(initial?[['toki-records-v1',JSON.stringify(initial)]]:[]),elements=new Map(),docEvents={},winEvents={},downloads=[];
@@ -17,7 +17,7 @@ function harness(initial, defaults, blockedStorage=false){
   el('#workspace-form').querySelectorAll=()=>[];
   el('#sleep-preset-form').elements=Object.fromEntries(Array.from({length:7},(_,i)=>[`wake-${i}`,`bed-${i}`]).flat().map(n=>[n,el('sleep-'+n)]));
   const document={querySelector:el,querySelectorAll:()=>[],documentElement:{outerHTML:'<html>portable shell</html>'},addEventListener:(k,fn)=>docEvents[k]=fn,body:{append(){}},head:{append(){}},createElement:()=>({click(){},remove(){}})};
-  const sandbox={document,window:{innerWidth:1365,addEventListener:(k,fn)=>winEvents[k]=fn,scrollTo(){}},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},location:{hash:'#dashboard',protocol:'file:'},navigator:{},crypto:webcrypto,Blob,URL:{createObjectURL:b=>{downloads.push(b);return 'blob:test';},revokeObjectURL(){}},setTimeout:()=>1,clearTimeout(){},console};
+  const sandbox={document,window:{innerWidth:1365,addEventListener:(k,fn)=>winEvents[k]=fn,scrollTo(){}},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},location:{hash:'#dashboard',protocol:'file:'},navigator:{},crypto:webcrypto,Blob,URL:{createObjectURL:b=>{downloads.push(b);return 'blob:test';},revokeObjectURL(){}},setTimeout:()=>1,clearTimeout(){},fetch:async()=>({ok:true,json:async()=>({items:[]})}),console};
   if(defaults)storage.set('toki-input-defaults-v2',JSON.stringify(defaults));
   if(blockedStorage)Object.defineProperty(sandbox,'localStorage',{get(){throw Error('SecurityError');}});
   vm.runInNewContext(script,sandbox);
