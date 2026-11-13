@@ -59,6 +59,6 @@ export function baseballTestGame2026(){
     date:'2026-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',state:'finished',
     location:'home',stadium:'東京ドーム',giantsStarter:'小笠原慎之介',opponentStarter:'高橋奎二',
     giantsScore:11,opponentScore:0,
-    sourceUrl:'https://npb.jp/bis/eng/2026/games/s2026092701960.html'
+    sourceUrl:'https://npb.jp/scores/2026/0927/g-s-24/'
   });
 }
