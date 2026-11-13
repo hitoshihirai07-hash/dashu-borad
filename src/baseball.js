@@ -48,7 +48,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       +'<div class="baseball-toolbar"><label>シーズン <select id="baseball-season"><option value="2026"'+(season===2026?' selected':'')+'>2026年</option><option value="2027"'+(season===2027?' selected':'')+'>2027年</option></select></label><button type="button" class="button secondary" data-baseball="refresh" '+(busy?'disabled':'')+'>最新情報を取得</button><button type="button" class="button primary" data-baseball="new">＋ 試合を登録</button></div>'
       +(error?'<p class="notice" role="alert">'+esc(error)+'</p>':'')
       +(busy?'<p class="muted">処理中です…</p>':'')
-      +(!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>':editing||draft?form():'<div class="baseball-layout"><section class="panel baseball-list"><div class="panel-heading"><h2>試合一覧</h2><small>'+filtered.length+'試合</small></div>'
+      +(editing||draft?form():!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>':'<div class="baseball-layout"><section class="panel baseball-list"><div class="panel-heading"><h2>試合一覧</h2><small>'+filtered.length+'試合</small></div>'
       +(filtered.length?filtered.map(x=>'<button type="button" class="baseball-row'+(selected===x.id?' is-selected':'')+'" data-baseball-select="'+esc(x.id)+'"><strong>'+esc(title(x.game))+'</strong><span>'+esc(status(x.game))+' ・ '+esc(result(x.game))+'</span></button>').join(''):'<p class="muted">このシーズンの試合はまだありません。</p>')
       +(season===2026?'<button type="button" class="button secondary baseball-example" data-baseball="example">9/27 巨人対ヤクルトを入力例として開く</button>':'')
       +'</section>'+detail(record()&&record().game.season===season?record():filtered[0])+'</div>');
