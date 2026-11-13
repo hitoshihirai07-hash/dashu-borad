@@ -1,6 +1,6 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
- let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false,formDraft=null;
+ let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false,formDraft=null,pageBodies=new Map(),openBodies=new Set();
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
  const memoDB='https://app.notion.com/p/4803a7f9e4e549ea809fce5495b3964d';
@@ -12,7 +12,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  }
  async function load(){
   if(busy)return;busy=true;message='Notionのメモを読み込み中';render();
-  try{const data=await api('/api/notion/memos');memos=data.items||[];loaded=true;message='Notionから最新のメモを取得しました。';}
+  try{const data=await api('/api/notion/memos');memos=data.items||[];pageBodies.clear();loaded=true;message='Notionから最新のメモを取得しました。';for(const openId of openBodies)if(memos.some(m=>m.id===openId))loadBody(openId,true);}
   catch(e){message=e.message;}
   finally{busy=false;render();}
  }
@@ -29,6 +29,65 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
    toast(message);
   }catch(e){message=e.message;toast(message);}
   finally{busy=false;render();}
+ }
+
+ const safeLink=url=>typeof url==='string'&&/^https?:\/\//i.test(url)?url:'';
+ function runs(items=[]){
+  return (Array.isArray(items)?items:[]).map(x=>{
+   let s=esc(x.text||'');
+   if(x.code)s='<code>'+s+'</code>';
+   if(x.bold)s='<strong>'+s+'</strong>';
+   if(x.italic)s='<em>'+s+'</em>';
+   if(x.underline)s='<u>'+s+'</u>';
+   if(x.strikethrough)s='<s>'+s+'</s>';
+   const link=safeLink(x.href);
+   return link?'<a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">'+s+'</a>':s;
+  }).join('');
+ }
+ function blockHTML(block){
+  const type=block.type||'',inner=runs(block.runs),children=(block.children||[]).map(blockHTML).join('');
+  let html='';
+  if(/^heading_[123]$/.test(type))html='<'+({heading_1:'h3',heading_2:'h4',heading_3:'h5'}[type])+'>'+inner+'</'+({heading_1:'h3',heading_2:'h4',heading_3:'h5'}[type])+'>';
+  else if(type==='bulleted_list_item')html='<div class="notion-block-list">• <span>'+inner+'</span></div>';
+  else if(type==='numbered_list_item')html='<div class="notion-block-list">– <span>'+inner+'</span></div>';
+  else if(type==='to_do')html='<div class="notion-block-list"><input type="checkbox" disabled '+(block.checked?'checked':'')+' aria-label="Notionのチェック項目"> <span>'+inner+'</span></div>';
+  else if(type==='toggle')html='<div class="notion-block-toggle">▸ '+inner+'</div>';
+  else if(type==='quote')html='<blockquote>'+inner+'</blockquote>';
+  else if(type==='callout')html='<aside>'+esc(block.icon||'💡')+' '+inner+'</aside>';
+  else if(type==='code')html='<pre><code>'+inner+'</code></pre>';
+  else if(type==='divider')html='<hr>';
+  else if(type==='table')html='<div class="notion-block-table"><table><tbody>'+children+'</tbody></table></div>';
+  else if(type==='table_row')html='<tr>'+(block.cells||[]).map(cell=>'<td>'+runs(cell)+'</td>').join('')+'</tr>';
+  else if(type==='image'||type==='file'||type==='pdf'||type==='video'){
+   const link=safeLink(block.url);
+   html=link?'<a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">'+(type==='image'?'画像を開く':type==='pdf'?'PDFを開く':type==='video'?'動画を開く':'ファイルを開く')+'</a>':'<span class="muted">添付ファイル</span>';
+   if(block.caption?.length)html+='<div class="muted">'+runs(block.caption)+'</div>';
+  }
+  else if(type==='bookmark'||type==='embed'||type==='link_preview'){
+   const link=safeLink(block.url);
+   html=link?'<a href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">'+(inner||esc(link))+'</a>':inner;
+  }
+  else if(type==='child_page'||type==='child_database')html='<p class="muted">Notionの子ページ（Notionで開いて確認してください）</p>';
+  else if(type==='column_list'||type==='column'||type==='synced_block'||type==='unsupported')html='';
+  else html=inner?'<p>'+inner+'</p>':'';
+  if(type==='table'||type==='table_row')return html;
+  return '<div class="notion-page-block">'+html+(children?'<div class="notion-page-children">'+children+'</div>':'')+'</div>';
+ }
+ function bodyHTML(id){
+  if(!openBodies.has(id))return '';
+  const state=pageBodies.get(id);
+  if(!state||state.loading)return '<div class="notion-page-body"><p role="status">Notionのページ本文を取得中…</p></div>';
+  if(state.error)return '<div class="notion-page-body"><p role="alert">'+esc(state.error)+'</p><button type="button" class="button secondary" data-notion-body-retry="'+esc(id)+'">再取得</button></div>';
+  return '<div class="notion-page-body"><h4>Notionページ本文（閲覧のみ）</h4>'+(state.blocks.length?state.blocks.map(blockHTML).join(''):'<p class="muted">ページ本文はありません。</p>')+(state.truncated?'<p class="muted">本文が長いため一部省略しています。残りはNotionで確認してください。</p>':'')+'</div>';
+ }
+ async function loadBody(id,force=false){
+  if(!force&&pageBodies.has(id))return;
+  pageBodies.set(id,{loading:true});render();
+  try{
+   const data=await api('/api/notion/memos?page_id='+encodeURIComponent(id));
+   pageBodies.set(id,{blocks:data.blocks||[],truncated:!!data.truncated,loading:false});
+  }catch(e){pageBodies.set(id,{loading:false,error:e.message});}
+  render();
  }
  function page(){
   const list=memos.filter(x=>(category==='all'||x.category===category)&&(!search||(`${x.title} ${x.body}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
@@ -52,15 +111,19 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     ${editing!==null&&editing!=='__closed__'?`<form id="notion-memo-form" class="notion-form"><h3>${note?'メモを編集':'新しいメモ'}</h3><label>タイトル<input name="title" maxlength="160" required value="${esc(draftDisplay?.title||'')}"></label>
      <label>内容<textarea name="body" maxlength="1900" rows="6">${esc(draftDisplay?.body||'')}</textarea></label>
      <label>分類<select name="category">${select(categories,draftDisplay?.category||'その他')}</select></label>
+     ${note?bodyHTML(note.id):''}
+     ${note&&!openBodies.has(note.id)?'<p class="muted">ページ本文は読み取り専用です。Notion側で編集してください。</p>':''}
      <div class="workspace-actions"><button class="button primary" type="submit" ${busy?'disabled':''}>保存する</button><button type="button" class="button secondary" data-notion-action="cancel">キャンセル</button></div></form>`:''}
     <div class="notion-filters"><label>検索<input id="notion-search" value="${esc(search)}" placeholder="タイトル・内容"></label><label>分類<select id="notion-category">${select(['all',...categories],category)}</select></label></div>
-    ${!loaded?'<p>「最新情報を取得」でNotionのメモを表示できます。</p>':list.length?list.map(x=>`<article class="notion-memo"><div><strong>${esc(x.title)}</strong><span class="muted"> ${esc(x.category)} ・ ${esc(x.createdAt.slice(0,10))}</span></div><p>${esc(x.body)}</p><button type="button" class="button secondary" data-notion-edit="${esc(x.id)}">編集</button></article>`).join(''):'<p class="muted">対象メモはありません。</p>'}
+    ${!loaded?'<p>「最新情報を取得」でNotionのメモを表示できます。</p>':list.length?list.map(x=>`<article class="notion-memo"><div><strong>${esc(x.title)}</strong><span class="muted"> ${esc(x.category)} ・ ${esc(x.createdAt.slice(0,10))}</span></div><p>${esc(x.body)}</p><div class="workspace-actions"><button type="button" class="button secondary" data-notion-body="${esc(x.id)}">${openBodies.has(x.id)?'本文を閉じる':'ページ本文を見る'}</button><button type="button" class="button secondary" data-notion-edit="${esc(x.id)}">編集</button></div>${bodyHTML(x.id)}</article>`).join(''):'<p class="muted">対象メモはありません。</p>'}
     </section>`}
    <p class="notion-message" role="status">${esc(message)}</p>`;
  }
  function click(button){
   if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();if(tab==='memos'&&!loaded)load();return true;}
-  if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;render();return true;}
+  if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;openBodies.add(editing);render();loadBody(editing);return true;}
+  if(button.dataset.notionBodyRetry){loadBody(button.dataset.notionBodyRetry,true);return true;}
+  if(button.dataset.notionBody){const id=button.dataset.notionBody;if(openBodies.has(id))openBodies.delete(id);else{openBodies.add(id);loadBody(id);}render();return true;}
   const action=button.dataset.notionAction;if(!action)return false;
   if(action==='sync')sync();else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
   else if(action==='cancel'){editing='__closed__';formDraft=null;render();}

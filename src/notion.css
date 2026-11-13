@@ -16,3 +16,18 @@
 .notion-task-row small{font-size:.75rem;color:#617366}
 .notion-task-row select{border:1px solid #a8c2ae;border-radius:8px;background:white;color:#274b33;font:inherit;padding:.4rem;max-width:140px}
 @media(max-width:600px){.notion-task-row{align-items:flex-start}.notion-task-row select{max-width:112px;min-width:95px}}
+
+/* Read-only Notion page content: preserve hierarchy without altering the editable DB property. */
+.notion-page-body{margin:.75rem 0;padding:.8rem 1rem;border:1px solid #dce7de;border-radius:10px;background:#fff;overflow-wrap:anywhere}
+.notion-page-body h4{margin:.15rem 0 .75rem;color:#275a42}
+.notion-page-body .notion-page-block{margin:.35rem 0;line-height:1.65}
+.notion-page-body .notion-page-block p{margin:.35rem 0;max-height:none;overflow:visible;white-space:pre-wrap}
+.notion-page-body .notion-page-children{margin:.25rem 0 .4rem 1.1rem;padding-left:.65rem;border-left:2px solid #e0ece4}
+.notion-block-list{display:flex;align-items:flex-start;gap:.35rem;white-space:pre-wrap}
+.notion-block-list input{margin-top:.35rem;flex-shrink:0}
+.notion-page-body blockquote{margin:.5rem 0;padding:.2rem .7rem;border-left:3px solid #70a78c;background:#f5faf7}
+.notion-page-body aside{padding:.6rem;border-radius:8px;background:#f3f8f4}
+.notion-page-body pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:.8rem;border-radius:8px;background:#f2f5f2}
+.notion-block-table{overflow-x:auto}.notion-block-table table{border-collapse:collapse}.notion-block-table td{border:1px solid #dce7de;padding:.35rem .55rem;min-width:90px}
+.notion-page-body a{color:#236948;text-decoration:underline}
+@media(max-width:600px){.notion-page-body{padding:.65rem}.notion-page-body .notion-page-children{margin-left:.4rem}}

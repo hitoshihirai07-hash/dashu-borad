@@ -15,6 +15,53 @@ async function notion(env,path,method='GET',data){
  const result=await r.json().catch(()=>({}));if(!r.ok)throw Error('Notion API '+r.status+': '+(result.message||'接続に失敗しました'));
  return result;
 }
+
+// Page body is stored as Notion blocks, separately from the "内容" DB property.
+// Return a bounded, read-only representation; never expose the Notion token.
+const safeUrl=value=>typeof value==='string'&&/^https?:\/\//i.test(value)?value:null;
+const textRuns=value=>(Array.isArray(value)?value:[]).map(part=>({
+ text:String(part.plain_text??part.text?.content??part.equation?.expression??''),
+ href:safeUrl(part.href??part.text?.link?.url),
+ bold:!!part.annotations?.bold,italic:!!part.annotations?.italic,
+ underline:!!part.annotations?.underline,strikethrough:!!part.annotations?.strikethrough,
+ code:!!part.annotations?.code
+}));
+function displayBlock(block){
+ const type=block.type, data=block[type]||{};
+ return {
+  id:block.id,type,runs:textRuns(data.rich_text||data.title||data.caption),
+  checked:!!data.checked,language:typeof data.language==='string'?data.language:'',
+  icon:data.icon?.type==='emoji'?data.icon.emoji:null,
+  url:safeUrl(data.external?.url||data.file?.url||data.url),
+  caption:textRuns(data.caption),
+  cells:type==='table_row'?(data.cells||[]).map(textRuns):undefined,
+  hasColumnHeader:!!data.has_column_header,
+  children:[]
+ };
+}
+async function pageBlocks(env,blockId,depth,budget){
+ if(depth>5){budget.truncated=true;return [];}
+ const blocks=[];let cursor=null;
+ do{
+  if(budget.remaining<=0){budget.truncated=true;break;}
+  const params=new URLSearchParams({page_size:String(Math.min(100,budget.remaining))});
+  if(cursor)params.set('start_cursor',cursor);
+  const data=await notion(env,'blocks/'+blockId+'/children?'+params);
+  for(const raw of data.results||[]){
+   if(budget.remaining<=0){budget.truncated=true;break;}
+   budget.remaining--;
+   const block=displayBlock(raw);
+   if(raw.has_children){
+    if(depth===5)budget.truncated=true;
+    else block.children=await pageBlocks(env,raw.id,depth+1,budget);
+   }
+   blocks.push(block);
+  }
+  cursor=data.has_more?data.next_cursor:null;
+  if(cursor&&budget.remaining<=0)budget.truncated=true;
+ }while(cursor&&budget.remaining>0);
+ return blocks;
+}
 const categoryNames=['アイデア','サイト運営','野球','日常','その他'];
 export async function onRequest({request,env}){
  if(!['GET','POST'].includes(request.method))return json({error:'この操作は許可されていません。'},405);
@@ -28,6 +75,15 @@ export async function onRequest({request,env}){
  try{
   const id=env.NOTION_MEMO_DATA_SOURCE_ID||DS;
   if(request.method==='GET'){
+   const pageId=new URL(request.url).searchParams.get('page_id');
+   if(pageId!==null){
+    if(!/^[a-f0-9-]{36}$/i.test(pageId))return json({error:'メモIDが不正です。'},400);
+    const page=await notion(env,'pages/'+pageId);
+    if(page.parent?.data_source_id!==id)return json({error:'別のデータベースのページは表示できません。'},403);
+    const budget={remaining:300,truncated:false};
+    const blocks=await pageBlocks(env,pageId,0,budget);
+    return json({id:pageId,url:page.url,blocks,truncated:budget.truncated,editedAt:page.last_edited_time});
+   }
    let cursor,rows=[];do{
     const r=await notion(env,'data_sources/'+id+'/query','POST',{page_size:100,...(cursor?{start_cursor:cursor}:{})});
     rows.push(...r.results);cursor=r.has_more?r.next_cursor:null;
