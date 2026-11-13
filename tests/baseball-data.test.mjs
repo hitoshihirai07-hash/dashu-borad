@@ -92,3 +92,19 @@ test('画面: 記録の表示・編集・入力例',async()=>{
  assert.match(ui.page(),/スタメン/);assert.match(ui.page(),/松本 剛/);
  assert.equal(submits,0);
 });
+
+test('途中出場を含む全打撃成績の登録と旧試合データ互換',()=>{
+  const fixture=baseballGameData2026Fixture();
+  assert.equal(fixture.lineups.giants.length,9);
+  assert.equal(fixture.batters.giants.length,19);
+  assert.equal(fixture.pitchers.giants.length,5);
+  assert.equal(fixture.batters.giants.filter(p=>p.starter).length,9);
+  assert.equal(fixture.batters.giants.reduce((sum,p)=>sum+(p.hits||0),0),9);
+  const roundtrip=parseBaseballEntry(baseballEntryFields(fixture));
+  assert.deepEqual(roundtrip,fixture);
+  const old={...fixture};delete old.batters;
+  const converted=normalizeBaseballData(old);
+  assert.equal(converted.batters.giants.length,9);
+  assert.equal(converted.batters.giants[0].name,fixture.lineups.giants[0].name);
+  assert.throws(()=>normalizeBaseballData({...fixture,batters:{giants:Array.from({length:61},()=>fixture.batters.giants[0]),opponent:[]}}),/60人/);
+});

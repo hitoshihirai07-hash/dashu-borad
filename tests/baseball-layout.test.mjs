@@ -54,3 +54,19 @@ test('タブを切り替えても編集中の入力文字を保持',async()=>{
  ui.click({dataset:{baseballStats:'tab',statsTab:'lineup'}});
  assert.match(ui.page(),/新しい選手/);
 });
+
+test('野手全員・スタメン・投手の切替表示',async()=>{
+  const ui=createBaseballData({escapeHTML:esc,render(){},toast(){},fetcher});
+  ui.select(firstId,game);
+  await new Promise(resolve=>setTimeout(resolve,0));
+  ui.click({dataset:{baseballStats:'tab',statsTab:'batters'}});
+  const html=ui.page();
+  assert.match(html,/皆川 岳飛/);
+  assert.match(html,/佐々木 俊輔/);
+  assert.match(html,/増田 陸/);
+  assert.match(html,/四球/);
+  ui.click({dataset:{baseballStats:'tab',statsTab:'pitching'}});
+  assert.match(ui.page(),/平内 龍太/);
+  ui.click({dataset:{baseballStats:'tab',statsTab:'lineup'}});
+  assert.match(ui.page(),/松本 剛/);
+});

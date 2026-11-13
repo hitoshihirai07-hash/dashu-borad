@@ -17,12 +17,19 @@ export function parseBaseballEntry(fields) {
   const gs=nums(fields.giantsInnings,'巨人'),os=nums(fields.opponentInnings,'対戦相手');
   const max=Math.max(gs.length,os.length);
   const innings=Array.from({length:max},(_,i)=>({number:i+1,giants:gs[i]??null,opponent:os[i]??null}));
-  const lineups={},pitchers={};
+  const lineups={},pitchers={},batters={};
   for(const team of ['giants','opponent']){
     lineups[team]=String(fields[team+'Lineup']||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>{
       const cols=baseballDataSplitColumns(line);
       if(cols.length<3)throw Error(BASEBALL_DATA_TEAM_LABELS[team]+'のスタメンは「打順,守備,選手名」で入力してください。');
       return {order:Number(cols[0]),position:cols[1],name:cols[2],atBats:baseballDataSafeInt(cols[3]),hits:baseballDataSafeInt(cols[4]),rbi:baseballDataSafeInt(cols[5])};
+    });
+    batters[team]=String(fields[team+'Batters']||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>{
+      const cols=baseballDataSplitColumns(line);
+      if(cols.length<3)throw Error(BASEBALL_DATA_TEAM_LABELS[team]+'の打撃成績は「打順,守備,選手名」で入力してください。');
+      return {order:Number(cols[0]),position:cols[1],name:cols[2],atBats:baseballDataSafeInt(cols[3]),
+        hits:baseballDataSafeInt(cols[4]),rbi:baseballDataSafeInt(cols[5]),
+        walks:baseballDataSafeInt(cols[6]),hitByPitch:baseballDataSafeInt(cols[7]),strikeouts:baseballDataSafeInt(cols[8])};
     });
     pitchers[team]=String(fields[team+'Pitchers']||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).map(line=>{
       const cols=baseballDataSplitColumns(line);
@@ -30,7 +37,7 @@ export function parseBaseballEntry(fields) {
       return {name:cols[0],outs:parsePitchingInnings(cols[1]||''),pitches:baseballDataSafeInt(cols[2]),hits:baseballDataSafeInt(cols[3]),walks:baseballDataSafeInt(cols[4]),strikeouts:baseballDataSafeInt(cols[5]),runs:baseballDataSafeInt(cols[6]),earnedRuns:baseballDataSafeInt(cols[7])};
     });
   }
-  return normalizeBaseballData({innings,lineups,pitchers,
+  return normalizeBaseballData({innings,lineups,batters,pitchers,
     decisions:{win:String(fields.win||''),loss:String(fields.loss||''),save:String(fields.save||'')},
     sourceUrl:String(fields.sourceUrl||'')});
 }
@@ -38,9 +45,10 @@ export function baseballEntryFields(data){
   const source=normalizeBaseballData(data||EMPTY_BASEBALL_DATA());
   const scores=team=>source.innings.map(i=>i[team]===null?'X':String(i[team])).join(' ');
   const lineup=team=>source.lineups[team].map(p=>[p.order,p.position,p.name,p.atBats,p.hits,p.rbi].map(v=>v??'').join(',')).join('\n');
+  const hitters=team=>source.batters[team].map(p=>[p.order,p.position,p.name,p.atBats,p.hits,p.rbi,p.walks,p.hitByPitch,p.strikeouts].map(v=>v??'').join(',')).join('\n');
   const pen=team=>source.pitchers[team].map(p=>[p.name,displayPitchingInnings(p.outs),p.pitches,p.hits,p.walks,p.strikeouts,p.runs,p.earnedRuns].map(v=>v??'').join(',')).join('\n');
   return {giantsInnings:scores('giants'),opponentInnings:scores('opponent'),
-    giantsLineup:lineup('giants'),opponentLineup:lineup('opponent'),giantsPitchers:pen('giants'),opponentPitchers:pen('opponent'),
+    giantsLineup:lineup('giants'),opponentLineup:lineup('opponent'),giantsBatters:hitters('giants'),opponentBatters:hitters('opponent'),giantsPitchers:pen('giants'),opponentPitchers:pen('opponent'),
     win:source.decisions.win,loss:source.decisions.loss,save:source.decisions.save,sourceUrl:source.sourceUrl};
 }
 export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,draftStorage=typeof sessionStorage!=='undefined'?sessionStorage:null}){
@@ -52,11 +60,11 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
   const td=v=>esc(v===null||v===undefined||v===''?'—':v);
   const field=(key,label,placeholder='',lines=3)=>'<label>'+label+'<textarea name="'+key+'" data-baseball-stats-field="'+key+'" rows="'+lines+'" placeholder="'+esc(placeholder)+'" spellcheck="false">'+esc(fields[key])+'</textarea></label>';
   const textInput=(key,label)=>'<label>'+label+'<input type="text" name="'+key+'" data-baseball-stats-field="'+key+'" maxlength="80" value="'+esc(fields[key])+'"></label>';
-  const tabs=()=>'<div class="baseball-stats-tabs" role="group" aria-label="表示する試合データ">'+[['score','イニング得点'],['lineup','巨人スタメン'],['pitching','巨人の投手']].map(([key,title])=>'<button type="button" class="baseball-tab'+(activeTab===key?' is-active':'')+'" data-baseball-stats="tab" data-stats-tab="'+key+'" aria-pressed="'+(activeTab===key?'true':'false')+'">'+title+'</button>').join('')+'</div>';
+  const tabs=()=>'<div class="baseball-stats-tabs" role="group" aria-label="表示する試合データ">'+[['score','イニング得点'],['lineup','スタメン'],['batters','野手・全打撃成績'],['pitching','投手・全登板成績']].map(([key,title])=>'<button type="button" class="baseball-tab'+(activeTab===key?' is-active':'')+'" data-baseball-stats="tab" data-stats-tab="'+key+'" aria-pressed="'+(activeTab===key?'true':'false')+'">'+title+'</button>').join('')+'</div>';
   const formatTable=(headers,body)=>'<div class="baseball-data-scroll"><table><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
   function overview(){
     if(!loaded)return '<p class="muted">試合データを読み込み中です。</p>';
-    const hasAny=data.innings.length||data.lineups.giants.length||data.pitchers.giants.length;
+    const hasAny=data.innings.length||data.lineups.giants.length||data.batters.giants.length||data.pitchers.giants.length;
     if(!hasAny)return '<p class="muted">まだ試合データはありません。「データを編集」から登録できます。</p>';
     let out=tabs();
     if(activeTab==='score'){
@@ -68,6 +76,8 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
       out+='<div class="baseball-data-decisions">勝：'+td(data.decisions.win)+'　敗：'+td(data.decisions.loss)+'　セーブ：'+td(data.decisions.save)+'</div>';
     }else if(activeTab==='lineup'){
       out+=data.lineups.giants.length?formatTable(['打順','守備','選手','打数','安打','打点'],data.lineups.giants.map(p=>'<tr><td>'+p.order+'</td><td>'+td(p.position)+'</td><td>'+td(p.name)+'</td><td>'+td(p.atBats)+'</td><td>'+td(p.hits)+'</td><td>'+td(p.rbi)+'</td></tr>').join('')):'<p class="muted">スタメンはまだ登録されていません。</p>';
+    }else if(activeTab==='batters'){
+      out+=data.batters.giants.length?formatTable(['打順','守備','選手','打数','安打','打点','四球','死球','三振'],data.batters.giants.map(p=>'<tr><td>'+p.order+'</td><td>'+td(p.position)+'</td><td>'+td(p.name)+'</td>'+['atBats','hits','rbi','walks','hitByPitch','strikeouts'].map(k=>'<td>'+td(p[k])+'</td>').join('')+'</tr>').join('')):'<p class="muted">全打撃成績はまだ登録されていません。</p>';
     }else{
       out+=data.pitchers.giants.length?formatTable(['登板','投手','回','球数','被安打','与四球','奪三振','失点','自責'],data.pitchers.giants.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+td(p.name)+'</td><td>'+td(displayPitchingInnings(p.outs))+'</td>'+['pitches','hits','walks','strikeouts','runs','earnedRuns'].map(k=>'<td>'+td(p[k])+'</td>').join('')+'</tr>').join('')):'<p class="muted">投手成績はまだ登録されていません。</p>';
     }
@@ -86,6 +96,9 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
       :activeTab==='lineup'
       ?'<p class="muted">1行に1人。打順,守備,選手名,打数,安打,打点。後ろ3項目は省略可。</p><div class="baseball-data-fields">'
        +field('giantsLineup','巨人のスタメン',baseballDataSample('giants'),9)+'</div>'
+      :activeTab==='batters'
+      ?'<p class="muted">スタメン・代打・代走・途中出場者を1行ずつ。打順,守備,選手名,打数,安打,打点,四球,死球,三振。</p><div class="baseball-data-fields">'
+       +field('giantsBatters','巨人の全打撃成績','1,中,松本 剛,6,2,0,0,0,1',12)+'</div>'
       :'<p class="muted">1行に1人。投手名,投球回,球数,被安打,与四球,奪三振,失点,自責点。</p><div class="baseball-data-fields">'
        +field('giantsPitchers','巨人の投手（登板順）','小笠原 慎之介,5,,4,1,5,0,0',7)+'</div>')
     +'<div class="baseball-data-actions"><button type="submit" class="button primary" '+(busy?'disabled':'')+'>試合データを保存</button><button type="button" class="button secondary" data-baseball-stats="cancel">編集を中止</button></div></form>';
@@ -93,7 +106,7 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
   function page(){
     if(!gameId)return '';
     const canExample=game?.date==='2026-09-27'&&game?.opponent==='ヤクルト'&&game?.gameType==='regular';
-    return '<section class="panel baseball-data" aria-label="試合データ"><div class="panel-heading"><div><h2>巨人のスタメン・投手成績</h2><small>相手球団はイニング得点のみ表示</small></div><div class="baseball-data-head-actions">'
+    return '<section class="panel baseball-data" aria-label="試合データ"><div class="panel-heading"><div><h2>巨人のスタメン・全選手成績</h2><small>相手球団はイニング得点のみ表示</small></div><div class="baseball-data-head-actions">'
       +(!editing?'<button type="button" class="button secondary" data-baseball-stats="edit" '+(!loaded||busy?'disabled':'')+'>データを編集</button>':'')
       +'<button type="button" class="button secondary" data-baseball-stats="reload" '+(busy||editing?'disabled':'')+'>保存済みデータを再取得</button></div></div>'
       +(error?'<p class="notice" role="alert">'+esc(error)+(editing?' 入力内容は保持しています。':'')+'</p>':'')
@@ -129,7 +142,7 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
     const action=button.dataset?.baseballStats;
     if(!action)return false;
     if(action==='tab'){
-      if(['score','lineup','pitching'].includes(button.dataset.statsTab)){
+      if(['score','lineup','batters','pitching'].includes(button.dataset.statsTab)){
         activeTab=button.dataset.statsTab;
         render();
       }
@@ -138,7 +151,7 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
     if(action==='reload'){if(!editing&&!busy)load();return true;}
     if(action==='edit'&&loaded&&!busy){fields=baseballEntryFields(data);editing=true;error='';saveDraft();render();return true;}
     if(action==='fixture'&&loaded&&!busy&&game?.date==='2026-09-27'&&game?.opponent==='ヤクルト'){
-      const fixture=baseballGameData2026Fixture();fixture.lineups.opponent=[];fixture.pitchers.opponent=[];fields=baseballEntryFields(fixture);activeTab='lineup';editing=true;error='';saveDraft();render();return true;
+      const fixture=baseballGameData2026Fixture();fixture.lineups.opponent=[];fixture.pitchers.opponent=[];fields=baseballEntryFields(fixture);activeTab='batters';editing=true;error='';saveDraft();render();return true;
     }
     if(action==='cancel'&&!busy){fields=null;editing=false;error='';clean(gameId);render();return true;}
     return true;
@@ -147,7 +160,7 @@ export function createBaseballData({escapeHTML:esc,render,toast,fetcher=fetch,dr
   async function save(){
     if(!editing||!fields||busy||!loaded)return;
     let next;
-    try{next=parseBaseballEntry(fields);next.lineups.opponent=data.lineups.opponent;next.pitchers.opponent=data.pitchers.opponent;}catch(e){error=e.message;render();return;}
+    try{next=parseBaseballEntry(fields);next.lineups.opponent=data.lineups.opponent;next.batters.opponent=data.batters.opponent;next.pitchers.opponent=data.pitchers.opponent;}catch(e){error=e.message;render();return;}
     const id=gameId,rev=revision;busy=true;error='';render();
     try{
       const response=await fetcher('/api/baseball/data',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({gameId:id,revision:rev,data:next})});
