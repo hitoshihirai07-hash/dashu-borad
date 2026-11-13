@@ -89,3 +89,12 @@
 /* 手動Notionインポート結果は現在の試合の下にだけ表示 */
 .baseball-notion-feedback{margin:8px 0 4px;padding:9px 11px;border:1px solid #cde4d4;border-radius:8px;background:#f4faf5;color:#285943;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
 .baseball-notion-feedback a{display:inline-block;margin-left:5px;color:#17674a;text-decoration:underline}
+
+/* 2027年の確定日程と日程未定試合。常時大きな一覧を増やさない。 */
+.baseball-schedule-feedback{font-size:12px;color:#295e47;background:#f3faf5;border:1px solid #c9e4d2;border-radius:8px;padding:8px 11px;margin:8px 0 11px}
+.baseball-pending{border:1px solid #deeadf;border-radius:9px;background:#fbfdfb;margin-top:12px;padding:10px 13px}
+.baseball-pending summary{color:#335d48;font-weight:650;font-size:13px;cursor:pointer}
+.baseball-pending p{color:var(--muted);margin:9px 0;font-size:12px}
+.baseball-pending-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #e9f0eb;font-size:12px}
+.baseball-pending-row .button{min-height:32px;font-size:12px;padding:6px 9px}
+@media(max-width:600px){.baseball-pending-row{align-items:flex-start;flex-direction:column}}

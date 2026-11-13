@@ -1,8 +1,9 @@
 import {createBaseballNotes} from './baseball-notes.js';
 import {createBaseballData} from './baseball-data.js';
+import {GIANTS_2027_UNDATED,GIANTS_2027_SCHEDULE} from './baseball-schedule-2027.js';
 import {BASEBALL_OPPONENTS,BASEBALL_TYPES,BASEBALL_STATES,BASEBALL_LOCATIONS,normalizeBaseballGame,baseballTestGame2026} from './baseball-model.js';
 export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
-  let items=[],loaded=false,busy=false,error='',season=2026,selected='',editing=false,draft=null,officialPreview=null,officialBusy=false,notionBusy=false,notionFeedback=null;
+  let items=[],loaded=false,busy=false,error='',season=2026,selected='',editing=false,draft=null,officialPreview=null,officialBusy=false,notionBusy=false,notionFeedback=null,seeding2027=false,scheduleFeedback='';
   const notes=createBaseballNotes({escapeHTML:esc,render,toast,fetcher});
   const stats=createBaseballData({escapeHTML:esc,render,toast,fetcher});
   const pick=(options,value)=>Object.entries(options).map(([key,label])=>'<option value="'+esc(key)+'"'+(value===key?' selected':'')+'>'+esc(label)+'</option>').join('');
@@ -55,19 +56,36 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     const filtered=items.filter(x=>x.game.season===season).sort((a,b)=>b.game.date.localeCompare(a.game.date)||b.game.gameNumber-a.game.gameNumber);
     const picked=filtered.find(x=>x.id===selected)||filtered[0];
     const options=filtered.map(item=>'<option value="'+esc(item.id)+'"'+(picked?.id===item.id?' selected':'')+'>'+esc(showDate(item.game.date)+'　巨人 対 '+item.game.opponent+'（'+result(item.game)+'）')+'</option>').join('');
+    const original=new Set(GIANTS_2027_SCHEDULE.map(([date,opponent,location])=>[date,opponent,location].join('~')));
+    const added=new Set(items.filter(item=>item.game.season===2027&&item.game.gameType==='regular'&&!original.has([item.game.date,item.game.opponent,item.game.location].join('~'))).map(item=>[item.game.opponent,item.game.location].join('~')));
+    const pendingRows=GIANTS_2027_UNDATED.map((row,index)=>({row,index})).filter(({row})=>!added.has(row.join('~')));
+    const pending=season===2027&&pendingRows.length?'<details class="baseball-pending"><summary>日程未定の試合（'+pendingRows.length+'試合）</summary><p>日程確定後に追加します。日付は仮登録していません。</p>'+pendingRows.map(({row:[opponent,location],index})=>'<div class="baseball-pending-row"><span>巨人 対 '+esc(opponent)+'（'+(location==='home'?'ホーム':'ビジター')+'）</span><button type="button" class="button secondary" data-baseball="pending-2027" data-pending-index="'+index+'">日程確定後に登録</button></div>').join('')+'</details>':'';
     return '<header class="baseball-heading"><h1>⚾ 試合管理</h1></header>'
       +'<div class="baseball-toolbar">'
-      +'<label class="baseball-season-field">シーズン<select id="baseball-season"><option value="2026"'+(season===2026?' selected':'')+'>2026年</option><option value="2027"'+(season===2027?' selected':'')+'>2027年</option></select></label>'
+      +'<label class="baseball-season-field">シーズン<select id="baseball-season" '+(busy||seeding2027?'disabled':'')+'><option value="2026"'+(season===2026?' selected':'')+'>2026年</option><option value="2027"'+(season===2027?' selected':'')+'>2027年</option></select></label>'
       +'<label class="baseball-game-field">試合を選択<select id="baseball-game-picker" '+(filtered.length?'':'disabled')+'>'+(filtered.length?options:'<option value="">登録済みの試合なし</option>')+'</select></label>'
       +'<button type="button" class="button primary" data-baseball="new">＋ 試合登録</button>'
       +'<button type="button" class="button secondary" data-baseball="refresh" '+(busy?'disabled':'')+'>再読込</button></div>'
       +(error?'<p class="notice" role="alert">'+esc(error)+'</p>':'')
+      +(scheduleFeedback?'<p class="baseball-schedule-feedback" role="status">'+esc(scheduleFeedback)+'</p>':'')
+      +(seeding2027?'<p class="muted" role="status">2027年の日程を確認・初期登録しています…</p>':'')
       +(busy?'<p class="muted">処理中です…</p>':'')
       +(editing||draft?form():!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>'
       :!filtered.length?'<section class="panel baseball-empty"><p>このシーズンの試合はまだ登録されていません。</p>'
       +(season===2026?'<button type="button" class="button secondary" data-baseball="example">2026/9/27の検証用試合を作成</button>':'')+'</section>'
       :'<div class="baseball-workspace">'+detail(picked)
-       +'<div class="baseball-main">'+notes.page()+stats.page()+'</div></div>');
+       +'<div class="baseball-main">'+notes.page()+stats.page()+'</div></div>')+pending;
+  }
+  async function initialize2027(){
+    if(seeding2027||busy)return;
+    seeding2027=true;scheduleFeedback='';render();
+    try{
+      const response=await fetcher('/api/baseball/games',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'seed-2027'})});
+      const data=await response.json();
+      if(!response.ok)throw Error(data.error||'2027年の日程を登録できませんでした。');
+      scheduleFeedback=data.alreadySeeded?'2027年の初期日程は登録済みです。':('2027年の確定日程を'+data.created+'試合追加しました。既存の試合記録は保持しました。');
+    }catch(e){scheduleFeedback='日程の初期登録に失敗しました：'+e.message;}
+    finally{seeding2027=false;await load();}
   }
   async function load(){
     if(busy)return;
@@ -97,6 +115,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     if(action==='refresh'){if(!draft)load();return true;}
     if(action==='new'){selected='';officialPreview=null;notes.select('');stats.select('',null);draft={date:season+'-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',location:'home',state:'scheduled'};editing=false;error='';render();return true;}
     if(action==='example'){selected='';officialPreview=null;notes.select('');stats.select('',null);draft=baseballTestGame2026();editing=false;error='';render();return true;}
+    if(action==='pending-2027'&&season===2027){const index=Number(button.dataset.pendingIndex);const pending=GIANTS_2027_UNDATED[index];if(pending){selected='';notes.select('');stats.select('',null);draft={date:'',opponent:pending[0],location:pending[1],gameNumber:1,gameType:'regular',state:'scheduled',stadium:''};editing=false;error='';render();}return true;}
     if(action==='edit'&&record()){draft={...record().game};editing=true;error='';render();return true;}
     if(action==='cancel'){editing=false;draft=null;error='';if(!selected)selected=items.find(x=>x.game.season===season)?.id||'';notes.select(selected);stats.select(selected,record()?.game);render();return true;}
     return false;
@@ -104,7 +123,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
   function change(el){
     if(notes.change(el))return true;
     if(stats.change(el))return true;
-    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';officialPreview=null;notionFeedback=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();return true;}
+    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';officialPreview=null;notionFeedback=null;scheduleFeedback='';notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();if(season===2027)initialize2027();return true;}
     if(el.id==='baseball-game-picker'){if(items.some(x=>x.id===el.value&&x.game.season===season)){selected=el.value;officialPreview=null;notionFeedback=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();}return true;}
     return false;
   }
