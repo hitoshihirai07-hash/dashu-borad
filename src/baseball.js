@@ -2,7 +2,7 @@ import {createBaseballNotes} from './baseball-notes.js';
 import {createBaseballData} from './baseball-data.js';
 import {BASEBALL_OPPONENTS,BASEBALL_TYPES,BASEBALL_STATES,BASEBALL_LOCATIONS,normalizeBaseballGame,baseballTestGame2026} from './baseball-model.js';
 export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
-  let items=[],loaded=false,busy=false,error='',season=2026,selected='',editing=false,draft=null,officialPreview=null,officialBusy=false;
+  let items=[],loaded=false,busy=false,error='',season=2026,selected='',editing=false,draft=null,officialPreview=null,officialBusy=false,notionBusy=false,notionFeedback=null;
   const notes=createBaseballNotes({escapeHTML:esc,render,toast,fetcher});
   const stats=createBaseballData({escapeHTML:esc,render,toast,fetcher});
   const pick=(options,value)=>Object.entries(options).map(([key,label])=>'<option value="'+esc(key)+'"'+(value===key?' selected':'')+'>'+esc(label)+'</option>').join('');
@@ -44,7 +44,8 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       +'<span class="baseball-summary-date">'+esc(showDate(g.date))+' ・ '+label(g.stadium)+' ・ '+esc(BASEBALL_TYPES[g.gameType]||'試合')+'</span>'
       +'<div class="baseball-score"><strong>巨人 '+label(g.giantsScore)+' <span class="baseball-dash">―</span> '+label(g.opponentScore)+' '+esc(g.opponent)+'</strong><span class="baseball-result">'+esc(result(g))+'・'+esc(status(g))+'</span></div>'
       +'<p class="baseball-summary-starters">先発：巨人 '+label(g.giantsStarter)+'　／　'+esc(g.opponent)+' '+label(g.opponentStarter)+'</p>'
-      +'</div><div class="baseball-summary-actions"><button type="button" class="button secondary" data-baseball="official-preview" '+(officialBusy?'disabled':'')+'>NPB結果を取得</button><button type="button" class="button secondary" data-baseball="edit">試合情報を編集</button></div></div>'
+      +'</div><div class="baseball-summary-actions"><button type="button" class="button primary" data-baseball="notion-import" '+(notionBusy?'disabled':'')+'>'+(notionBusy?'インポート中…':'Notionへインポート')+'</button><button type="button" class="button secondary" data-baseball="official-preview" '+(officialBusy?'disabled':'')+'>NPB結果を取得</button><button type="button" class="button secondary" data-baseball="edit">試合情報を編集</button></div></div>'
+      +(notionFeedback?'<p class="baseball-notion-feedback" role="status">'+esc(notionFeedback.message)+(notionFeedback.url?' <a href="'+esc(notionFeedback.url)+'" target="_blank" rel="noopener noreferrer">Notionの試合ページを開く</a>':'')+'</p>':'')
       +(officialPreview?'<div class="baseball-official-preview" role="status"><strong>NPB公式：巨人 '+officialPreview.giantsScore+' ― '+officialPreview.opponentScore+' '+esc(g.opponent)+'</strong><span class="muted"> 最終得点のみ・まだ保存していません。</span><div><button type="button" class="button primary" data-baseball="official-apply" '+(officialBusy?'disabled':'')+'>反映する</button><button type="button" class="button secondary" data-baseball="official-discard">破棄</button></div></div>':'')
       +'<details class="baseball-extra"><summary>球場・対戦情報・参照元を見る</summary><dl class="baseball-dl">'
       +[['試合区分',BASEBALL_TYPES[g.gameType]],['開催区分',BASEBALL_LOCATIONS[g.location]],['球場',g.stadium],['試合番号',g.gameNumber]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+label(v)+'</dd></div>').join('')
@@ -89,6 +90,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     if(stats.click(button))return true;
     
     const action=button.dataset.baseball;if(!action)return false;
+    if(action==='notion-import'){importNotion();return true;}
     if(action==='official-preview'){previewOfficial();return true;}
     if(action==='official-apply'){applyOfficial();return true;}
     if(action==='official-discard'){officialPreview=null;render();return true;}
@@ -102,8 +104,8 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
   function change(el){
     if(notes.change(el))return true;
     if(stats.change(el))return true;
-    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';officialPreview=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();return true;}
-    if(el.id==='baseball-game-picker'){if(items.some(x=>x.id===el.value&&x.game.season===season)){selected=el.value;officialPreview=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();}return true;}
+    if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';officialPreview=null;notionFeedback=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();return true;}
+    if(el.id==='baseball-game-picker'){if(items.some(x=>x.id===el.value&&x.game.season===season)){selected=el.value;officialPreview=null;notionFeedback=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();}return true;}
     return false;
   }
   async function save(event){
@@ -119,7 +121,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       const result=await response.json();
       if(!response.ok)throw Error(result.error||'試合を保存できませんでした。');
       const item=result.item;items=items.filter(x=>x.id!==item.id).concat(item);
-      selected=item.id;season=game.season;officialPreview=null;notes.select(selected);stats.select(selected,game);editing=false;draft=null;toast('試合を保存しました。');loaded=true;
+      selected=item.id;season=game.season;officialPreview=null;notionFeedback=null;notes.select(selected);stats.select(selected,game);editing=false;draft=null;toast('試合を保存しました。');loaded=true;
     }catch(e){error=e.message;}
     finally{busy=false;render();}
   }
@@ -150,6 +152,28 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     }catch(e){error=e.message;}
     finally{officialBusy=false;render();}
   }
+
+  async function importNotion(){
+    const current=record();
+    if(!current||notionBusy||editing||draft)return;
+    const gameId=current.id;
+    notionBusy=true;notionFeedback=null;error='';render();
+    try{
+      const response=await fetcher('/api/baseball/notion-import',{
+        method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({gameId})
+      });
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||'Notionへのインポートに失敗しました。');
+      if(record()?.id!==gameId)return;
+      const message=result.status==='created'?'Notionに試合を追加しました。':result.status==='updated'?'Notionの試合記録を更新しました。':'Notionには変更がありません。';
+      const warnings=result.warnings?.length?' '+result.warnings.join('／'):'';
+      notionFeedback={message:message+warnings,url:result.pageUrl||''};
+      toast(message);
+    }catch(e){if(record()?.id===gameId)notionFeedback={message:e.message||'Notionへのインポートに失敗しました。',url:''};}
+    finally{notionBusy=false;render();}
+  }
+
   function submit(event){if(notes.submit(event))return true;if(stats.submit(event))return true;if(event.target.id!=='baseball-game-form')return false;event.preventDefault();if(busy)return true;save(event);return true;}
   return {page,load,click,change,submit,input:el=>notes.input(el)||stats.input(el),keydown:notes.keydown,clearDrafts:()=>{notes.clearDrafts();stats.clearDrafts();}};
 }

@@ -85,3 +85,7 @@
 @media(max-width:1080px){.baseball-main{grid-template-columns:1fr}}
 @media(max-width:700px){.baseball-summary-line{flex-direction:column;align-items:stretch}.baseball-summary-actions{justify-content:flex-start}.baseball-dl{grid-template-columns:repeat(2,minmax(0,1fr))}.baseball-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.baseball-toolbar .baseball-season-field{flex:0 0 95px}.baseball-game-field{flex:1 1 180px}.baseball-main{grid-template-columns:1fr}.baseball-decision-fields{grid-template-columns:1fr 1fr}.baseball-fields{grid-template-columns:1fr 1fr}.baseball-workspace>.panel,.baseball-main>.panel{padding:12px}.baseball-score strong{font-size:22px}}
+
+/* 手動Notionインポート結果は現在の試合の下にだけ表示 */
+.baseball-notion-feedback{margin:8px 0 4px;padding:9px 11px;border:1px solid #cde4d4;border-radius:8px;background:#f4faf5;color:#285943;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.baseball-notion-feedback a{display:inline-block;margin-left:5px;color:#17674a;text-decoration:underline}
