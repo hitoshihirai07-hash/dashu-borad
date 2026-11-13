@@ -18,7 +18,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
   function form(){
     const g=draft||{date:'2026-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',location:'home',state:'scheduled',stadium:'',giantsStarter:'',opponentStarter:'',giantsScore:null,opponentScore:null,sourceUrl:''};
     const persisted=record();
-    return '<section class="panel baseball-edit"><div class="panel-heading"><h2>'+(editing?'試合情報を修正':'試合を新規登録')+'</h2><button type="button" class="button secondary" data-baseball="cancel">一覧へ戻る</button></div>'
+    return '<section class="panel baseball-edit"><div class="panel-heading"><h2>'+(editing?'試合情報を修正':'試合を新規登録')+'</h2><button type="button" class="button secondary" data-baseball="cancel">試合画面に戻る</button></div>'
     +'<form id="baseball-game-form"><div class="baseball-fields">'
     +formInput('date','試合日',g.date,'date','required min="2000-01-01" max="2100-12-31" '+(editing?'readonly':''))
     +formSelect('opponent','対戦相手',opps,g.opponent).replace('<select name="opponent">','<select name="opponent" '+(editing?'disabled':'')+'>')
@@ -37,27 +37,36 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     +'<div class="baseball-actions"><button class="button primary" type="submit" '+(busy?'disabled':'')+'>'+(editing?'変更を保存':'試合を登録')+'</button></div></form></section>';
   }
   function detail(item){
-    if(!item)return '<section class="panel baseball-detail"><h2>試合詳細</h2><p class="muted">左の試合一覧から選択してください。</p></section>';
+    if(!item)return '';
     const g=item.game;
-    return '<section class="panel baseball-detail"><div class="panel-heading"><h2>'+esc(title(g))+'</h2><button type="button" class="button secondary" data-baseball="edit">編集</button></div>'
-      +'<div class="baseball-score"><strong>巨人 '+label(g.giantsScore)+' － '+label(g.opponentScore)+' '+esc(g.opponent)+'</strong><span>'+esc(result(g))+' ・ '+esc(status(g))+'</span></div>'
-      +'<div class="baseball-official-controls"><button type="button" class="button secondary" data-baseball="official-preview" '+(officialBusy?'disabled':'')+'>NPB公式から結果を取得</button><small>自動取得は最終スコアのみ。個人成績は対象外です。</small></div>'
-      +(officialPreview?'<div class="baseball-official-preview" role="status"><p>NPB公式：巨人 <strong>'+officialPreview.giantsScore+' － '+officialPreview.opponentScore+'</strong> '+esc(g.opponent)+'</p><p class="muted">未保存のプレビューです。確認してから反映してください。</p><button type="button" class="button primary" data-baseball="official-apply" '+(officialBusy?'disabled':'')+'>この結果を反映</button><button type="button" class="button secondary" data-baseball="official-discard">破棄</button></div>':'')
-      +'<dl class="baseball-dl">'
-      +[['試合区分',BASEBALL_TYPES[g.gameType]],['開催区分',BASEBALL_LOCATIONS[g.location]],['球場',g.stadium],['巨人先発',g.giantsStarter],['相手先発',g.opponentStarter],['同日の試合番号',g.gameNumber]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+label(v)+'</dd></div>').join('')
-      +'</dl>'+(g.sourceUrl?'<a href="'+esc(g.sourceUrl)+'" target="_blank" rel="noopener noreferrer">参考記録を開く</a>':'')
-      +'<p class="muted baseball-phase">スタメン・継投などの詳細情報は下の「試合データ」で確認・編集できます。自動取得は今後の検証対象です。</p></section>';
+    return '<section class="panel baseball-detail" aria-label="試合の基本情報">'
+      +'<div class="baseball-summary-line"><div class="baseball-summary-content">'
+      +'<span class="baseball-summary-date">'+esc(showDate(g.date))+' ・ '+label(g.stadium)+' ・ '+esc(BASEBALL_TYPES[g.gameType]||'試合')+'</span>'
+      +'<div class="baseball-score"><strong>巨人 '+label(g.giantsScore)+' <span class="baseball-dash">―</span> '+label(g.opponentScore)+' '+esc(g.opponent)+'</strong><span class="baseball-result">'+esc(result(g))+'・'+esc(status(g))+'</span></div>'
+      +'<p class="baseball-summary-starters">先発：巨人 '+label(g.giantsStarter)+'　／　'+esc(g.opponent)+' '+label(g.opponentStarter)+'</p>'
+      +'</div><div class="baseball-summary-actions"><button type="button" class="button secondary" data-baseball="official-preview" '+(officialBusy?'disabled':'')+'>NPB結果を取得</button><button type="button" class="button secondary" data-baseball="edit">試合情報を編集</button></div></div>'
+      +(officialPreview?'<div class="baseball-official-preview" role="status"><strong>NPB公式：巨人 '+officialPreview.giantsScore+' ― '+officialPreview.opponentScore+' '+esc(g.opponent)+'</strong><span class="muted"> 最終得点のみ・まだ保存していません。</span><div><button type="button" class="button primary" data-baseball="official-apply" '+(officialBusy?'disabled':'')+'>反映する</button><button type="button" class="button secondary" data-baseball="official-discard">破棄</button></div></div>':'')
+      +'<details class="baseball-extra"><summary>球場・対戦情報・参照元を見る</summary><dl class="baseball-dl">'
+      +[['試合区分',BASEBALL_TYPES[g.gameType]],['開催区分',BASEBALL_LOCATIONS[g.location]],['球場',g.stadium],['試合番号',g.gameNumber]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+label(v)+'</dd></div>').join('')
+      +'</dl>'+(g.sourceUrl?'<a href="'+esc(g.sourceUrl)+'" target="_blank" rel="noopener noreferrer">参考記録を開く</a>':'')+'</details></section>';
   }
   function page(){
     const filtered=items.filter(x=>x.game.season===season).sort((a,b)=>b.game.date.localeCompare(a.game.date)||b.game.gameNumber-a.game.gameNumber);
-    return '<header class="page-heading"><div><h1>⚾ 試合管理</h1><p>巨人の観戦メモ・試合結果・個人成績をまとめて管理します。</p></div></header>'
-      +'<div class="baseball-toolbar"><label>シーズン <select id="baseball-season"><option value="2026"'+(season===2026?' selected':'')+'>2026年</option><option value="2027"'+(season===2027?' selected':'')+'>2027年</option></select></label><button type="button" class="button secondary" data-baseball="refresh" '+(busy?'disabled':'')+'>保存した試合を再読込</button><button type="button" class="button primary" data-baseball="new">＋ 試合を登録</button></div>'
+    const picked=filtered.find(x=>x.id===selected)||filtered[0];
+    const options=filtered.map(item=>'<option value="'+esc(item.id)+'"'+(picked?.id===item.id?' selected':'')+'>'+esc(showDate(item.game.date)+'　巨人 対 '+item.game.opponent+'（'+result(item.game)+'）')+'</option>').join('');
+    return '<header class="baseball-heading"><h1>⚾ 試合管理</h1></header>'
+      +'<div class="baseball-toolbar">'
+      +'<label class="baseball-season-field">シーズン<select id="baseball-season"><option value="2026"'+(season===2026?' selected':'')+'>2026年</option><option value="2027"'+(season===2027?' selected':'')+'>2027年</option></select></label>'
+      +'<label class="baseball-game-field">試合を選択<select id="baseball-game-picker" '+(filtered.length?'':'disabled')+'>'+(filtered.length?options:'<option value="">登録済みの試合なし</option>')+'</select></label>'
+      +'<button type="button" class="button primary" data-baseball="new">＋ 試合登録</button>'
+      +'<button type="button" class="button secondary" data-baseball="refresh" '+(busy?'disabled':'')+'>再読込</button></div>'
       +(error?'<p class="notice" role="alert">'+esc(error)+'</p>':'')
       +(busy?'<p class="muted">処理中です…</p>':'')
-      +(editing||draft?form():!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>':'<div class="baseball-layout"><section class="panel baseball-list"><div class="panel-heading"><h2>試合一覧</h2><small>'+filtered.length+'試合</small></div>'
-      +(filtered.length?filtered.map(x=>'<button type="button" class="baseball-row'+(selected===x.id?' is-selected':'')+'" data-baseball-select="'+esc(x.id)+'"><strong>'+esc(title(x.game))+'</strong><span>'+esc(status(x.game))+' ・ '+esc(result(x.game))+'</span></button>').join(''):'<p class="muted">このシーズンの試合はまだありません。</p>')
-      +(season===2026?'<button type="button" class="button secondary baseball-example" data-baseball="example">9/27 巨人対ヤクルトの検証用試合を開く</button>':'')
-      +'</section><div class="baseball-main">'+notes.page()+'<div class="baseball-side">'+detail(record()&&record().game.season===season?record():filtered[0])+stats.page()+'</div></div></div>');
+      +(editing||draft?form():!loaded?'<section class="panel"><p>試合データを読み込んでいます。</p></section>'
+      :!filtered.length?'<section class="panel baseball-empty"><p>このシーズンの試合はまだ登録されていません。</p>'
+      +(season===2026?'<button type="button" class="button secondary" data-baseball="example">2026/9/27の検証用試合を作成</button>':'')+'</section>'
+      :'<div class="baseball-workspace">'+detail(picked)
+       +'<div class="baseball-main">'+notes.page()+stats.page()+'</div></div>');
   }
   async function load(){
     if(busy)return;
@@ -68,7 +77,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
       if(!response.ok)throw Error(data.error||'試合一覧を取得できませんでした。');
       items=data.items||[];loaded=true;
       if(selected&&!items.some(x=>x.id===selected))selected='';
-      if(!selected&&items.some(x=>x.game.season===season))selected=items.find(x=>x.game.season===season).id;
+      if(!items.some(x=>x.id===selected&&x.game.season===season))selected=items.find(x=>x.game.season===season)?.id||'';
       notes.select(selected);
       stats.select(selected,record()?.game);
       officialPreview=null;
@@ -78,7 +87,7 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
   function click(button){
     if(notes.click(button))return true;
     if(stats.click(button))return true;
-    if(button.dataset.baseballSelect!==undefined){selected=button.dataset.baseballSelect;officialPreview=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();return true;}
+    
     const action=button.dataset.baseball;if(!action)return false;
     if(action==='official-preview'){previewOfficial();return true;}
     if(action==='official-apply'){applyOfficial();return true;}
@@ -87,13 +96,14 @@ export function createBaseball({escapeHTML:esc,render,toast,fetcher=fetch}){
     if(action==='new'){selected='';officialPreview=null;notes.select('');stats.select('',null);draft={date:season+'-09-27',opponent:'ヤクルト',gameNumber:1,gameType:'regular',location:'home',state:'scheduled'};editing=false;error='';render();return true;}
     if(action==='example'){selected='';officialPreview=null;notes.select('');stats.select('',null);draft=baseballTestGame2026();editing=false;error='';render();return true;}
     if(action==='edit'&&record()){draft={...record().game};editing=true;error='';render();return true;}
-    if(action==='cancel'){editing=false;draft=null;error='';render();return true;}
+    if(action==='cancel'){editing=false;draft=null;error='';if(!selected)selected=items.find(x=>x.game.season===season)?.id||'';notes.select(selected);stats.select(selected,record()?.game);render();return true;}
     return false;
   }
   function change(el){
     if(notes.change(el))return true;
     if(stats.change(el))return true;
     if(el.id==='baseball-season'){season=Number(el.value);selected=items.find(x=>x.game.season===season)?.id||'';officialPreview=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();return true;}
+    if(el.id==='baseball-game-picker'){if(items.some(x=>x.id===el.value&&x.game.season===season)){selected=el.value;officialPreview=null;notes.select(selected);stats.select(selected,record()?.game);editing=false;draft=null;render();}return true;}
     return false;
   }
   async function save(event){

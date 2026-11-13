@@ -1,79 +1,87 @@
-/* 試合管理：既存の明るい配色と固定しない本文レイアウトを継承 */
-.baseball-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-.baseball-toolbar label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
-.baseball-toolbar select,.baseball-fields input,.baseball-fields select{width:100%;min-height:42px;background:#fff;color:#173d32;border:1px solid #cadbd0;border-radius:8px;padding:9px 12px}
-.baseball-layout{display:grid;grid-template-columns:minmax(260px,0.9fr) minmax(0,1.5fr);gap:18px;align-items:start}
-.baseball-list,.baseball-detail{min-height:240px}
-.baseball-row{width:100%;display:grid;text-align:left;gap:4px;background:#fff;border:1px solid #dbe9e0;border-radius:9px;padding:13px 12px;color:var(--green);margin-bottom:9px}
-.baseball-row strong{font-size:14px}.baseball-row span{color:var(--muted);font-size:12px}
-.baseball-row:hover,.baseball-row.is-selected{background:#edf5ef;border-color:#9fc4ae}
-.baseball-example{width:100%;white-space:normal;text-align:center;margin-top:12px}
-.baseball-score{background:#f3f8f5;border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;margin:16px 0}
-.baseball-score strong{font-size:clamp(18px,2.5vw,26px)}.baseball-score span{color:var(--muted);font-size:13px}
-.baseball-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;margin:12px 0 20px}
-.baseball-dl div{border-bottom:1px solid var(--line);padding:10px 0;min-width:0}
-.baseball-dl dt{font-size:12px;color:var(--muted)}.baseball-dl dd{margin:3px 0 0;font-weight:600;overflow-wrap:anywhere}
-.baseball-phase{margin-top:24px;border-top:1px solid var(--line);padding-top:15px}
-.baseball-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:18px 0}
-.baseball-fields label{display:flex;flex-direction:column;gap:6px;color:#335b44;font-weight:600;font-size:13px}
-.baseball-edit .muted{margin-bottom:14px}
-.baseball-actions{display:flex;justify-content:flex-end;margin-top:22px}
-@media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
-@media(max-width:600px){.baseball-toolbar .button{flex:1}.baseball-fields,.baseball-dl{grid-template-columns:1fr}.baseball-score strong{font-size:21px}}
-
-/* Phase 2: keyboard-first observation notes */
-.baseball-layout{grid-template-columns:minmax(190px,0.7fr) minmax(0,2.3fr)}
-.baseball-main{min-width:0;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,0.9fr);gap:16px;align-items:start}
-.baseball-notes{min-width:0}
-.baseball-note-label{font-weight:700;display:block;margin:8px 0}
-.baseball-notes textarea{display:block;width:100%;min-height:126px;padding:12px;border:1px solid #cadbd0;border-radius:9px;resize:vertical;background:#fff;color:#173d32}
-.baseball-note-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
-.baseball-note-options label{display:grid;gap:4px;font-size:12px;color:#41624f}
-.baseball-note-options input,.baseball-note-options select{min-width:0;width:100%;min-height:40px;border:1px solid #cadbd0;border-radius:8px;background:white;padding:8px;color:#173d32}
-.baseball-note-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;margin:16px 0 6px}
-.baseball-note-actions small{color:var(--muted)}.baseball-note-history{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
-.baseball-note-item{border:1px solid #e2ece5;border-radius:10px;padding:12px 14px;margin-bottom:11px;background:#fbfdfb}
-.baseball-note-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:#557364;font-size:12px}
-.baseball-note-head time{font-weight:750;color:#24634b}.baseball-note-item p{white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;font-size:14px}
-.baseball-note-controls,.baseball-note-confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
-.baseball-note-confirm span{margin-right:auto;font-size:12px;color:#a14336}
-.baseball-note-confirm .button{min-height:36px;padding:5px 12px}
-@media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
-@media(max-width:900px){.baseball-layout{grid-template-columns:1fr}}
-@media(max-width:600px){.baseball-note-options{grid-template-columns:1fr}.baseball-note-actions .button{width:100%}}
-
-/* 試合詳細: 観戦メモの入力領域を保ちつつ、公式データを右側に表示 */
-.baseball-side{display:grid;gap:16px;min-width:0}
+/* 巨人の観戦記録：試合を上部で切り替える、余白を抑えた画面 */
+.baseball-heading{margin:0 0 8px}
+.baseball-heading h1{font-size:clamp(21px,2.1vw,27px);margin:0;color:#174637;line-height:1.25}
+.baseball-toolbar{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:0 0 12px}
+.baseball-toolbar label{display:grid;gap:3px;font-size:11px;color:var(--muted)}
+.baseball-toolbar select{height:40px;min-height:40px;background:#fff;color:#173d32;border:1px solid #cadbd0;border-radius:9px;padding:7px 9px;max-width:100%}
+.baseball-season-field{flex:0 0 110px}
+.baseball-game-field{flex:1 1 280px;min-width:190px}
+.baseball-toolbar .button{min-height:40px;white-space:nowrap}
+.baseball-workspace{display:flex;flex-direction:column;gap:12px;min-width:0}
+.baseball-workspace>.panel,.baseball-main>.panel{min-width:0;padding:15px 17px}
+.baseball-detail{min-height:0}
+.baseball-summary-line{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.baseball-summary-content{min-width:0;flex:1}
+.baseball-summary-date{font-size:12px;color:#5f796b}
+.baseball-score{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin:5px 0 3px;padding:0;background:transparent;border-radius:0}
+.baseball-score strong{font-size:clamp(20px,2.4vw,29px);line-height:1.35;color:#154736}
+.baseball-score .baseball-dash{font-weight:400;color:#79978a}
+.baseball-result{color:#4e8068;font-size:12px;font-weight:700}
+.baseball-summary-starters{margin:0;font-size:12px;color:#4c695b;line-height:1.5}
+.baseball-summary-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;flex-shrink:0}
+.baseball-summary-actions .button{padding:7px 11px;font-size:12px;min-height:36px}
+.baseball-extra{margin-top:8px;border-top:1px solid #edf2ee;padding-top:7px}
+.baseball-extra summary{font-size:12px;cursor:pointer;color:#3e785e}
+.baseball-extra a{font-size:12px}
+.baseball-dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:9px 0}
+.baseball-dl div{min-width:0}
+.baseball-dl dt{font-size:11px;color:var(--muted)}
+.baseball-dl dd{margin:2px 0 0;font-size:12px;overflow-wrap:anywhere}
+.baseball-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.14fr);gap:12px;align-items:start}
+.baseball-main>.panel{margin:0}
+.baseball-main .panel-heading{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px}
+.baseball-main .panel-heading h2{font-size:17px;margin:0}
+.baseball-main .panel-heading h3{font-size:14px;margin:0}
+.baseball-main .panel-heading small{color:var(--muted);font-size:11px}
+.baseball-main .panel-heading .button{min-height:34px;padding:6px 10px;font-size:12px}
+.baseball-note-label{display:block;margin:6px 0 4px;font-size:12px;font-weight:700}
+.baseball-notes textarea{width:100%;min-height:92px;height:94px;max-height:240px;resize:vertical;border:1px solid #cadbd0;border-radius:8px;padding:10px;background:#fff;color:#173d32}
+.baseball-note-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:7px 0}
+.baseball-note-options label{display:grid;gap:4px;font-size:11px;color:#496c59}
+.baseball-note-options input,.baseball-note-options select{min-width:0;width:100%;min-height:36px;border:1px solid #cadbd0;border-radius:7px;background:#fff;padding:6px 8px;color:#173d32}
+.baseball-note-actions{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}
+.baseball-note-actions small{font-size:11px;color:var(--muted)}
+.baseball-note-actions .button{min-height:36px}
+.baseball-note-history{margin-top:12px;padding-top:11px;border-top:1px solid #e4eee7;max-height:390px;overflow:auto}
+.baseball-note-item{border:1px solid #e2ece5;border-radius:8px;padding:9px 10px;margin-bottom:8px;background:#fbfdfb}
+.baseball-note-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:#557364;font-size:11px}
+.baseball-note-head time{font-weight:750;color:#24634b}
+.baseball-note-item p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;margin:5px 0;line-height:1.5}
+.baseball-note-controls,.baseball-note-confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px}
+.baseball-note-confirm span{margin-right:auto;color:#a14336}
+.baseball-note-confirm .button{padding:5px 9px;min-height:32px}
 .baseball-data{min-width:0}
-.baseball-data .panel-heading{align-items:flex-start;flex-wrap:wrap}
-.baseball-data-head-actions{display:flex;flex-wrap:wrap;gap:6px}
-.baseball-data-head-actions .button{padding:7px 10px;min-height:36px}
-.baseball-data h3{font-size:14px;margin:20px 0 8px}
-.baseball-data h3:first-child{margin-top:0}
-.baseball-data-scroll{max-width:100%;overflow:auto;border:1px solid #e0ece4;border-radius:8px;margin-bottom:16px}
-.baseball-data-scroll table{font-size:12px;white-space:nowrap;width:max-content;min-width:100%}
-.baseball-data-scroll th,.baseball-data-scroll td{padding:8px 9px}
-.baseball-data-decisions{padding:12px;background:#f4faf5;border-radius:8px}
-.baseball-data-source{margin-top:15px;font-size:12px}
-.baseball-data-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.baseball-data-fields label{display:grid;gap:5px;min-width:0;font-size:12px;font-weight:650;color:#335b44}
-.baseball-data-fields textarea,.baseball-data-fields input{width:100%;min-width:0;max-width:100%;border-radius:8px;background:#fff;border:1px solid #cadbd0;color:#173d32;padding:9px 10px;font:inherit}
-.baseball-data-fields textarea{font:12px/1.55 ui-monospace,Consolas,monospace;resize:vertical}
-.baseball-data-form>.muted{font-size:12px;margin:9px 0}
-.baseball-data-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px}
-@media(max-width:1170px){.baseball-main{grid-template-columns:1fr}}
-@media(max-width:600px){.baseball-data-fields{grid-template-columns:1fr}.baseball-data-actions .button{flex:1}}
-
-/* Giants-first compact layout: game list + readable stacked workspace */
-.baseball-layout{grid-template-columns:minmax(180px,230px) minmax(0,1fr)!important;gap:16px}
-.baseball-main{display:flex!important;flex-direction:column;min-width:0;gap:16px}
-.baseball-side{display:contents!important}
-.baseball-detail{order:-1}.baseball-notes{order:0}.baseball-data{order:1}
-.baseball-detail,.baseball-notes,.baseball-data{width:100%;min-width:0}
-.baseball-official-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
-.baseball-official-controls small{color:var(--muted)}
-.baseball-official-preview{border:1px solid #bbd7c8;background:#f4faf5;border-radius:10px;padding:15px;margin:12px 0}
-.baseball-official-preview p{margin:0 0 8px}
-.baseball-official-preview button{margin:6px 8px 2px 0}
-.baseball-data-scroll{max-width:100%;overflow:auto}
-@media(max-width:800px){.baseball-layout{grid-template-columns:1fr!important}.baseball-list{min-height:0}}
+.baseball-data-head-actions{display:flex;gap:6px;flex-wrap:wrap}
+.baseball-data-head-actions .button{padding:6px 10px;min-height:34px;font-size:12px}
+.baseball-stats-tabs{display:flex;gap:4px;margin:8px 0 11px;flex-wrap:wrap;border-bottom:1px solid #dbe8df;padding-bottom:6px}
+.baseball-tab{background:#f3f7f4;border:1px solid #dfebe3;border-radius:7px;padding:8px 11px;color:#446b56;font-size:12px;cursor:pointer}
+.baseball-tab.is-active{background:#dff0e6;border-color:#a3cbb4;color:#17563c;font-weight:750}
+.baseball-data-scroll{max-width:100%;overflow:auto;border:1px solid #e0ece4;border-radius:7px;margin:6px 0 10px}
+.baseball-data-scroll table{font-size:12px;white-space:nowrap;width:max-content;min-width:100%;border-collapse:collapse}
+.baseball-data-scroll th,.baseball-data-scroll td{padding:7px 9px;border-bottom:1px solid #e7efe9;text-align:center}
+.baseball-data-scroll th{background:#f4f8f5}
+.baseball-data-decisions{padding:10px;background:#f4faf5;border-radius:7px;font-size:12px;line-height:1.6}
+.baseball-data-source{margin:10px 0 0;font-size:12px}
+.baseball-data-fields{display:grid;grid-template-columns:1fr;gap:9px;margin:8px 0}
+.baseball-decision-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+.baseball-data-fields label{display:grid;gap:4px;font-size:12px;font-weight:650;color:#335b44;min-width:0}
+.baseball-data-fields textarea,.baseball-data-fields input{width:100%;min-width:0;max-width:100%;border-radius:8px;background:#fff;border:1px solid #cadbd0;color:#173d32;padding:8px 10px;font:inherit}
+.baseball-data-fields textarea{font:12px/1.5 ui-monospace,Consolas,monospace;max-height:150px;min-height:80px;resize:vertical}
+.baseball-data-fields textarea[rows="1"]{height:38px;min-height:38px;max-height:70px}
+.baseball-data-form>.muted{font-size:11px;margin:6px 0}
+.baseball-data-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.baseball-data-actions .button{min-height:36px;padding:6px 11px}
+.baseball-data .muted{font-size:12px}
+.baseball-official-preview{border:1px solid #bbd7c8;background:#f4faf5;border-radius:8px;padding:9px;margin:8px 0;font-size:12px}
+.baseball-official-preview p{margin:0 0 5px}
+.baseball-official-preview button{margin:5px 7px 0 0}
+.baseball-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.baseball-fields label{display:grid;gap:4px;font-size:12px;font-weight:650;color:#335b44;min-width:0}
+.baseball-fields input,.baseball-fields select{width:100%;min-height:39px;background:#fff;color:#173d32;border:1px solid #cadbd0;border-radius:8px;padding:7px 10px}
+.baseball-edit{max-width:100%}
+.baseball-edit .muted{font-size:12px;margin:8px 0}
+.baseball-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.baseball-empty{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+@media(max-width:1080px){.baseball-main{grid-template-columns:1fr}}
+@media(max-width:700px){.baseball-summary-line{flex-direction:column;align-items:stretch}.baseball-summary-actions{justify-content:flex-start}.baseball-dl{grid-template-columns:repeat(2,minmax(0,1fr))}.baseball-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.baseball-toolbar .baseball-season-field{flex:0 0 95px}.baseball-game-field{flex:1 1 180px}.baseball-main{grid-template-columns:1fr}.baseball-decision-fields{grid-template-columns:1fr 1fr}.baseball-fields{grid-template-columns:1fr 1fr}.baseball-workspace>.panel,.baseball-main>.panel{padding:12px}.baseball-score strong{font-size:22px}}
