@@ -121,7 +121,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const records=timeEntries('',t.id),minutes=records.reduce((s,r)=>s+r.minutes,0);
     const overdue=showProjectOverdue&&t.due&&t.due<localDate()&&!['done','waiting','someday'].includes(t.status);
     return `<section class="panel work-detail" aria-label="タスク詳細">
-      <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)}${timeLabel(t)} ・ ${completedLabel(t)}${t.stage?' ・ '+esc(t.stage):''}</p></div><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button></div>
+      <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)}${timeLabel(t)} ・ ${completedLabel(t)}${t.stage?' ・ '+esc(t.stage):''}</p></div><div class="workspace-actions"><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button><button type="button" class="button secondary" data-workspace-delete="tasks:${esc(t.id)}">削除</button></div></div>
       ${overdue?`<aside class="work-overdue-notice" role="status"><strong>このタスクは期限を${daysLate(t.due,localDate())}日過ぎています</strong><p>予定日は自動変更されません。必要なら変更してください。</p>${overdueActions(t)}</aside>`:''}
       ${t.dueHistory.length?`<section class="work-detail-section work-deadline-history"><h3>予定日の変更履歴</h3><p class="workspace-meta">最初の期限：${esc((t.originalDue||t.dueHistory[0].from))} ・ 現在の期限：${esc(t.due||'未設定')}</p><details><summary>変更履歴を見る（${t.dueHistory.length}件）</summary><ol>${[...t.dueHistory].reverse().map(h=>`<li>${esc(h.from)} → ${esc(h.to||'日付未定')}（${esc(formatStamp(h.at))}）</li>`).join('')}</ol></details></section>`:''}
       ${t.assignee==='ai'?`<section class="work-detail-section work-ai-details"><div class="work-section-head"><h3>AI依頼：${esc(t.aiService||'依頼先未設定')}</h3></div><div class="work-ai-detail-layout"><div class="work-ai-detail-status">${aiStatusControl(t)}</div><div class="work-ai-detail-times"><span><strong>依頼日時</strong>${esc(formatStamp(t.aiRequestedAt)||'未記録')}</span><span><strong>確認日時</strong>${esc(formatStamp(t.aiCheckedAt)||'未記録')}</span></div></div><p class="muted">依頼から${t.aiCheckedAt?'確認':'現在'}までの経過：${esc(aiElapsed(t))}。これは待ち時間であり、AIの実稼働時間でも自分の作業時間でもありません。</p>${t.aiState==='done'&&t.status!=='done'?'<p class="work-ai-task-hint">AIの確認は済んでいますが、このタスクはまだ未完了です。完了した場合はタスク一覧のステータスを「完了」に変更してください。</p>':''}</section>`:''}
@@ -501,7 +501,12 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(button.dataset.workspaceHabitShift){const d=new Date(habitDate+'T12:00:00');d.setDate(d.getDate()+Number(button.dataset.workspaceHabitShift));habitDate=localDate(d);render();return true;}
       if(button.dataset.workspaceHabitDay){habitDate=button.dataset.workspaceHabitDay;render();return true;}
       if(button.dataset.workspaceHabitToday!==undefined){habitDate=localDate();render();return true;}
-      if(button.dataset.workspaceDelete){const [type,id]=button.dataset.workspaceDelete.split(':');if(!confirm('この項目を削除しますか？先にバックアップを保存してください。'))return true;save(workspaceDelete(value,type,id));toast('削除しました。');return true;}
+      if(button.dataset.workspaceDelete){const [type,id]=button.dataset.workspaceDelete.split(':');if(type==='tasks'){
+          const task=value.tasks.find(t=>t.id===id);if(!task)throw Error('タスクが見つかりません。');
+          if(!confirm(`「${task.title}」を削除しますか？\nNotionに連携済みの場合は次回の同期でNotion側もアーカイブします。\n作業時間の記録は残ります。`))return true;
+          selectedTask='';save(workspaceDelete(value,type,id));toast('タスクを削除しました。Notion側には同期時に反映されます。');return true;
+        }
+        if(!confirm('この項目を削除しますか？先にバックアップを保存してください。'))return true;save(workspaceDelete(value,type,id));toast('削除しました。');return true;}
       if(button.dataset.workspaceConvert){const note=value.notes.find(x=>x.id===button.dataset.workspaceConvert);if(!note)throw Error('メモがありません。');open('tasks','',{title:note.title,detail:note.body,project:note.project});return true;}
       if(button.dataset.workspaceCopy){
         const p=value.prompts.find(x=>x.id===button.dataset.workspaceCopy);if(!p)throw Error('プロンプトがありません。');
