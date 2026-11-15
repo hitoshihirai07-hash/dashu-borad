@@ -129,6 +129,7 @@ export async function onRequest({request,env}){
    if(choice==='local'){await patch(other,{properties:props(local)});newLinks[local.id]={page:other.notionId,local:lh,remote:lh};updates.push(local.title+'：ときの記録を採用');continue;}
    if(choice==='notion'){const next=adopt(local,other);newLinks[local.id]={page:other.notionId,local:fingerprint(next),remote:rh};updates.push(local.title+'：Notionを採用');continue;}
    const lc=lh!==previous.local,rc=rh!==previous.remote;
+   if(!lc&&!rc)continue;
    if(lc&&!rc){await patch(other,{properties:props(local)});newLinks[local.id]={page:other.notionId,local:lh,remote:lh};updates.push(local.title+'：Notionへ反映');continue;}
    if(rc&&!lc){
     if(local.repeat&&['waiting','someday'].includes(other.status)){conflict(local.id,local.title,'ルーチンの待機状態は手動確認',local,other);continue;}
