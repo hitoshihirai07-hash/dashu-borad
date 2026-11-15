@@ -22,10 +22,12 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   busy=true;message='タスクを照合しています。';render();
   try{
    const result=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resolutions})});
-   changes=result.updated||[];conflicts=result.conflicts||[];
+   let verified={updated:[],conflicts:[],changed:false};
+   if(Object.keys(resolutions).length&&!(result.conflicts||[]).length)verified=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   changes=[...(result.updated||[]),...(verified.updated||[])];conflicts=[...(result.conflicts||[]),...(verified.conflicts||[])];
    message=`同期確認完了：反映 ${changes.length}件、要確認 ${conflicts.length}件`;
    initialized=true;
-   if(result.changed)await cloud.refresh();
+   if(result.changed||verified.changed)await cloud.refresh();
    toast(message);
   }catch(e){message=e.message;toast(message);}
   finally{busy=false;render();}
