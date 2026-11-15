@@ -1,6 +1,6 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
- let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',initialized=false,started=false,formDraft=null,pageBodies=new Map(),openBodies=new Set();
+ let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',formDraft=null,pageBodies=new Map(),openBodies=new Set();
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
  const memoDB='https://app.notion.com/p/4803a7f9e4e549ea809fce5495b3964d';
@@ -26,8 +26,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
    if(Object.keys(resolutions).length&&!(result.conflicts||[]).length)verified=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    changes=[...(result.updated||[]),...(verified.updated||[])];conflicts=[...(result.conflicts||[]),...(verified.conflicts||[])];
    message=`同期確認完了：反映 ${changes.length}件、要確認 ${conflicts.length}件`;
-   initialized=true;
-   if(result.changed||verified.changed)await cloud.refresh();
+   await cloud.refresh();
    toast(message);
   }catch(e){message=e.message;toast(message);}
   finally{busy=false;render();}
@@ -98,7 +97,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   return `<header class="page-heading"><div><h1>Notion連携</h1><p>タスクとメモをNotionと共有します。</p></div></header>
    <div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button></div>
    ${tab==='tasks'?`<section class="panel notion-panel"><h2>タスクの双方向同期</h2>
-    <p class="muted">初回は未完了のタスクだけ登録します。以降はNotionとダッシュボードで変更・完了を相互反映します。削除は自動同期しません。</p>
+    <p class="muted">初回は未完了のタスクだけ登録します。以降は「Notionと同期」を押したときだけ変更・完了を相互反映します。削除は必要に応じて確認します。</p>
     <p>現在の未完了タスク：<strong>${workspace.get().tasks.filter(t=>t.status!=='done').length}件</strong></p>
     <div class="workspace-actions"><button type="button" class="button primary" data-notion-action="sync" ${busy?'disabled':''}>Notionと同期</button><a class="button secondary" target="_blank" rel="noopener noreferrer" href="${taskDB}">Notionで開く</a></div>
     <p class="muted">同期の前にデータ共有画面からバックアップを保存してください。通信・更新競合時は上書きしません。</p>
@@ -135,7 +134,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }).join('')+'<div class="workspace-actions"><button type="button" class="button primary" data-notion-action="resolve" '+(busy?'disabled':'')+'>選択した内容で解決する</button></div></section>';
  }
  function click(button){
-  if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();if(tab==='memos'&&!loaded)load();return true;}
+  if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();return true;}
   if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;openBodies.add(editing);render();loadBody(editing);return true;}
   if(button.dataset.notionBodyRetry){loadBody(button.dataset.notionBodyRetry,true);return true;}
   if(button.dataset.notionBody){const id=button.dataset.notionBody;if(openBodies.has(id))openBodies.delete(id);else{openBodies.add(id);loadBody(id);}render();return true;}
@@ -171,18 +170,6 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }catch(e){message=e.message;toast(e.message);}finally{busy=false;render();}})();
   return true;
  }
- async function start(){
-  if(started)return;
-  started=true;
-  try{
-    if(cloud.status()==='ready'){
-      const result=await api('/api/notion/sync');
-      initialized=!!result.initialized;
-      if(initialized)await sync();
-    }
-  }catch(e){message=e.message;}
-  setInterval(()=>{if(typeof document==='undefined'||document.hidden||cloud.status()!=='ready')return;if(initialized)sync();if(tab==='memos'&&loaded&&!busy)load();},120000);
-  if(typeof window!=='undefined')window.addEventListener('focus',()=>{if(initialized&&cloud.status()==='ready')sync();});
- }
- return {page,click,change,input,submit,load,sync,start};
+
+ return {page,click,change,input,submit,load,sync};
 }

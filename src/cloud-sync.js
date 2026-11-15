@@ -60,8 +60,6 @@ export function createCloudSync({storage,fetcher=globalThis.fetch,download,onApp
     if(status==='ready'){dirty=true;storage.setItem(pendingKey,'1');announce('dirty','復元データを送信中');schedule();}
     else announce('local','端末内へバックアップを復元しました。');
   }
-  let timer=null;
-  if(online){timer=setInterval(()=>{if(typeof document!=='undefined'&&!document.hidden)refresh();},30000);timer?.unref?.();if(typeof window!=='undefined')window.addEventListener('focus',()=>refresh());}
   const panel=()=>{
     const message=detail||({ready:'同期済み',dirty:'同期中',loading:'接続中',local:'端末保存のみ',setup:'初回登録待ち',choose:'クラウド読込待ち',conflict:'同期競合',error:'通信エラー'}[status]);
     const action=(()=>{if(status==='setup')return `<button class="button secondary" data-cloud="backup">全データをバックアップ</button><button class="button primary" data-cloud="start" ${!backed&&nonEmptyCloudData(localData())?'disabled':''}>クラウド利用開始</button>`;

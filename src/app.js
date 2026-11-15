@@ -197,7 +197,7 @@ async function authCall(url,options={}){
   const result=await response.json().catch(()=>({error:'サーバーの応答を読み取れません。'}));
   return {ok:response.ok,...result};
 }
-async function afterLogin(){authScreen.hidden=true;$('.sidebar').inert=false;$('.workspace').inert=false;render();await cloud.init();await notion.start();if(location.hash==='#baseball')await baseball.load();}
+async function afterLogin(){authScreen.hidden=true;$('.sidebar').inert=false;$('.workspace').inert=false;render();await cloud.init();if(location.hash==='#baseball')await baseball.load();}
 authForm.addEventListener('submit',async e=>{
   e.preventDefault();if(authBusy)return;authBusy=true;
   const button=authForm.querySelector('button[type="submit"]');button.disabled=true;authError.textContent='';
