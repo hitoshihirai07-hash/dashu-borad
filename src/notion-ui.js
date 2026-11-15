@@ -16,12 +16,12 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   catch(e){message=e.message;}
   finally{busy=false;render();}
  }
- async function sync(){
+ async function sync(resolutions={}){
   if(busy)return;
   if(cloud.status()!=='ready'){toast('先に「データ共有・同期」でクラウド保存を完了してください。');return;}
   busy=true;message='タスクを照合しています。';render();
   try{
-   const result=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+   const result=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resolutions})});
    changes=result.updated||[];conflicts=result.conflicts||[];
    message=`同期確認完了：反映 ${changes.length}件、要確認 ${conflicts.length}件`;
    initialized=true;
@@ -105,7 +105,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
      <select data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}の状態">${[['todo','未着手'],['doing','進行中'],['waiting','待機中'],['someday','いつかやる'],['done','完了']].map(([key,label])=>`<option value="${key}" ${key===t.status?'selected':''}>${label}</option>`).join('')}</select></div>`).join('')||'<p class="muted">未完了タスクはありません。</p>'}</div>
     </section>
     ${changes.length?`<section class="panel notion-panel"><h2>反映した内容</h2><ul>${changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
-    ${conflicts.length?`<section class="panel notion-panel"><h2>要確認：競合</h2><ul>${conflicts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="muted">データは自動で上書きしていません。</p></section>`:''}
+     ${conflictPanel()}
     `:`<section class="panel notion-panel"><div class="panel-heading"><h2>Notionのメモ</h2><a href="${memoDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>
     <div class="workspace-actions"><button type="button" class="button secondary" data-notion-action="load" ${busy?'disabled':''}>最新情報を取得</button><button type="button" class="button primary" data-notion-action="new" ${busy?'disabled':''}>新しいメモ</button></div>
     ${editing!==null&&editing!=='__closed__'?`<form id="notion-memo-form" class="notion-form"><h3>${note?'メモを編集':'新しいメモ'}</h3><label>タイトル<input name="title" maxlength="160" required value="${esc(draftDisplay?.title||'')}"></label>
@@ -119,13 +119,32 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     </section>`}
    <p class="notion-message" role="status">${esc(message)}</p>`;
  }
+ function conflictDetails(task){
+  if(!task)return '<p class="muted">該当するタスクはありません（削除済み・見つからない状態）。</p>';
+  const states={todo:'未着手',doing:'進行中',waiting:'待機中',someday:'いつか',done:'完了'};
+  return '<dl>'+[['タスク名',task.title],['状態',states[task.status]||task.status],['予定日',task.due||'日付未定'],['優先度',task.priority],['プロジェクト',task.project||'未分類'],['詳細',task.detail||'なし'],['完了日時',task.completedAt||'なし']].map(([name,value])=>'<dt>'+esc(name)+'</dt><dd>'+esc(value)+'</dd>').join('')+'</dl>';
+ }
+ function conflictPanel(){
+  if(!conflicts.length)return '';
+  const fieldNames={title:'タスク名',status:'状態',due:'予定日',priority:'優先度',project:'プロジェクト',detail:'詳細',completedAt:'完了日時'};
+  return '<section class="panel notion-panel"><h2>要確認：競合 '+conflicts.length+'件</h2><p class="muted">残す内容を選択してください。未選択の場合は上書きしません。</p>'+conflicts.map(c=>{
+   if(typeof c==='string')return '<p>'+esc(c)+'</p>';
+   return '<article class="notion-conflict-row"><h3>'+esc(c.title)+'</h3><p class="muted">'+esc(c.reason)+(c.fields?.length?'（'+c.fields.map(f=>esc(fieldNames[f]||f)).join('・')+'）':'')+'</p><div class="notion-conflict-compare"><div><strong>ときの記録</strong>'+conflictDetails(c.local)+'</div><div><strong>Notion</strong>'+conflictDetails(c.notion)+'</div></div><label>残す内容<select data-notion-resolution="'+esc(c.id)+'"><option value="">選択してください</option><option value="local">ときの記録を採用'+(c.local?'':'（Notionをアーカイブ）')+'</option><option value="notion">Notionを採用'+(c.notion?'':'（ときの記録から削除）')+'</option></select></label></article>';
+  }).join('')+'<div class="workspace-actions"><button type="button" class="button primary" data-notion-action="resolve" '+(busy?'disabled':'')+'>選択した内容で解決する</button></div></section>';
+ }
  function click(button){
   if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();if(tab==='memos'&&!loaded)load();return true;}
   if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;openBodies.add(editing);render();loadBody(editing);return true;}
   if(button.dataset.notionBodyRetry){loadBody(button.dataset.notionBodyRetry,true);return true;}
   if(button.dataset.notionBody){const id=button.dataset.notionBody;if(openBodies.has(id))openBodies.delete(id);else{openBodies.add(id);loadBody(id);}render();return true;}
   const action=button.dataset.notionAction;if(!action)return false;
-  if(action==='sync')sync();else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
+  if(action==='sync')sync();else if(action==='resolve'){
+    const fields=[...document.querySelectorAll('[data-notion-resolution]')];
+    const selected=Object.fromEntries(fields.filter(el=>el.value).map(el=>[el.dataset.notionResolution,el.value]));
+    if(!fields.length||Object.keys(selected).length!==fields.length){toast('すべての要確認タスクで解決方法を選択してください。');return true;}
+    if(!confirm('選択した内容を両方へ反映します。よろしいですか？'))return true;
+    sync(selected);
+  }else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
   else if(action==='cancel'){editing='__closed__';formDraft=null;render();}
   return true;
  }
