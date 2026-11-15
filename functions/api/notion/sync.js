@@ -147,7 +147,7 @@ export async function onRequest({request,env}){
    updates.push(local.title+'：別項目の変更を自動統合');
   }
   for(const other of remote){
-   if(deleted.has(other.id)||original.some(t=>t.id===other.id))continue;
+   if(deleted.has(other.id)||tasks.some(t=>t.id===other.id)||original.some(t=>t.id===other.id))continue;
    if(links[other.id]){
     if(!resolutions[other.id]){conflict(other.id,other.title,'ときの記録側で見つかりません',null,other);continue;}
     if(resolutions[other.id]==='local'){await patch(other,{archived:true});delete newLinks[other.id];deleted.add(other.id);changed=true;updates.push(other.title+'：Notion側をアーカイブ');continue;}
