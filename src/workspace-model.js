@@ -8,7 +8,7 @@ export const HABITS = Object.freeze([
   {id:'daily', label:'今日の記録'},
 ]);
 export const workspaceFresh = () => ({
-  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],reviews:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[]
+  format:'toki-workspace',version:1,projects:[],tasks:[],notes:[],prompts:[],templates:[],links:[],events:[],reviews:[],quickNotes:[],focusDays:{},habits:{},hiddenProjects:[],deletedTaskIds:[]
 });
 const validClock = v => !v || /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const validTimestamp = v => !v || Number.isFinite(Date.parse(v));
@@ -146,6 +146,10 @@ export function workspaceValidate(value){
   const hidden=value.hiddenProjects??[];
   if(!Array.isArray(hidden)||hidden.length>2000||hidden.some(x=>typeof x!=='string'||!x.trim()||x.length>80)||new Set(hidden).size!==hidden.length)throw Error('プロジェクトの表示設定が不正です。');
   out.hiddenProjects=[...hidden];
+  // Tombstones prevent a task deleted here from being imported again from Notion.
+  const deletedTaskIds=value.deletedTaskIds??[];
+  if(!Array.isArray(deletedTaskIds)||deletedTaskIds.length>10000||deletedTaskIds.some(id=>typeof id!=='string'||!id||id.length>160)||new Set(deletedTaskIds).size!==deletedTaskIds.length||deletedTaskIds.some(id=>out.tasks.some(t=>t.id===id)))throw Error('削除済みタスクの同期情報が不正です。');
+  out.deletedTaskIds=[...deletedTaskIds];
   return out;
 }
 export function validLinkUrl(value){
@@ -170,8 +174,9 @@ export function workspaceChange(current,type,payload,id,makeId){
 export function workspaceDelete(current,type,id){
   current=workspaceValidate(current);
   if(!Object.hasOwn({projects:1,tasks:1,notes:1,prompts:1,templates:1,links:1,events:1,reviews:1,quickNotes:1},type))throw Error('種類が不正です。');
+  if(type==='tasks'&&!current.tasks.some(t=>t.id===id))throw Error('削除するタスクが見つかりません。');
   return workspaceValidate({...current,[type]:current[type].filter(x=>x.id!==id),
-    ...(type==='tasks'?{focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length)),quickNotes:current.quickNotes.map(n=>n.taskId===id?{...n,taskId:'',updatedAt:new Date().toISOString()}:n)}:{})});
+    ...(type==='tasks'?{deletedTaskIds:[...current.deletedTaskIds,id],focusDays:Object.fromEntries(Object.entries(current.focusDays).map(([day,ids])=>[day,ids.filter(x=>x!==id)]).filter(([,ids])=>ids.length)),quickNotes:current.quickNotes.map(n=>n.taskId===id?{...n,taskId:'',updatedAt:new Date().toISOString()}:n)}:{})});
 }
 // Changing a deadline is an explicit action; never silently roll tasks forward.
 export function workspaceRescheduleTask(current,id,due,makeId,at=new Date().toISOString()){
