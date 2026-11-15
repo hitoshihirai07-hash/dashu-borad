@@ -47,7 +47,7 @@ async function list(env){
   const response=await notion(env,'data_sources/'+(env.NOTION_TASK_DATA_SOURCE_ID||TASK_DS)+'/query','POST',{page_size:100,...(cursor?{start_cursor:cursor}:{})});
   rows.push(...(response.results||[]));cursor=response.has_more?response.next_cursor:null;
   if(rows.length>10000)throw Error('Notion件数が上限を超えました');
- }while(cursor);return rows.filter(x=>!x.archived&&!x.in_trash).map(decode);
+ }while(cursor);return rows.filter(x=>!x.in_trash).map(decode);
 }
 const freshTask=(r,at)=>({
  id:r.id,title:r.title,project:r.project,createdAt:at,updatedAt:at,
@@ -89,7 +89,7 @@ export async function onRequest({request,env}){
  const remove=id=>{tasks=tasks.filter(t=>t.id!==id);deleted.add(id);changed=true;};
  const patch=async(other,properties)=>{
   const fresh=await notion(env,'pages/'+other.notionId);
-  if(fresh.archived||fresh.in_trash||fresh.last_edited_time!==other.notionEdited)throw Error('Notionが同期中に変更されました。再同期してください。');
+  if(fresh.in_trash||fresh.last_edited_time!==other.notionEdited)throw Error('Notionが同期中に変更されました。再同期してください。');
   await notion(env,'pages/'+other.notionId,'PATCH',properties);
  };
  const create=async(local)=>{
@@ -106,7 +106,7 @@ export async function onRequest({request,env}){
    if(choice==='notion'){
     const restored=freshTask(other,now);tasks.push(restored);deleted.delete(id);changed=true;
     newLinks[id]={page:other.notionId,local:fingerprint(restored),remote:fingerprint(other)};updates.push(other.title+'：Notionから復元');
-   }else{await patch(other,{archived:true});delete newLinks[id];updates.push(other.title+'：Notion側もアーカイブ');}
+   }else{await patch(other,{in_trash:true});delete newLinks[id];updates.push(other.title+'：Notion側もアーカイブ');}
   }
   for(const local of original){
    if(deleted.has(local.id))continue;
@@ -150,7 +150,7 @@ export async function onRequest({request,env}){
    if(deleted.has(other.id)||tasks.some(t=>t.id===other.id)||original.some(t=>t.id===other.id))continue;
    if(links[other.id]){
     if(!resolutions[other.id]){conflict(other.id,other.title,'ときの記録側で見つかりません',null,other);continue;}
-    if(resolutions[other.id]==='local'){await patch(other,{archived:true});delete newLinks[other.id];deleted.add(other.id);changed=true;updates.push(other.title+'：Notion側をアーカイブ');continue;}
+    if(resolutions[other.id]==='local'){await patch(other,{in_trash:true});delete newLinks[other.id];deleted.add(other.id);changed=true;updates.push(other.title+'：Notion側をアーカイブ');continue;}
    }
    const added=freshTask(other,now);if(!added.title.trim())continue;
    tasks.push(added);changed=true;newLinks[other.id]={page:other.notionId,local:fingerprint(added),remote:fingerprint(other)};
