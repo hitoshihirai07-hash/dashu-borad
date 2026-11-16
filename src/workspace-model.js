@@ -101,7 +101,10 @@ export function workspaceValidate(value){
         });
         const originalDue=str(item.originalDue??(dueHistory[0]?.from||''),10);
         if(originalDue&&!validDay(originalDue))throw Error('元の期限が不正です。');
-        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        const workTools=str(item.workTools??'',180),workUrl=str(item.workUrl??'',2048);
+        if(workUrl&&!validLinkUrl(workUrl))throw Error('作業リンクはhttp/httpsの有効なURLを入力してください。');
+        const firstStep=str(item.firstStep??'',1200),taskDoneCriteria=str(item.taskDoneCriteria??'',1200),aiRequest=str(item.aiRequest??'',4000);
+        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,workTools,workUrl,firstStep,taskDoneCriteria,aiRequest,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects'){
         const stages=item.stages??[];

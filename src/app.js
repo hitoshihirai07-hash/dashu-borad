@@ -14,6 +14,7 @@ const colors=['#327655','#76a68a','#aecbb3','#bb9d65','#709da0','#927fa2','#a774
 const timeText=m=>m%60?`${Math.floor(m/60)?Math.floor(m/60)+'時間':''}30分`:`${m/60}時間`;
 let storageError='',data=fresh(),mode='week',anchor=localDate(),view='dashboard',query='',activityFilter='',showDeleted=false,page=1,editing=null,deleting=null,mergePlan=null,mergeSnapshot='',toastTimer;
 try{const raw=localStorage.getItem(KEY);if(raw)data=validate(JSON.parse(raw));}catch{storageError='端末内の記録を読み込めません。既存データを保護するため保存を停止しています。データ共有から救出ファイルを書き出してください。';}
+let homePanel='work';
 let selectedField='all',breakdownKey='project',inputDefaults={field:'プロ野球',projects:{}};
 try{const stored=JSON.parse(localStorage.getItem('toki-input-defaults-v2'));if(stored&&Object.hasOwn(FIELD_PRESETS,stored.field)&&stored.projects&&typeof stored.projects==='object')inputDefaults=stored;}catch{}
 function fieldTabs(){return `<div class="segmented field-tabs" role="group" aria-label="分野で表示切替">${[['all','全体'],['プロ野球','プロ野球']].map(([value,label])=>`<button data-field="${value}" class="${selectedField===value?'active':''}" aria-pressed="${selectedField===value}">${label}</button>`).join('')}</div>`;}
@@ -88,7 +89,17 @@ function dashboard(){
   // One compact operational home; detailed histories, charts and filters remain on their own pages.
   const today=localDate(),todayMinutes=activeRecords(data).filter(r=>r.date===today).reduce((sum,r)=>sum+r.minutes,0);
   const todayTime=todayMinutes?`${Math.floor(todayMinutes/60)?Math.floor(todayMinutes/60)+'時間':''}${todayMinutes%60?todayMinutes%60+'分':''}`:'0分';
-  return `<div class="home-dashboard"><h1 class="visually-hidden">今日の作業と記録</h1>${workspace.linksHome(true)}<div class="home-dashboard-grid">${workspace.quickHome(true)}${workspace.habitHome()}${workspace.actionBoard()}${workspace.homeEvents()}${lifeLog.home()}<section class="panel home-card home-time" aria-label="時間の記録"><div class="panel-heading"><h2>時間の記録</h2><a class="text-button" href="#records">記録を確認</a></div><div class="home-time-summary"><span>今日の合計</span><strong>${todayTime}</strong></div><button type="button" class="button primary home-time-add" data-action="add">${icon('plus')}時間を記録</button></section></div></div>`;
+  return `<div class="home-dashboard"><h1 class="visually-hidden">今日の作業と記録</h1>
+  <div class="home-view-switch" role="group" aria-label="ホームの表示切替">
+    <button type="button" data-home-panel="work" aria-pressed="${homePanel==='work'}" class="${homePanel==='work'?'active':''}">作業・ToDo</button>
+    <button type="button" data-home-panel="life" aria-pressed="${homePanel==='life'}" class="${homePanel==='life'?'active':''}">記録・生活</button>
+  </div>
+  <div class="home-stage-work" ${homePanel==='work'?'':'hidden'}>${workspace.linksHome(true)}${workspace.actionBoard(true)}</div>
+  <div class="home-dashboard-grid home-stage-life" ${homePanel==='life'?'':'hidden'}>
+    ${workspace.quickHome(true)}${workspace.habitHome()}${workspace.homeEvents()}${lifeLog.home()}
+    <section class="panel home-card home-time" aria-label="時間の記録"><div class="panel-heading"><h2>時間の記録</h2><a class="text-button" href="#records">記録を確認</a></div><div class="home-time-summary"><span>今日の合計</span><strong>${todayTime}</strong></div><button type="button" class="button primary home-time-add" data-action="add">${icon('plus')}時間を記録</button></section>
+  </div>
+</div>`;
 }
 function timeReport(){const range=periodRange(mode,anchor),records=inRange(byField(activeRecords(data),selectedField),range),total=records.reduce((s,r)=>s+r.minutes,0),days=new Set(records.map(r=>r.date)).size;let label=mode==='month'?`${anchor.slice(0,4)}年${Number(anchor.slice(5,7))}月`:mode==='day'?`${anchor.replaceAll('-','/')}（${['日','月','火','水','木','金','土'][new Date(anchor+'T12:00:00').getDay()]}）`:`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`;
   return `<section class="time-report"><div class="panel-heading"><h2>時間の集計・グラフ</h2><small>期間を切り替えて振り返る</small></div>`+fieldTabs()+quickRecordPanel()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div></section>`;
@@ -145,6 +156,7 @@ async function importFile(file){if(!file)return;try{if(file.size>10*1024*1024)th
 document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;
   try{
     if(button.dataset.close){$('#'+button.dataset.close).close();return;}
+    if(button.dataset.homePanel!==undefined){if(!['work','life'].includes(button.dataset.homePanel))return;homePanel=button.dataset.homePanel;render();return;}
     if(lifeLog.click(button))return;
     if(notion.click(button))return;
     if(baseball.click(button))return;

@@ -122,11 +122,11 @@ test('dashboard shows only today total and the time records page keeps quick-rec
  h.nav('#dashboard');assert.match(h.html(),/今日の合計<\/span><strong>1時間30分/);
 });
 
-test('dashboard retains compact order with a life-log entry and no in-home histories',()=>{
+test('dashboard keeps original controls in switchable, compact panels',()=>{
  const h=harness(),html=h.html();
- const names=['よく使うリンク','ひとことメモ</h2>','今日の習慣','今日のタスク','生活ログ</h2>','時間の記録</h2>'];
- const positions=names.map(x=>html.indexOf(x));
- assert(positions.every(x=>x>=0));assert(positions.every((x,i)=>i===0||x>positions[i-1]));
+ assert.match(html,/data-home-panel="work"/);assert.match(html,/data-home-panel="life"/);
+ assert.match(html,/class="home-stage-work"/);assert.match(html,/class="home-dashboard-grid home-stage-life" hidden/);
+ for(const name of ['よく使うリンク','これからやること','ひとことメモ','今日の習慣','生活ログ','時間の記録'])assert.match(html,new RegExp(name));
  assert.match(html,/href="#quick-notes"/);assert.match(html,/href="#records"/);
  assert.match(html,/data-workspace-quick-form/);assert.match(html,/data-workspace-habit/);
  assert.match(html,/data-action="add"/);assert.match(html,/data-life="home-today"/);
