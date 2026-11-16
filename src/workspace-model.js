@@ -188,6 +188,16 @@ export function workspaceRescheduleTask(current,id,due,makeId,at=new Date().toIS
   const dueHistory=[...task.dueHistory,{from:task.due,to:due,at}].slice(-40);
   return workspaceChange(current,'tasks',{due,dueHistory,originalDue:task.originalDue||task.due},id,makeId);
 }
+
+/** Explicitly schedule an actionable task, including a previously undated one. */
+export function workspaceSetTaskDate(current,id,due,makeId,at=new Date().toISOString()){
+  current=workspaceValidate(current);
+  const task=current.tasks.find(t=>t.id===id);
+  if(!task||['done','waiting','someday'].includes(task.status))throw Error('予定日を変更できる未完了タスクがありません。');
+  if(!validDay(due))throw Error('変更先の日付が不正です。');
+  if(task.due)return workspaceRescheduleTask(current,id,due,makeId,at);
+  return workspaceChange(current,'tasks',{due},id,makeId);
+}
 export function workspaceMoveLink(current,id,direction){
   current=workspaceValidate(current);
   if(!['up','down'].includes(direction))throw Error('移動方向が不正です。');
