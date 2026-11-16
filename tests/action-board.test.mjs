@@ -23,7 +23,7 @@ test('action board groups actionable tasks by day without moving old deadlines',
   w=add(w,'翌週の仕事','2026-11-23');
   w=add(w,'期限超過','2026-11-01');
   w=add(w,'日付未定','');
-  w=add(w,'待機中','2026-11-16','waiting');
+  w=add(w,'待機対象タスク','2026-11-16','waiting');
   const h=uiHarness(w);
   try{
     assert.match(h.ui.actionBoard(),/今日の仕事/);
@@ -36,7 +36,7 @@ test('action board groups actionable tasks by day without moving old deadlines',
     assert.doesNotMatch(h.ui.actionBoard(),/翌週の仕事/);
     h.ui.click({dataset:{workspaceActionView:'undated'}});
     assert.match(h.ui.actionBoard(),/日付未定/);
-    assert.doesNotMatch(h.ui.actionBoard(),/待機中/);
+    assert.doesNotMatch(h.ui.actionBoard(),/待機対象タスク/);
   }finally{h.close();}
 });
 test('undated tasks can be scheduled; existing due history and completion still work',()=>{

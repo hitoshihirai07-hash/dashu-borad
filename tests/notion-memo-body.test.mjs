@@ -71,6 +71,7 @@ test('memo list allows viewing and closing safely escaped read-only page text',a
  };
  try{
   notion.click({dataset:{notionTab:'memos'}});
+  notion.click({dataset:{notionAction:'load'}}); // Manual fetch; switching tabs does not auto-sync.
   await flush();await flush();
   assert.match(notion.page(),/ページ本文を見る/);
   notion.click({dataset:{notionBody:memoId}});
