@@ -42,3 +42,21 @@
 .notion-conflict-row>label{display:block;margin-top:.7rem;font-weight:600}
 .notion-conflict-row select{display:block;max-width:100%;min-width:230px;margin-top:.35rem;border:1px solid #a8c2ae;border-radius:8px;background:#fff;padding:.55rem;color:#274b33;font:inherit}
 @media(max-width:600px){.notion-conflict-compare{grid-template-columns:1fr}.notion-conflict-compare dl{grid-template-columns:5.5rem 1fr}}
+
+/* Manual promotion of actionable Notion candidates, on the Notion page only. */
+.notion-backlog-panel .workspace-actions{align-items:center;gap:.65rem}
+.notion-backlog-message{margin:.65rem 0;color:#456d53;font-size:.82rem}
+.notion-backlog-list{display:grid;gap:.7rem;margin-top:1rem}
+.notion-backlog-item{border:1px solid #dce9e0;border-radius:11px;padding:1rem;background:#fcfefc;display:grid;gap:.75rem}
+.notion-backlog-info{display:flex;gap:.55rem 1rem;align-items:center;flex-wrap:wrap}
+.notion-backlog-info strong{flex:1;min-width:200px;font-size:.92rem;overflow-wrap:anywhere;color:#2b5b40}
+.notion-backlog-info>span{font-size:.72rem;color:#386f4d;background:#e7f4e9;border-radius:8px;padding:.2rem .5rem}
+.notion-backlog-info>a{font-size:.76rem;text-decoration:underline}
+.notion-backlog-controls{display:flex;align-items:end;flex-wrap:wrap;gap:.65rem}
+.notion-backlog-controls label{display:grid;gap:.3rem;font-size:.78rem;color:#526c5b;font-weight:650}
+.notion-backlog-controls input,.notion-backlog-controls select{min-height:40px;border:1px solid #b7d0be;border-radius:8px;padding:.45rem .6rem;background:#fff;color:#294c35;max-width:100%}
+.notion-backlog-controls select{min-width:160px}
+.notion-backlog-controls .button{min-height:40px;padding:.5rem .9rem}
+.notion-backlog-added{padding:.45rem .65rem;background:#f0f7f1;border-radius:8px;color:#477052;font-size:.8rem}
+.work-task-origin{background:#f3f9f4;color:#466d52;padding:9px 12px;font-size:.78rem;border-radius:9px;margin-top:14px}
+@media(max-width:600px){.notion-tabs{gap:.3rem;flex-wrap:wrap}.notion-tabs .button{min-width:0;flex:1;padding:.6rem .35rem;font-size:.78rem}.notion-backlog-item{padding:.75rem}.notion-backlog-controls{display:grid;grid-template-columns:1fr 1fr}.notion-backlog-controls .button{grid-column:1/-1}.notion-backlog-controls select{min-width:0;width:100%}}

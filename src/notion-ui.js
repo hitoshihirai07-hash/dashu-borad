@@ -1,9 +1,11 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',formDraft=null,pageBodies=new Map(),openBodies=new Set();
+ let backlog=[],backlogLoaded=false,backlogBusy=false,backlogMessage='',backlogDates=new Map(),backlogProjects=new Map();
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
  const memoDB='https://app.notion.com/p/4803a7f9e4e549ea809fce5495b3964d';
+ const backlogDB='https://app.notion.com/p/40bee5b798908067b80ed27f3d45cd89';
  const select=(options,current)=>options.map(x=>`<option value="${esc(x)}" ${x===current?'selected':''}>${esc(x)}</option>`).join('');
  async function api(url,options={}){
   const res=await fetch(url,{credentials:'same-origin',cache:'no-store',...options});
@@ -90,12 +92,49 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }catch(e){pageBodies.set(id,{loading:false,error:e.message});}
   render();
  }
+
+ async function loadBacklog(){
+  if(backlogBusy)return;
+  backlogBusy=true;backlogMessage='候補を取得しています。';render();
+  try{
+   const data=await api('/api/notion/backlog');
+   backlog=(Array.isArray(data.items)?data.items:[]).filter(x=>x.status==='対応可能');
+   backlogLoaded=true;
+   backlogMessage='候補を取得しました。Notionの記録日を実行日に流用しません。';
+  }catch(e){backlog=[];backlogLoaded=false;backlogMessage=e.message;toast(e.message);}
+  finally{backlogBusy=false;render();}
+ }
+ function backlogPage(){
+  const registered=new Map(workspace.get().tasks.filter(t=>t.sourceNotionPage).map(t=>[t.sourceNotionPage,t]));
+  const projects=workspace.visibleProjects();
+  const items=backlog.map(c=>{
+   const existing=registered.get(c.id),selected=backlogProjects.get(c.id)||'';
+   return `<article class="notion-backlog-item">
+     <div class="notion-backlog-info"><strong>${esc(c.title)}</strong><span>対応可能</span><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">元のNotionページを見る</a></div>
+     ${existing?`<p class="notion-backlog-added">登録済み（実行日：${esc(existing.due||'日付未定')}） <button type="button" class="text-button" data-workspace-select-task="${esc(existing.id)}">タスクを開く</button></p>`:
+       `<div class="notion-backlog-controls">
+         <label>実行日（必須）<input type="date" data-notion-backlog-date="${esc(c.id)}" value="${esc(backlogDates.get(c.id)||'')}"></label>
+         <label>プロジェクト<select data-notion-backlog-project="${esc(c.id)}"><option value="">未分類</option>${[...new Set([...projects,...(selected?[selected]:[])])].map(name=>`<option value="${esc(name)}" ${name===selected?'selected':''}>${esc(name)}</option>`).join('')}</select></label>
+         <button type="button" class="button primary" data-notion-promote="${esc(c.id)}">この日でToDoに登録</button>
+       </div>`}
+    </article>`;
+  }).join('');
+  return `<section class="panel notion-panel notion-backlog-panel">
+   <div class="panel-heading"><h2>次回タスクの候補</h2><a href="${backlogDB}" target="_blank" rel="noopener noreferrer" class="text-button">Notionで確認</a></div>
+   <p class="muted">Notion「次回タスク確認管理」の「対応可能」の候補だけを手動で取得します。元の日付は記録日です。作業日は必ずここで別に指定してください。</p>
+   <div class="workspace-actions"><button type="button" class="button primary" data-notion-action="load-backlog" ${backlogBusy?'disabled':''}>候補を取得・更新</button><span class="muted">Notion側の状態や記録は変更しません。</span></div>
+   <p class="notion-backlog-message" role="status">${esc(backlogMessage)}</p>
+   ${!backlogLoaded?'<p class="muted">「候補を取得・更新」を押してください。自動取得はありません。</p>':
+     backlog.length?`<div class="notion-backlog-list">${items}</div>`:'<p class="muted">対応可能な候補はありません。</p>'}
+  </section>`;
+ }
+
  function page(){
   const list=memos.filter(x=>(category==='all'||x.category===category)&&(!search||(`${x.title} ${x.body}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
   const note=editing?memos.find(x=>x.id===editing):null;
   const draftDisplay=formDraft||note;
-  return `<header class="page-heading"><div><h1>Notion連携</h1><p>タスクとメモをNotionと共有します。</p></div></header>
-   <div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button></div>
+  return `<header class="page-heading"><div><h1>Notion連携</h1><p>タスク・メモの同期と、次回候補の手動確認ができます。</p></div></header>
+   <div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button><button type="button" class="button ${tab==='backlog'?'primary':'secondary'}" data-notion-tab="backlog">次回候補</button></div>
    ${tab==='tasks'?`<section class="panel notion-panel"><h2>タスクの双方向同期</h2>
     <p class="muted">初回は未完了のタスクだけ登録します。以降は「Notionと同期」を押したときだけ変更・完了を相互反映します。削除は必要に応じて確認します。</p>
     <p>現在の未完了タスク：<strong>${workspace.get().tasks.filter(t=>t.status!=='done').length}件</strong></p>
@@ -107,7 +146,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     </section>
     ${changes.length?`<section class="panel notion-panel"><h2>反映した内容</h2><ul>${changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
      ${conflictPanel()}
-    `:`<section class="panel notion-panel"><div class="panel-heading"><h2>Notionのメモ</h2><a href="${memoDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>
+    `:tab==='backlog'?backlogPage():`<section class="panel notion-panel"><div class="panel-heading"><h2>Notionのメモ</h2><a href="${memoDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>
     <div class="workspace-actions"><button type="button" class="button secondary" data-notion-action="load" ${busy?'disabled':''}>最新情報を取得</button><button type="button" class="button primary" data-notion-action="new" ${busy?'disabled':''}>新しいメモ</button></div>
     ${editing!==null&&editing!=='__closed__'?`<form id="notion-memo-form" class="notion-form"><h3>${note?'メモを編集':'新しいメモ'}</h3><label>タイトル<input name="title" maxlength="160" required value="${esc(draftDisplay?.title||'')}"></label>
      <label>内容<textarea name="body" maxlength="1900" rows="6">${esc(draftDisplay?.body||'')}</textarea></label>
@@ -134,6 +173,19 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }).join('')+'<div class="workspace-actions"><button type="button" class="button primary" data-notion-action="resolve" '+(busy?'disabled':'')+'>選択した内容で解決する</button></div></section>';
  }
  function click(button){
+  if(button.dataset.notionPromote!==undefined){
+   const candidate=backlog.find(c=>c.id===button.dataset.notionPromote);
+   if(!candidate){toast('候補が見つかりません。再取得してください。');return true;}
+   const card=button.closest?.('.notion-backlog-item');
+   const day=card?.querySelector?.('[data-notion-backlog-date]')?.value||backlogDates.get(candidate.id)||'';
+   const project=card?.querySelector?.('[data-notion-backlog-project]')?.value??backlogProjects.get(candidate.id)??'';
+   try{
+    if(!day)throw Error('実行日を指定してください。Notionの記録日は使いません。');
+    workspace.promoteNotionCandidate({...candidate,day,project});
+    toast('実行日を指定してタスクに登録しました。');
+   }catch(e){toast(e.message);}
+   return true;
+  }
   if(button.dataset.notionTab){tab=button.dataset.notionTab;editing='__closed__';formDraft=null;render();return true;}
   if(button.dataset.notionEdit){editing=button.dataset.notionEdit;formDraft=null;openBodies.add(editing);render();loadBody(editing);return true;}
   if(button.dataset.notionBodyRetry){loadBody(button.dataset.notionBodyRetry,true);return true;}
@@ -145,11 +197,13 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
     if(!fields.length||Object.keys(selected).length!==fields.length){toast('すべての要確認タスクで解決方法を選択してください。');return true;}
     if(!confirm('選択した内容を両方へ反映します。よろしいですか？'))return true;
     sync(selected);
-  }else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
+  }else if(action==='load-backlog')loadBacklog();else if(action==='load')load();else if(action==='new'){editing='';formDraft=null;render();}
   else if(action==='cancel'){editing='__closed__';formDraft=null;render();}
   return true;
  }
  function change(node){
+  if(node.dataset?.notionBacklogDate!==undefined){backlogDates.set(node.dataset.notionBacklogDate,node.value);return true;}
+  if(node.dataset?.notionBacklogProject!==undefined){backlogProjects.set(node.dataset.notionBacklogProject,node.value);return true;}
   if(node.id==='notion-category'){category=node.value;render();return true;}
   return false;
  }

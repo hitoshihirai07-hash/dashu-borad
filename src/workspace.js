@@ -124,6 +124,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     return `<section class="panel work-detail" aria-label="タスク詳細">
       <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)}${timeLabel(t)} ・ ${completedLabel(t)}${t.stage?' ・ '+esc(t.stage):''}</p></div><div class="workspace-actions"><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button><button type="button" class="button secondary" data-workspace-delete="tasks:${esc(t.id)}">削除</button></div></div>
       ${overdue?`<aside class="work-overdue-notice" role="status"><strong>このタスクは期限を${daysLate(t.due,localDate())}日過ぎています</strong><p>予定日は自動変更されません。必要なら変更してください。</p>${overdueActions(t)}</aside>`:''}
+      ${t.sourceNotionPage?`<div class="work-task-origin">Notionの次回候補から登録：<a href="${esc(t.sourceNotionUrl)}" target="_blank" rel="noopener noreferrer">元ページを開く</a></div>`:''}
       ${t.dueHistory.length?`<section class="work-detail-section work-deadline-history"><h3>予定日の変更履歴</h3><p class="workspace-meta">最初の期限：${esc((t.originalDue||t.dueHistory[0].from))} ・ 現在の期限：${esc(t.due||'未設定')}</p><details><summary>変更履歴を見る（${t.dueHistory.length}件）</summary><ol>${[...t.dueHistory].reverse().map(h=>`<li>${esc(h.from)} → ${esc(h.to||'日付未定')}（${esc(formatStamp(h.at))}）</li>`).join('')}</ol></details></section>`:''}
       ${t.assignee==='ai'?`<section class="work-detail-section work-ai-details"><div class="work-section-head"><h3>AI依頼：${esc(t.aiService||'依頼先未設定')}</h3></div><div class="work-ai-detail-layout"><div class="work-ai-detail-status">${aiStatusControl(t)}</div><div class="work-ai-detail-times"><span><strong>依頼日時</strong>${esc(formatStamp(t.aiRequestedAt)||'未記録')}</span><span><strong>確認日時</strong>${esc(formatStamp(t.aiCheckedAt)||'未記録')}</span></div></div><p class="muted">依頼から${t.aiCheckedAt?'確認':'現在'}までの経過：${esc(aiElapsed(t))}。これは待ち時間であり、AIの実稼働時間でも自分の作業時間でもありません。</p>${t.aiState==='done'&&t.status!=='done'?'<p class="work-ai-task-hint">AIの確認は済んでいますが、このタスクはまだ未完了です。完了した場合はタスク一覧のステータスを「完了」に変更してください。</p>':''}</section>`:''}
       <section class="work-detail-section work-start-guide"><h3>作業の始め方</h3>
@@ -200,7 +201,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const period=(label,rows)=>rows.length?`<details class="work-task-group work-task-fold" data-workspace-task-group="${esc(label)}" ${expandedTaskGroups.has(label)||search?'open':''}><summary>${label} <small>${rows.length}件</small></summary>${byDay(rows)}</details>`:'';
     const sections=taskView==='done'?section('完了済みの履歴',matched.sort((a,b)=>b.completedAt.localeCompare(a.completedAt)),{collapsed:false}):
       [section('期限切れ・直近7日間',overdueRecent,{overdueActionsVisible:true,id:'overdue-tasks'}),section('古い期限切れ',overdueOld,{collapsed:true,overdueActionsVisible:true}),section(`今日・${displayDay(today)}`,todayRows),section(`明日・${displayDay(tomorrow)}`,tomorrowRows),period('今週の残り',weekRows),period('来週以降',futureRows),section('日付未定（着手可能）',undated,{collapsed:true}),section('確認目安が来た待機',review),section('待機中',waiting,{collapsed:true}),section('いつかやる',someday,{collapsed:true}),section('完了済みの履歴',done,{collapsed:true})].join('');
-    return `<header class="page-heading"><div><h1>タスク</h1><p>日付ごとに整理しています。選ぶと右側に詳細を表示します。</p></div><div class="workspace-actions"><a class="button secondary" href="#templates">テンプレートから追加</a><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></div></header>
+    return `<header class="page-heading"><div><h1>タスク</h1><p>日付ごとに整理しています。選ぶと右側に詳細を表示します。</p></div><div class="workspace-actions"><a class="button secondary" href="#notion">Notionの次回候補</a><a class="button secondary" href="#templates">テンプレートから追加</a><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></div></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
       <p class="muted work-help">期限切れは自動で繰り越しません。完了履歴や古い予定は折りたたんでいます。ルーチンは完了・スキップ後に次回分を作成します。</p>
       <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label><label>表示<select id="workspace-status-filter"><option value="pending" ${taskView==='pending'?'selected':''}>未完了中心</option><option value="all" ${taskView==='all'?'selected':''}>すべて</option><option value="done" ${taskView==='done'?'selected':''}>完了済みのみ</option></select></label></div>
@@ -517,6 +518,23 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const unchanged=old?.repeat&&JSON.stringify(old.repeat)===JSON.stringify(rule)&&old.due===f.elements.due.value;
     return {rule,due:unchanged?old.due:firstRoutineDate(rule,since)};
   }
+
+  function promoteNotionCandidate({id,title,url,status,day,project=''}) {
+    if(error)throw Error(error);
+    if(status!=='対応可能')throw Error('対応可能な候補だけを登録できます。');
+    if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('候補IDが不正です。');
+    if(typeof title!=='string'||!title.trim()||title.length>160)throw Error('タスク名を確認してください。');
+    if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))throw Error('実行日を選んでください。');
+    if(typeof url!=='string'||!/^https:\/\//i.test(url))throw Error('Notionの元ページを確認できません。');
+    if(typeof project!=='string'||project.length>80)throw Error('プロジェクト名が不正です。');
+    if(value.tasks.some(t=>t.sourceNotionPage===id))throw Error('この候補はすでにタスク登録されています。');
+    const next=workspaceChange(value,'tasks',{
+      title:title.trim(),project,due:day,status:'todo',priority:'normal',
+      sourceNotionPage:id,sourceNotionUrl:url
+    },'',uid);
+    save(next);
+    return next.tasks.find(t=>t.sourceNotionPage===id)?.id||'';
+  }
   function click(button){
     try{
       if(button.dataset.workspaceActionView!==undefined){
@@ -767,5 +785,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,error:()=>error,reload,home,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,promoteNotionCandidate,error:()=>error,reload,home,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
 }

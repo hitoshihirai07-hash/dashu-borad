@@ -104,7 +104,11 @@ export function workspaceValidate(value){
         const workTools=str(item.workTools??'',180),workUrl=str(item.workUrl??'',2048);
         if(workUrl&&!validLinkUrl(workUrl))throw Error('作業リンクはhttp/httpsの有効なURLを入力してください。');
         const firstStep=str(item.firstStep??'',1200),taskDoneCriteria=str(item.taskDoneCriteria??'',1200),aiRequest=str(item.aiRequest??'',4000);
-        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,workTools,workUrl,firstStep,taskDoneCriteria,aiRequest,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        const sourceNotionPage=str(item.sourceNotionPage??'',36),sourceNotionUrl=str(item.sourceNotionUrl??'',2048);
+        if(sourceNotionPage&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sourceNotionPage))throw Error('元のNotionページIDが不正です。');
+        if(sourceNotionUrl&&!validLinkUrl(sourceNotionUrl))throw Error('元のNotionリンクが不正です。');
+        if(Boolean(sourceNotionPage)!==Boolean(sourceNotionUrl))throw Error('元のNotionページの情報が不完全です。');
+        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,workTools,workUrl,firstStep,taskDoneCriteria,aiRequest,sourceNotionPage,sourceNotionUrl,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects'){
         const stages=item.stages??[];
