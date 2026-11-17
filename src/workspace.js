@@ -519,7 +519,28 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     return {rule,due:unchanged?old.due:firstRoutineDate(rule,since)};
   }
 
-  function promoteNotionCandidate({id,title,url,status,day,project=''}) {
+  function refreshNotionCandidatePrompts(candidates){
+    if(error)throw Error(error);
+    if(!Array.isArray(candidates))throw Error('次回候補の形式が不正です。');
+    const prompts=new Map();
+    for(const candidate of candidates){
+      if(!candidate||typeof candidate.id!=='string'||!Object.hasOwn(candidate,'prompt'))continue;
+      if(typeof candidate.prompt!=='string'||candidate.prompt.length>4000)throw Error('AIプロンプトが長すぎるか形式が不正です。');
+      prompts.set(candidate.id,candidate.prompt);
+    }
+    if(!prompts.size)return 0;
+    let updated=0;
+    const tasks=value.tasks.map(t=>{
+      if(!t.sourceNotionPage||!prompts.has(t.sourceNotionPage))return t;
+      const prompt=prompts.get(t.sourceNotionPage);
+      if(t.aiRequest===prompt)return t;
+      updated++;
+      return {...t,aiRequest:prompt,updatedAt:new Date().toISOString()};
+    });
+    if(updated)save({...value,tasks});
+    return updated;
+  }
+  function promoteNotionCandidate({id,title,url,status,day,project='',prompt=''}) {
     if(error)throw Error(error);
     if(status!=='対応可能')throw Error('対応可能な候補だけを登録できます。');
     if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('候補IDが不正です。');
@@ -527,10 +548,11 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day))throw Error('実行日を選んでください。');
     if(typeof url!=='string'||!/^https:\/\//i.test(url))throw Error('Notionの元ページを確認できません。');
     if(typeof project!=='string'||project.length>80)throw Error('プロジェクト名が不正です。');
+    if(typeof prompt!=='string'||prompt.length>4000)throw Error('AIプロンプトが長すぎるか形式が不正です。');
     if(value.tasks.some(t=>t.sourceNotionPage===id))throw Error('この候補はすでにタスク登録されています。');
     const next=workspaceChange(value,'tasks',{
       title:title.trim(),project,due:day,status:'todo',priority:'normal',
-      sourceNotionPage:id,sourceNotionUrl:url
+      sourceNotionPage:id,sourceNotionUrl:url,aiRequest:prompt
     },'',uid);
     save(next);
     return next.tasks.find(t=>t.sourceNotionPage===id)?.id||'';
@@ -785,5 +807,5 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,promoteNotionCandidate,error:()=>error,reload,home,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,promoteNotionCandidate,refreshNotionCandidatePrompts,error:()=>error,reload,home,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
 }

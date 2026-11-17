@@ -35,6 +35,17 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  }
 
  const safeLink=url=>typeof url==='string'&&/^https?:\/\//i.test(url)?url:'';
+ async function copyBacklogPrompt(text){
+  if(typeof navigator!=='undefined'&&navigator.clipboard?.writeText){
+   try{await navigator.clipboard.writeText(text);toast('AIプロンプトをコピーしました。');return;}catch{}
+  }
+  if(typeof document==='undefined'||!document.createElement)throw Error('コピーできませんでした。');
+  const field=document.createElement('textarea');
+  field.value=text;field.setAttribute('readonly','');field.style.position='fixed';field.style.left='-9999px';
+  document.body.append(field);field.select();
+  try{if(!document.execCommand('copy'))throw Error('コピーできませんでした。');toast('AIプロンプトをコピーしました。');}
+  finally{field.remove();}
+ }
  function runs(items=[]){
   return (Array.isArray(items)?items:[]).map(x=>{
    let s=esc(x.text||'');
@@ -98,9 +109,10 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   backlogBusy=true;backlogMessage='候補を取得しています。';render();
   try{
    const data=await api('/api/notion/backlog');
-   backlog=(Array.isArray(data.items)?data.items:[]).filter(x=>x.status==='対応可能');
-   backlogLoaded=true;
-   backlogMessage='候補を取得しました。Notionの記録日を実行日に流用しません。';
+   const next=(Array.isArray(data.items)?data.items:[]).filter(x=>x.status==='対応可能');
+   const updated=workspace.refreshNotionCandidatePrompts?.(next)||0;
+   backlog=next;backlogLoaded=true;
+   backlogMessage='候補を取得しました。'+(updated?'登録済みタスクのプロンプト '+updated+'件を更新しました。':'')+'Notionの記録日を実行日に流用しません。';
   }catch(e){backlog=[];backlogLoaded=false;backlogMessage=e.message;toast(e.message);}
   finally{backlogBusy=false;render();}
  }
@@ -108,9 +120,10 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   const registered=new Map(workspace.get().tasks.filter(t=>t.sourceNotionPage).map(t=>[t.sourceNotionPage,t]));
   const projects=workspace.visibleProjects();
   const items=backlog.map(c=>{
-   const existing=registered.get(c.id),selected=backlogProjects.get(c.id)||'';
+   const existing=registered.get(c.id),selected=backlogProjects.get(c.id)||'',prompt=typeof c.prompt==='string'?c.prompt:'';
    return `<article class="notion-backlog-item">
      <div class="notion-backlog-info"><strong>${esc(c.title)}</strong><span>対応可能</span><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">元のNotionページを見る</a></div>
+     ${prompt?`<details class="notion-backlog-prompt"><summary>AIプロンプトを見る</summary><div class="notion-backlog-prompt-text">${esc(prompt)}</div><button type="button" class="button secondary" data-notion-backlog-copy="${esc(c.id)}">プロンプトをコピー</button></details>`:''}
      ${existing?`<p class="notion-backlog-added">登録済み（実行日：${esc(existing.due||'日付未定')}） <button type="button" class="text-button" data-workspace-select-task="${esc(existing.id)}">タスクを開く</button></p>`:
        `<div class="notion-backlog-controls">
          <label>実行日（必須）<input type="date" data-notion-backlog-date="${esc(c.id)}" value="${esc(backlogDates.get(c.id)||'')}"></label>
@@ -173,6 +186,11 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   }).join('')+'<div class="workspace-actions"><button type="button" class="button primary" data-notion-action="resolve" '+(busy?'disabled':'')+'>選択した内容で解決する</button></div></section>';
  }
  function click(button){
+  if(button.dataset.notionBacklogCopy!==undefined){
+   const candidate=backlog.find(c=>c.id===button.dataset.notionBacklogCopy);
+   if(!candidate?.prompt){toast('コピーするプロンプトがありません。');return true;}
+   copyBacklogPrompt(candidate.prompt).catch(e=>toast(e.message));return true;
+  }
   if(button.dataset.notionPromote!==undefined){
    const candidate=backlog.find(c=>c.id===button.dataset.notionPromote);
    if(!candidate){toast('候補が見つかりません。再取得してください。');return true;}

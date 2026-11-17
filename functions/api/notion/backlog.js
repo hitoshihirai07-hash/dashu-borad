@@ -35,7 +35,11 @@ export async function onRequest({request,env}){
     const title=plain(p.properties?.['名前']?.title).trim();
     const status=p.properties?.['状態']?.select?.name||'';
     const url=safeUrl(p.url);
-    if(status==='対応可能'&&title&&url)items.push({id:p.id,title,status,url});
+    if(status==='対応可能'&&title&&url){
+      const prompt=plain(p.properties?.['AIプロンプト']?.rich_text).trim();
+      if(prompt.length>4000)throw Error('「'+title+'」のAIプロンプトが4000文字を超えています。Notionで短くしてください。');
+      items.push({id:p.id,title,status,url,prompt});
+    }
    }
    cursor=data.has_more?data.next_cursor:null;
    if(cursor&&items.length>=1000)throw Error('候補が多いため取得を中断しました。Notion側で整理してください。');
