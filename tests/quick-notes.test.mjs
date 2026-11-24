@@ -126,7 +126,7 @@ test('navigation and dashboard expose the memo page while keeping existing route
  const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
  for(const item of ['desktop-nav','mobile-nav']){
    const start=shell.indexOf(`<nav class="${item}"`),end=shell.indexOf('</nav>',start);
-   assert.match(shell.slice(start,end),/href="#quick-notes" data-nav="quick-notes"/);
+   assert.match(shell.slice(start,end),/href="#journal" data-nav="journal"/);
  }
  assert.match(app,/workspace\.quickHome\(true\)/);
  assert.match(app,/'quick-notes':workspace\.quickNotesPage/);

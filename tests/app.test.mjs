@@ -122,10 +122,10 @@ test('dashboard shows only today total and the time records page keeps quick-rec
  h.nav('#dashboard');assert.match(h.html(),/今日の合計<\/span><strong>1時間30分/);
 });
 
-test('dashboard keeps original controls in switchable, compact panels',()=>{
+test('dashboard shows work and life controls together without a switch',()=>{
  const h=harness(),html=h.html();
- assert.match(html,/data-home-panel="work"/);assert.match(html,/data-home-panel="life"/);
- assert.match(html,/class="home-stage-work"/);assert.match(html,/class="home-dashboard-grid home-stage-life" hidden/);
+ assert.doesNotMatch(html,/data-home-panel=/);
+ assert.match(html,/class="home-stage-work"/);assert.match(html,/class="home-dashboard-grid home-stage-life">/);
  for(const name of ['よく使うリンク','これからやること','ひとことメモ','今日の習慣','生活ログ','時間の記録'])assert.match(html,new RegExp(name));
  assert.match(html,/href="#quick-notes"/);assert.match(html,/href="#records"/);
  assert.match(html,/data-workspace-quick-form/);assert.match(html,/data-workspace-habit/);
@@ -179,3 +179,5 @@ test('home life-log button opens today, then shows a completed notice without du
  assert.equal(h.el('#life-dialog').open,false);
  assert.equal(h.readLife().records.length,1);
 });
+
+test('record group and scoped Notion routes remain accessible',()=>{const h=harness();h.nav('#journal');for(const route of ['records','life-log','habits','quick-notes','notion-memos'])assert.match(h.html(),new RegExp('href="#'+route+'"'));h.nav('#tasks');assert.match(h.html(),/Notionと同期/);assert.match(h.html(),/href="#notion-backlog"/);h.nav('#notion-memos');assert.match(h.html(),/Notionメモ/);h.nav('#notion-backlog');assert.match(h.html(),/次回タスク候補/);h.nav('#share');assert.match(h.html(),/Notionの同期・競合管理/);});

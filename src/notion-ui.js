@@ -142,12 +142,15 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   </section>`;
  }
 
- function page(){
+ function taskControls(){return `<button type="button" class="button secondary" data-notion-action="sync" ${busy?'disabled':''}>Notionと同期</button><a class="text-button" href="#notion-backlog">次回タスク候補</a>${conflicts.length?`<a class="text-button" href="#share">要確認 ${conflicts.length}件</a>`:''}<span class="muted" role="status">${esc(message)}</span>`;}
+ function settingsPanel(){return `<details class="panel notion-settings" ${conflicts.length?'open':''}><summary>Notionの同期・競合管理（要確認 ${conflicts.length}件）</summary><div class="workspace-actions">${taskControls()}<a href="${taskDB}" target="_blank" rel="noopener noreferrer">Notionで開く</a></div>${changes.length?`<p>反映 ${changes.length}件</p><ul>${changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}${conflictPanel()}</details>`;}
+ function page(section){
+  if(section)tab=section;
   const list=memos.filter(x=>(category==='all'||x.category===category)&&(!search||(`${x.title} ${x.body}`).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
   const note=editing?memos.find(x=>x.id===editing):null;
   const draftDisplay=formDraft||note;
-  return `<header class="page-heading"><div><h1>Notion連携</h1><p>タスク・メモの同期と、次回候補の手動確認ができます。</p></div></header>
-   <div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button><button type="button" class="button ${tab==='backlog'?'primary':'secondary'}" data-notion-tab="backlog">次回候補</button></div>
+  return `<header class="page-heading"><div><h1>${section==='memos'?'Notionメモ':section==='backlog'?'次回タスク候補':'Notion連携'}</h1><p>必要なときに手動で最新情報を取得します。</p></div></header>
+   ${section?'':`<div class="notion-tabs"><button type="button" class="button ${tab==='tasks'?'primary':'secondary'}" data-notion-tab="tasks">タスク</button><button type="button" class="button ${tab==='memos'?'primary':'secondary'}" data-notion-tab="memos">メモ</button><button type="button" class="button ${tab==='backlog'?'primary':'secondary'}" data-notion-tab="backlog">次回候補</button></div>`}
    ${tab==='tasks'?`<section class="panel notion-panel"><h2>タスクの双方向同期</h2>
     <p class="muted">初回は未完了のタスクだけ登録します。以降は「Notionと同期」を押したときだけ変更・完了を相互反映します。削除は必要に応じて確認します。</p>
     <p>現在の未完了タスク：<strong>${workspace.get().tasks.filter(t=>t.status!=='done').length}件</strong></p>
@@ -243,5 +246,5 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   return true;
  }
 
- return {page,click,change,input,submit,load,sync};
+ return {page,taskControls,settingsPanel,click,change,input,submit,load,sync};
 }

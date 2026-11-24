@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const shell=readFileSync(new URL('../src/shell.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/workspace.css',import.meta.url),'utf8');
 const app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
-const routeNames=['dashboard','tasks','calendar','projects','habits','records','life-log','prompts','templates','links','share'];
+const routeNames=['dashboard','tasks','projects','calendar','journal','baseball','share'];
 
 function nav(name){const start=shell.indexOf(`<nav class="${name}"`);const end=shell.indexOf('</nav>',start);assert.ok(start>=0&&end>start,`missing ${name}`);return shell.slice(start,end);}
 
@@ -20,12 +20,11 @@ test('all existing pages remain reachable on desktop and on mobile',()=>{
   }
 });
 
-test('desktop has a small top-level navigation and accessible grouped pages',()=>{
+test('desktop has six main entries and settings, with no redundant menu groups',()=>{
   assert.equal([...pcNav.matchAll(/class="sidebar-primary"/g)].length,6);
-  assert.equal([...pcNav.matchAll(/class="sidebar-group"/g)].length,2);
-  assert.equal([...pcNav.matchAll(/name="desktop-sidebar-groups"/g)].length,2);
-  assert.match(pcNav,/<details[^>]+class="sidebar-group">\s*<summary>/);
+  assert.equal([...pcNav.matchAll(/class="sidebar-group"/g)].length,0);
   assert.match(shell,/<nav class="mobile-nav" aria-label=/);
+  for(const child of ['habits','records','life-log','quick-notes','prompts','templates','links','notion'])assert.doesNotMatch(pcNav,new RegExp('data-nav="'+child+'"'));
 });
 
 test('desktop menu scrolls separately and mobile bottom navigation is preserved',()=>{

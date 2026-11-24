@@ -75,7 +75,7 @@ test('layout removes stand-alone quick memo nav and provides accessible habit an
  const shell=readFileSync(new URL('../src/shell.html',import.meta.url),'utf8');
  const js=readFileSync(new URL('../src/workspace.js',import.meta.url),'utf8');
  assert.doesNotMatch(shell,/data-nav="notes"/);
- assert.match(shell,/data-nav="habits"/);
+ assert.match(shell,/data-nav="journal"/);
  assert.match(shell,/name="memo"/);
  assert.match(js,/data-workspace-save-note="tasks"/);
  assert.match(js,/data-workspace-save-note="projects"/);

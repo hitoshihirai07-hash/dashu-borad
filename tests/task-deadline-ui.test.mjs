@@ -76,7 +76,7 @@ test('task and compact home show overdue warnings; reschedule buttons update wit
  }finally{h.close();}
 });
 
-test('project task list uses the same date grouping, warns for overdue items and allows manual rescheduling',()=>{
+test('project task list simplifies upcoming tasks, warns for overdue items and allows manual rescheduling',()=>{
  let w=workspaceFresh();
  w=add(w,'遅れているタスク','2026-11-08');
  w=add(w,'古い期限','2026-10-01');
@@ -88,8 +88,9 @@ test('project task list uses the same date grouping, warns for overdue items and
    assert.match(html,/期限を過ぎた未完了タスクが2件あります/);
    assert.match(html,/期限切れ・直近7日間/);
    assert.match(html,/古い期限切れ/);
-   assert.match(html,/明日・11月10日（火）/);
-   assert.match(html,/来週以降/);
+   assert.match(html,/明日のタスク/);
+   assert.match(html,/来週のタスク/);
+   assert.match(html,/未完了タスク/);
    assert.match(html,/data-workspace-reschedule=/);
    const id=w.tasks.find(t=>t.title==='遅れているタスク').id;
    h.ui.click({dataset:{workspaceSelectTask:id}});
