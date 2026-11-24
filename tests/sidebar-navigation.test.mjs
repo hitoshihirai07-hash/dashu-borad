@@ -35,7 +35,7 @@ test('desktop menu scrolls separately and mobile bottom navigation is preserved'
 });
 
 test('current group auto-opens on navigation, but not again after manually closing',()=>{
-  const script=app.slice(app.indexOf('let lastSidebarView=null;'),app.indexOf('function render(){view='));
+  const script=app.slice(app.indexOf('let lastSidebarView=null;'),app.indexOf('function render()'));
   const groups=[
     {open:false, current:false, querySelector(selector){return selector.includes('projects')?{}:null;},classList:{toggle(key,value){assert.equal(key,'has-current');groups[0].current=value;}}},
     {open:false, current:false, querySelector(selector){return selector.includes('records')?{}:null;},classList:{toggle(key,value){assert.equal(key,'has-current');groups[1].current=value;}}},

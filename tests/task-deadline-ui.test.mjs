@@ -84,6 +84,7 @@ test('project task list simplifies upcoming tasks, warns for overdue items and a
  w=add(w,'来週のタスク','2026-11-17');
  const h=makeUI(w);
  try{
+   globalThis.location.hash='#projects';
    const html=h.ui.projects();
    assert.match(html,/期限を過ぎた未完了タスクが2件あります/);
    assert.match(html,/期限切れ・直近7日間/);

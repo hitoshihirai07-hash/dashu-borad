@@ -767,6 +767,34 @@ body:has(.home-dashboard) footer{display:none}
 body:has(.home-dashboard){height:auto;min-height:100dvh;overflow:auto}body:has(.home-dashboard) footer{display:none}#main:has(.home-dashboard){height:auto;max-height:none;min-height:0;overflow:visible;padding:12px 18px}.home-dashboard{height:auto;grid-template-rows:auto auto;gap:10px;align-content:start}.home-stage-work{grid-template-rows:auto auto;gap:8px}.home-stage-work .action-board-compact{min-height:0;overflow:visible}.home-stage-life{grid-template-areas:'habits life time' 'memo memo memo';grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto;gap:8px}.home-stage-life>.panel{overflow:visible;padding:10px 12px}.home-stage-life .home-memo .work-quick-form textarea{min-height:38px;height:44px}.home-stage-life .habit-checks.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.home-date-extra summary,.task-filter-details summary,.task-estimate-fold summary,.project-advanced summary,.workspace-task-advanced summary,.notion-settings>summary{cursor:pointer;font-weight:650;color:#286342;font-size:13px;padding:8px 4px}.home-date-extra input{margin-top:4px}.task-utility-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0 10px}.task-utility-bar .button{min-height:32px;padding:5px 10px;font-size:12px}.task-search-bar{display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px;margin:8px 0}.task-search-bar>label{flex:1 1 220px;min-width:0}.task-filter-details{flex:1 1 180px;min-width:0;border:1px solid #dce9df;border-radius:9px;padding:3px 9px}.task-filter-details[open]{flex-basis:100%}.task-estimate-fold{border-bottom:1px solid #e2ece4;margin-bottom:8px}.workspace-task-advanced{border:1px solid #dce9df;border-radius:9px;padding:8px 10px}.workspace-task-advanced-fields{display:grid;gap:10px;padding:7px 0}.project-advanced{border-top:1px solid #e2ece4;margin:9px 0}.notion-settings{margin-bottom:14px}.work-project-tasks .work-task-row{padding:7px;min-height:49px}
 @media(max-width:950px){.home-stage-life{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'habits habits' 'life time' 'memo memo'}}@media(max-width:600px){#main:has(.home-dashboard){padding:8px 10px}.home-stage-life{gap:7px}.home-stage-life .home-life-copy{display:block}.home-stage-life .home-memo .work-quick-form textarea{height:45px}.work-task-focus{grid-template-columns:repeat(3,minmax(0,1fr))}.work-tasks-page.mobile-detail-open>.task-utility-bar,.work-tasks-page.mobile-detail-open>.task-search-bar{display:none}.journal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.section-tabs a{padding:7px 9px;font-size:12px}.task-search-bar>label,.task-filter-details{flex-basis:100%}}
 
+.record-heading {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.record-heading h1 { font-size: clamp(19px, 2vw, 28px); }
+.record-tabs { width: fit-content; margin: 12px 0; }
+.record-total { margin: 12px 0; }
+.record-total strong { margin-left: 8px; }
+.home-stage-work > .work-today-focus { margin: 0; }
+@media (min-width: 951px) {
+  .home-stage-work { grid-template-columns: minmax(0, 2fr) minmax(200px, 1fr); align-items: start; }
+  .home-stage-work > .work-today-focus { grid-area: 1 / 1; }
+  .home-stage-work > .action-board { grid-area: 2 / 1; }
+  .home-stage-work > .home-links { grid-area: 1 / 2 / 3 / 3; }
+}
+@media (max-width: 600px) {
+  .home-stage-work .home-links-grid { display: flex; overflow-x: auto; }
+  .home-stage-work .home-link-tile { flex: none; }
+}
+
 .notion-tabs{display:flex;gap:.5rem;margin:1rem 0}.notion-tabs .button{min-width:100px;justify-content:center}
 .notion-panel{margin:1rem 0;padding:1.2rem}.notion-panel h2{margin:0 0 .8rem}
 .notion-form{display:grid;gap:.75rem;margin:1rem 0;padding:1rem;border:1px solid #dce7de;border-radius:12px;background:#f7fbf8}
@@ -971,7 +999,6 @@ body:has(.home-dashboard){height:auto;min-height:100dvh;overflow:auto}body:has(.
  .baseball-calendar-mobile-item .baseball-calendar-game strong{font-size:13px}
  .baseball-calendar-heading{margin-bottom:10px}
 }
-
 </style></head>
 <body><div id="auth-screen" class="auth-screen" role="region" aria-label="ログイン"><div class="auth-card"><h1>ときの記録</h1><p>本人専用ログイン</p><form id="auth-form"><label>メールアドレス<input type="email" name="email" autocomplete="username" maxlength="254" required></label><label>パスワード<input type="password" name="password" autocomplete="current-password" required></label><p id="auth-error" class="error" role="alert"></p><button class="button primary auth-submit" type="submit">ログイン</button></form><p id="auth-loading" class="muted">ログイン状態を確認中…</p></div></div><a href="#main" class="skip">本文へ移動</a><aside class="sidebar" inert>
   <a class="brand" href="#dashboard"><span data-icon="clock"></span>ときの記録</a>
@@ -1331,7 +1358,6 @@ function baseballGameData2026Fixture() {
 const GIANTS_2027_SCHEDULE = Object.freeze([["2027-03-26","中日","home",""],["2027-03-27","中日","home",""],["2027-03-28","中日","home",""],["2027-03-30","ヤクルト","away",""],["2027-03-31","ヤクルト","away",""],["2027-04-01","ヤクルト","away",""],["2027-04-02","阪神","home",""],["2027-04-03","阪神","home",""],["2027-04-04","阪神","home",""],["2027-04-06","DeNA","away",""],["2027-04-07","DeNA","away",""],["2027-04-08","DeNA","away",""],["2027-04-09","広島","home",""],["2027-04-10","広島","home",""],["2027-04-11","広島","home",""],["2027-04-13","中日","away",""],["2027-04-14","中日","away",""],["2027-04-15","中日","away",""],["2027-04-16","広島","away",""],["2027-04-17","広島","away",""],["2027-04-18","広島","away",""],["2027-04-20","ヤクルト","home","長崎"],["2027-04-22","ヤクルト","home",""],["2027-04-23","阪神","away",""],["2027-04-24","阪神","away",""],["2027-04-25","阪神","away",""],["2027-04-27","DeNA","home",""],["2027-04-28","DeNA","home",""],["2027-04-29","DeNA","home",""],["2027-05-01","中日","away",""],["2027-05-02","中日","away",""],["2027-05-03","広島","home",""],["2027-05-04","広島","home",""],["2027-05-05","広島","home",""],["2027-05-07","ヤクルト","away","静岡"],["2027-05-08","ヤクルト","away",""],["2027-05-09","ヤクルト","away",""],["2027-05-11","DeNA","away","ハードオフ新潟"],["2027-05-13","DeNA","away",""],["2027-05-14","中日","home",""],["2027-05-15","中日","home",""],["2027-05-16","中日","home",""],["2027-05-18","広島","away",""],["2027-05-19","広島","away",""],["2027-05-21","ヤクルト","home",""],["2027-05-22","ヤクルト","home",""],["2027-05-23","ヤクルト","home",""],["2027-05-25","DeNA","home","ひたちなか"],["2027-05-27","DeNA","home",""],["2027-05-29","阪神","away",""],["2027-05-30","阪神","away",""],["2027-06-01","ロッテ","away",""],["2027-06-02","ロッテ","away",""],["2027-06-03","ロッテ","away",""],["2027-06-04","日本ハム","home",""],["2027-06-05","日本ハム","home",""],["2027-06-06","日本ハム","home",""],["2027-06-08","ソフトバンク","away",""],["2027-06-09","ソフトバンク","away",""],["2027-06-10","ソフトバンク","away",""],["2027-06-11","オリックス","away",""],["2027-06-12","オリックス","away",""],["2027-06-13","オリックス","away",""],["2027-06-15","楽天","home",""],["2027-06-16","楽天","home",""],["2027-06-17","楽天","home",""],["2027-06-18","西武","home",""],["2027-06-19","西武","home",""],["2027-06-20","西武","home",""],["2027-06-25","阪神","home",""],["2027-06-26","阪神","home",""],["2027-06-27","阪神","home",""],["2027-06-29","DeNA","away",""],["2027-06-30","DeNA","away",""],["2027-07-01","DeNA","away",""],["2027-07-02","中日","home",""],["2027-07-03","中日","home",""],["2027-07-04","中日","home",""],["2027-07-06","広島","home","富山"],["2027-07-07","広島","home","金沢"],["2027-07-09","ヤクルト","home",""],["2027-07-10","ヤクルト","home",""],["2027-07-11","ヤクルト","home",""],["2027-07-13","阪神","away",""],["2027-07-14","阪神","away",""],["2027-07-15","阪神","away",""],["2027-07-17","ヤクルト","away",""],["2027-07-18","ヤクルト","away",""],["2027-07-19","ヤクルト","away",""],["2027-07-24","広島","away",""],["2027-07-25","広島","away",""],["2027-07-27","阪神","home",""],["2027-07-28","阪神","home",""],["2027-07-29","阪神","home",""],["2027-07-30","中日","away",""],["2027-07-31","中日","away",""],["2027-08-01","中日","away",""],["2027-08-03","DeNA","home",""],["2027-08-04","DeNA","home",""],["2027-08-05","DeNA","home",""],["2027-08-06","広島","away",""],["2027-08-07","広島","away",""],["2027-08-08","広島","away",""],["2027-08-10","ヤクルト","home",""],["2027-08-11","ヤクルト","home",""],["2027-08-12","ヤクルト","home",""],["2027-08-13","中日","away",""],["2027-08-14","中日","away",""],["2027-08-15","中日","away",""],["2027-08-17","阪神","home",""],["2027-08-18","阪神","home",""],["2027-08-19","阪神","home",""],["2027-08-20","DeNA","home",""],["2027-08-21","DeNA","home",""],["2027-08-22","DeNA","home",""],["2027-08-24","ヤクルト","away",""],["2027-08-25","ヤクルト","away",""],["2027-08-26","ヤクルト","away",""],["2027-08-27","DeNA","away",""],["2027-08-28","DeNA","away",""],["2027-08-29","DeNA","away",""],["2027-08-31","中日","home","京セラD大阪"],["2027-09-01","中日","home","京セラD大阪"],["2027-09-02","中日","home","倉敷"],["2027-09-04","広島","home",""],["2027-09-05","広島","home",""],["2027-09-07","阪神","away",""],["2027-09-08","阪神","away",""],["2027-09-09","阪神","away",""],["2027-09-11","広島","away",""],["2027-09-12","広島","away",""],["2027-09-17","DeNA","home",""],["2027-09-18","DeNA","home",""],["2027-09-19","阪神","away",""],["2027-09-20","阪神","away",""],["2027-09-22","中日","away",""],["2027-09-23","中日","away",""],["2027-09-25","ヤクルト","away",""],["2027-10-02","広島","home",""],["2027-10-03","広島","home",""]]);
 const GIANTS_2027_UNDATED = Object.freeze([["ヤクルト","home"],["広島","home"],["DeNA","away"]]);
 const GIANTS_2027_SNAPSHOT = '2026-11-13';
-
 
 
 const LIFE_KEY = 'toki-life-log-v1';
@@ -2428,6 +2454,8 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   const expandedTaskGroups=new Set(),expandedTaskRows=new Set(),expandedDetailTasks=new Set();
   let taskFocus='overview',mobileTaskDetail=false,taskSort='default';
   const expandedInlineSteps=new Set();
+  let taskListPosition=0;
+  let projectTaskId='';
   let actionView='today',actionDate=localDate();
   let selectedProject='',selectedTask='',reviewProject='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),calendarDate=localDate(),calendarView='month',calendarFlags={tasks:true,events:true,habits:true},savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート',links:'毎日使うリンク',events:'個人予定'};
@@ -2495,11 +2523,12 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   }
   const daySequence=(a,b)=>{const days=[];for(let day=a;day<=b;day=makeDay(day,1))days.push(day);return days;};
   function itemRow(t){
+    const selected=typeof location!=='undefined'&&location.hash==='#projects'?projectTaskId:selectedTask;
     const recordedMinutes=recordedTaskMinutes(t.id);
     const compactTask=typeof location!=='undefined'&&location.hash==='#tasks',progress=workspaceTaskProgress(t);
     const actionable=!['done','waiting','someday'].includes(t.status);
-    return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
-      <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
+    return `<div class="work-task-row ${selected===t.id?'selected':''}">
+      <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selected===t.id}">
         <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
         <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}${timeLabel(t)}</span>
         ${compactTask&&t.status!=='done'&&(progress.next||progress.total)?`<span class="work-next-step" title="${esc(progress.next)}">${progress.total?`<span class="work-step-count">${progress.done}/${progress.total}件</span> `:''}${progress.next?`次：${esc(progress.next)}`:'全項目チェック済み'}</span>`:''}
@@ -2656,7 +2685,7 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
   function projects(){
     const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
     const projectTasks=value.tasks.filter(t=>t.project===selectedProject);
-    if(selectedTask&&!projectTasks.some(t=>t.id===selectedTask))selectedTask='';
+    if(projectTaskId&&!projectTasks.some(t=>t.id===projectTaskId))projectTaskId='';
     const today=localDate(),tomorrow=makeDay(today,1),recentCutoff=makeDay(today,-7);
     const weekEnd=makeDay(today,6-(new Date(today+'T12:00:00').getDay()+6)%7);
     const projectActive=projectTasks.filter(t=>!['done','waiting','someday'].includes(t.status));
@@ -2688,8 +2717,8 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       <div class="work-project-layout"><nav class="panel work-project-nav" aria-label="プロジェクト一覧"><h2>プロジェクト一覧</h2>${projectNames.map(n=>`<button type="button" class="work-project-choice ${selectedProject===n?'selected':''}" data-workspace-select-project="${esc(n)}" aria-pressed="${selectedProject===n}"><span>${esc(n)}</span><small>${projectStats.get(n).total?projectStats.get(n).percent+'%':'—'}</small></button>`).join('')||'<p class="muted">表示中のプロジェクトはありません。</p>'}
         <button type="button" class="work-project-settings-toggle" data-workspace-manage-projects="1" aria-expanded="${projectSettingsOpen}">表示設定（非表示 ${hiddenNames.length}件）${projectSettingsOpen?' ▲':' ▼'}</button>
         ${projectSettingsOpen?`<div class="work-project-settings"><p>非表示にしてもタスク・メモ・時間記録は残り、タスク一覧でも確認できます。</p>${allNames().map(n=>`<div class="work-project-settings-row"><span title="${esc(n)}">${esc(n)}</span><button type="button" class="button secondary" data-workspace-project-visibility="${esc(n)}" data-visible="${value.hiddenProjects.includes(n)?'true':'false'}" aria-label="${esc(n)}を${value.hiddenProjects.includes(n)?'表示':'非表示'}にする">${value.hiddenProjects.includes(n)?'表示する':'隠す'}</button></div>`).join('')||'<p>プロジェクトはまだありません。</p>'}</div>`:''}</nav>
-      <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>次にやること</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${selectedTask?'':'selected'}" data-workspace-overview="1">概要・プロンプト・作業履歴</button><a class="text-button" href="#prompts">全プロンプト管理</a>${projectTaskSections||'<p class="muted work-empty">このプロジェクトにはまだタスクがありません。</p>'}</section>
-      ${selectedProject?(selectedTask?detailTask(visibleTask(selectedTask),true):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
+      <section class="panel work-project-tasks"><div class="work-section-head"><div><span class="work-eyebrow">${esc(selectedProject||'プロジェクトを選択')}</span><h2>次にやること</h2></div>${selectedProject?`<button type="button" class="button secondary" data-workspace-new-task="${esc(selectedProject)}">${icon('plus')}追加</button>`:''}</div><button type="button" class="work-project-overview ${projectTaskId?'':'selected'}" data-workspace-overview="1">概要・プロンプト・作業履歴</button><a class="text-button" href="#prompts">全プロンプト管理</a>${projectTaskSections||'<p class="muted work-empty">このプロジェクトにはまだタスクがありません。</p>'}</section>
+      ${selectedProject?(projectTaskId?detailTask(visibleTask(projectTaskId),true):detailProject(selectedProject)):'<section class="panel work-detail"><h2>新規プロジェクトを作成</h2><p class="muted">プロジェクトを登録すると、ここでタスクとメモをまとめられます。</p></section>'}</div>`;
   }
   const latestQuickNotes=()=>[...value.quickNotes].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id));
   const noteDate=iso=>new Date(iso).toLocaleString('ja-JP',{year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -2763,7 +2792,7 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
     if(compact){
       const rows=actionView==='week'?daySequence(today,weekEnd).flatMap(d=>rowsOn(d).filter(t=>t.status!=='done')):
         actionView==='undated'?undated:rowsOn(activeDay).filter(t=>t.status!=='done');
-      const sorted=rows.sort((a,b)=>actionView==='week'?a.due.localeCompare(b.due)||taskOrder(a,b):taskOrder(a,b));
+      const sorted=rows.filter(t=>actionView!=='today'||!focus.has(t.id)).sort((a,b)=>actionView==='week'?a.due.localeCompare(b.due)||taskOrder(a,b):taskOrder(a,b));
       const limit=3;
       const shown=sorted.slice(0,limit),remaining=Math.max(0,sorted.length-shown.length);
       const late=taskBuckets(value.tasks,today).overdue.length;
@@ -2777,7 +2806,7 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
             <div class="action-preview-meta">${esc(t.workTools||t.project||'未分類')}${t.firstStep?' ・ 最初：'+esc(t.firstStep.replace(/\s+/g,' ').slice(0,55)):''}</div></div>
             ${t.workUrl?`<a href="${esc(t.workUrl)}" target="_blank" rel="noopener noreferrer" class="action-preview-open" aria-label="${esc(t.title)}の作業リンクを開く">開く</a>`:''}
             <select class="action-preview-status" data-workspace-status="${esc(t.id)}" aria-label="${esc(t.title)}の状態">${[['todo','未着手'],['doing','進行中'],['done','完了']].map(([k,label])=>`<option value="${k}" ${t.status===k?'selected':''}>${label}</option>`).join('')}</select>
-          </div>`).join(''):'<p class="action-board-empty">この期間の未完了タスクはありません。</p>'}
+          </div>`).join(''):'<p class="action-board-empty">ほかに未完了タスクはありません。</p>'}
         </div>
         <div class="action-preview-footer">${remaining?`<a href="#tasks">ほか${remaining}件はタスク一覧へ</a>`:'<span>タスク名を押すと詳細を開けます。</span>'}
           <button type="button" class="text-button" data-workspace-new-dated-task="${esc(activeDay)}">＋ タスク追加</button></div>
@@ -2792,6 +2821,11 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       <div class="action-board-content">${contents}</div>
       <div class="action-board-footer">${actionView==='undated'?'<button type="button" class="button secondary" data-workspace-new="tasks">＋ タスクを追加</button>':`<button type="button" class="button secondary" data-workspace-new-dated-task="${esc(activeDay)}">＋ ${actionView==='week'?'今日':'この日'}のタスクを追加</button>`}<p>待機中・いつかやるタスクは日別一覧に混ぜません。予定日は自動で繰り越しません。</p></div>
     </section>`;
+  }
+
+  function focusHome(){
+    const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
+    return `<section class="panel work-today-focus"><div class="panel-heading"><h2>今日の3件 <small>${picked.length}/3</small></h2><a class="text-button" href="#tasks">タスクを探す</a></div><p class="muted">期限とは別に、今日集中するタスクを選びます。選んでも予定日は変わりません。</p>${picked.length?`<div class="work-focus-list">${picked.map(t=>`<div class="work-focus-row"><button type="button" data-workspace-select-task="${esc(t.id)}">${esc(t.title)}</button><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">外す</button></div>`).join('')}</div>`:'<p class="work-empty muted">タスクの詳細から、今日集中するものを選べます。</p>'}${picked.length<3&&candidates.length?`<details class="work-focus-pick"><summary>候補から選ぶ（最大3件）</summary>${candidates.map(t=>`<div class="work-focus-row"><span>${esc(t.title)}<small>${esc(t.project||'未分類')}</small></span><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">選ぶ</button></div>`).join('')}</details>`:''}</section>`;
   }
 
   function home(compact=false){
@@ -2809,9 +2843,8 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       return `<section class="panel home-card home-doing" aria-label="今日のタスク"><div class="panel-heading"><h2>今日のタスク <small>${todayTasks.length}件</small></h2><div class="workspace-inline"><button type="button" class="text-button" data-workspace-open-planner="${today}">1日手帳</button><a class="text-button" href="#tasks">すべて見る</a></div></div>${overdueNotice(overdue,true)}<div class="home-doing-list">${todayTasks.map(t=>`<button type="button" class="home-doing-item ${t.status==='done'?'is-done':''}" data-workspace-select-task="${esc(t.id)}" title="${esc(t.title)}"><span class="home-doing-title">${esc(t.title)}</span><span class="home-task-status" data-status="${esc(t.status)}">${esc(completedLabel(t))}</span><span class="home-doing-project">${esc(t.project||'未分類')}</span></button>`).join('')||'<p class="muted home-doing-empty">今日のタスクはありません。</p>'}</div><div class="home-card-actions"><button type="button" class="text-button" data-workspace-new-dated-task="${today}">＋ 今日のタスクを追加</button></div></section>`;
     }
     const today=localDate(),b=taskBuckets(value.tasks,today),focus=[...b.overdue,...b.today,...value.tasks.filter(t=>t.status==='doing'&&!b.overdue.includes(t)&&!b.today.includes(t)),...b.upcoming].slice(0,6);
-    const picked=focusIds().map(visibleTask).filter(Boolean),candidates=value.tasks.filter(t=>!['done','waiting','someday'].includes(t.status)&&!picked.includes(t)).sort((a,b)=>Number(b.priority==='high')-Number(a.priority==='high')||(a.due||'9999').localeCompare(b.due||'9999')).slice(0,6);
     const personal=value.events.filter(e=>e.date===today).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-    return `<section class="panel work-today-focus"><div class="panel-heading"><h2>今日やる3件 <small>${picked.length}/3</small></h2><a class="text-button" href="#tasks">タスクを探す</a></div><p class="muted">期限とは別に、今日集中するタスクを選びます。選んでも予定日は変わりません。</p>${picked.length?`<div class="work-focus-list">${picked.map(t=>`<div class="work-focus-row"><button type="button" data-workspace-select-task="${esc(t.id)}">${esc(t.title)}</button><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">外す</button></div>`).join('')}</div>`:'<p class="work-empty muted">まだ選んでいません。下から選択できます。</p>'}${picked.length<3&&candidates.length?`<details class="work-focus-pick" ${picked.length?'':'open'}><summary>候補から選ぶ（最大3件）</summary>${candidates.map(t=>`<div class="work-focus-row"><span>${esc(t.title)}<small>${esc(t.project||'未分類')}</small></span><button type="button" class="button secondary" data-workspace-focus="${esc(t.id)}">選ぶ</button></div>`).join('')}</details>`:''}</section>
+    return `${focusHome()}
     <section class="panel work-today-events"><div class="panel-heading"><h2>今日の予定</h2><a class="text-button" href="#calendar">カレンダーを見る</a></div>${personal.length?personal.map(e=>`<div class="work-event-row ${e.status==='done'?'is-done':''}"><span class="work-type-dot event"></span><strong>${esc(e.title)}</strong><small>${e.status==='done'?'完了':e.allDay?'終日':esc(e.time||'時刻なし')}</small><button type="button" class="button secondary" data-workspace-event-status="${esc(e.id)}" data-status="${e.status==='done'?'todo':'done'}">${e.status==='done'?'戻す':'完了'}</button></div>`).join(''):'<p class="muted">今日の個人予定はありません。</p>'}<button type="button" class="button secondary" data-workspace-new-event="${today}">＋予定を追加</button></section>
     <section class="panel workspace-home"><div class="panel-heading"><h2>期限・進行中のタスク</h2><a class="text-button" href="#tasks">タスク一覧へ</a></div><div class="workspace-home-stats"><span>今日 ${b.today.length}件</span><span>期限切れ ${b.overdue.length}件</span><span>進行中 ${value.tasks.filter(x=>x.status==='doing').length}件</span></div>${overdueNotice(b.overdue,true)}${b.review.length?`<div class="work-review-reminder"><strong>確認目安が来た待機タスク ${b.review.length}件</strong><p>情報が出たか確認して、作業できるようになったら「未着手」に戻してください。</p>${taskList(b.review.slice(0,3))}<a href="#tasks" class="text-button">待機タスクを確認する</a></div>`:''}${focus.length?taskList(focus):'<p class="muted">今日のタスクはありません。やることを追加できます。</p>'}<div class="workspace-actions"><button type="button" class="button primary" data-workspace-new="tasks">${icon('plus')}タスクを追加</button><a class="button secondary" href="#projects">プロジェクトを開く</a></div></section>`;
   }
@@ -3094,12 +3127,25 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       if(button.dataset.workspaceStopRepeat){const t=visibleTask(button.dataset.workspaceStopRepeat);if(!t?.repeat)throw Error('ルーチンがありません。');if(!confirm('このタスクの繰り返しを解除しますか？タスク自体は残ります。'))return true;save(workspaceChange(value,'tasks',{repeat:null},t.id,uid));toast('繰り返しを解除しました。');return true;}
       if(button.dataset.workspacePin){const p=value.prompts.find(x=>x.id===button.dataset.workspacePin);if(!p)throw Error('プロンプトがありません。');save(workspaceChange(value,'prompts',{pinned:!p.pinned},p.id,uid));return true;}
       if(button.dataset.workspaceEdit){const [type,id]=button.dataset.workspaceEdit.split(':');open(type,id);return true;}
-      if(button.dataset.workspaceSelectProject!==undefined){selectedProject=button.dataset.workspaceSelectProject;selectedTask='';render();return true;}
-      if(button.dataset.workspaceOverview!==undefined){selectedTask='';render();return true;}
-      if(button.dataset.workspaceTaskBack!==undefined){mobileTaskDetail=false;render();return true;}
+      if(button.dataset.workspaceSelectProject!==undefined){selectedProject=button.dataset.workspaceSelectProject;projectTaskId='';render();return true;}
+      if(button.dataset.workspaceOverview!==undefined){projectTaskId='';render();return true;}
+      if(button.dataset.workspaceTaskBack!==undefined){
+        mobileTaskDetail=false;render();
+        window.scrollTo?.(0,taskListPosition);
+        const row=document.querySelector('.work-task-row.selected .work-task-select');
+        row?.focus?.({preventScroll:true});
+        row?.scrollIntoView?.({block:'nearest'});
+        return true;}
       if(button.dataset.workspaceTaskFocus!==undefined){taskFocus=button.dataset.workspaceTaskFocus;taskView='pending';selectedTask='';mobileTaskDetail=false;render();return true;}
       if(button.dataset.workspaceTaskMore!==undefined){const key=button.dataset.workspaceTaskMore;if(expandedTaskRows.has(key))expandedTaskRows.delete(key);else expandedTaskRows.add(key);render();return true;}
-      if(button.dataset.workspaceSelectTask){selectedTask=button.dataset.workspaceSelectTask;if(window.innerWidth<=600)mobileTaskDetail=true;if(!['#tasks','#projects'].includes(location.hash)){taskFocus='overview';taskView=visibleTask(selectedTask)?.status==='done'?'all':'pending';filter='';search='';location.hash='#tasks';}render();if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({behavior:'smooth',block:'start'});return true;}
+      if(button.dataset.workspaceSelectTask){
+        if(location.hash==='#projects'){
+          projectTaskId=button.dataset.workspaceSelectTask;render();
+          if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({block:'start'});
+          return true;
+        }
+        if(location.hash==='#tasks')taskListPosition=window.scrollY;
+        selectedTask=button.dataset.workspaceSelectTask;if(window.innerWidth<=600)mobileTaskDetail=true;if(!['#tasks','#projects'].includes(location.hash)){taskFocus='overview';taskView=visibleTask(selectedTask)?.status==='done'?'all':'pending';filter='';search='';location.hash='#tasks';}render();if(window.innerWidth<=600)document.querySelector('.work-detail')?.scrollIntoView?.({behavior:'smooth',block:'start'});return true;}
       if(button.dataset.workspaceManageProjects!==undefined){projectSettingsOpen=!projectSettingsOpen;render();return true;}
       if(button.dataset.workspaceProjectVisibility!==undefined){
         const project=button.dataset.workspaceProjectVisibility,visible=button.dataset.visible==='true';
@@ -3220,7 +3266,11 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
         const created=next.tasks.at(-1);if(!created)throw Error('タスクを作成できませんでした。');
         next=workspaceChange(next,'quickNotes',{taskId:created.id},source.id,uid);
       }
-      if(formType==='tasks'){selectedTask=next.tasks.find(t=>t.id===formId&&t.status!=='done')?.id||next.tasks.at(-1)?.id||'';if(payload.project)selectedProject=payload.project;}
+      if(formType==='tasks'){
+        const savedId=next.tasks.find(t=>t.id===formId&&t.status!=='done')?.id||next.tasks.at(-1)?.id||'';
+        if(location.hash==='#projects'){projectTaskId=savedId;if(payload.project)selectedProject=payload.project;}
+        else selectedTask=savedId;
+      }
       if(formType==='projects')selectedProject=payload.title;
       if(formType==='events')calendarDate=payload.date;
       const completedFromEdit=formType==='tasks'&&formId&&payload.status==='done'?value.tasks.find(t=>t.id===formId&&t.status!=='done'):null;
@@ -3268,7 +3318,7 @@ function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecord
       toast('メモを保存しました。');
     }catch(e){toast(e.message);}
   });
-  return {get:()=>value,visibleProjects:names,promoteNotionCandidate,refreshNotionCandidatePrompts,error:()=>error,reload,home,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
+  return {get:()=>value,visibleProjects:names,promoteNotionCandidate,refreshNotionCandidatePrompts,error:()=>error,reload,home,focusHome,actionBoard,quickHome,quickNotesPage,linksHome,links,tasks,projects,homeEvents,habitHome,habits,calendar,prompts,templates,click,change,input};
 }
 
 // This component is intentionally independent of the existing task and quick-note stores.
@@ -4176,16 +4226,21 @@ function chart(records,range){
   return `<div class="chart-label">（時間）</div><div class="trend">${svg}${!records.length?'<div class="chart-empty"><span>最初の記録から、振り返りをはじめましょう</span></div>':''}</div>`;
 }
 function breakdown(records){const entries=groups(records,breakdownKey),total=entries.reduce((s,e)=>s+e[1],0);let offset=0;const circles=entries.map(([name,v],i)=>{const percent=v/total*100;const c=`<circle cx="50" cy="50" r="40" fill="none" stroke="${colors[i%colors.length]}" stroke-width="13" pathLength="100" stroke-dasharray="${percent} ${100-percent}" stroke-dashoffset="${-offset}"><title>${escapeHTML(name)}：${timeText(v)}</title></circle>`;offset+=percent;return c;}).join('');return `<div class="breakdown-body"><div class="donut-wrap"><svg viewBox="0 0 100 100" role="img" aria-label="${breakdownKey==='project'?'プロジェクト':'活動'}別の時間配分"><circle cx="50" cy="50" r="40" fill="none" stroke="#e6f0eb" stroke-width="13"/>${circles}</svg><div class="donut-center">${total?`<strong>${total/60}</strong>時間`:'まだ記録が<br>ありません'}</div></div>${total?`<div class="legend">${entries.map(([name,v],i)=>`<div class="legend-row"><i style="background:${colors[i%colors.length]}"></i><span class="activity-name">${escapeHTML(name)}</span><strong>${timeText(v)}</strong><small>${Math.round(v/total*100)}%</small></div>`).join('')}</div>`:'<p class="breakdown-empty">時間を記録すると、<br>ここに時間の内訳が表示されます。</p>'}</div>`;}
+let recordTab='history';
+const routePositions=new Map();
+if(window.history)window.history.scrollRestoration='manual';
+
 function quickRecordPanel(){
   const today=localDate(),hasToday=activeRecords(data).some(r=>r.date===today),recent=recentRecordPresets(byField(data.records,selectedField),3);
-  return `<section class="panel quick-record-panel ${hasToday?'':'needs-record'}"><div class="quick-record-copy"><h2>${hasToday?'最近の活動をすぐ記録':'今日はまだ時間記録がありません'}</h2><p>${hasToday?'よく使う活動を、今日の記録として1クリックで追加できます。':'忘れる前に、最近使った活動からそのまま今日へ追加できます。'}</p></div><div class="quick-record-actions">${recent.map((r,i)=>`<button class="quick-record-button" data-quick-record="${i}"><strong>${escapeHTML(r.activity)}</strong><span>${escapeHTML(r.project)} · ${timeText(r.minutes)}</span></button>`).join('')||`<button class="button secondary" data-action="add">${icon('plus')}時間を記録</button>`}</div></section>`;
+  if(!recent.length)return '';
+  return `<section class="panel quick-record-panel ${hasToday?'':'needs-record'}"><div class="quick-record-copy"><h2>${hasToday?'最近の活動をすぐ記録':'今日はまだ時間記録がありません'}</h2><p>${hasToday?'よく使う活動を、今日の記録として1クリックで追加できます。':'忘れる前に、最近使った活動からそのまま今日へ追加できます。'}</p></div><div class="quick-record-actions">${recent.map((r,i)=>`<button class="quick-record-button" data-quick-record="${i}"><strong>${escapeHTML(r.activity)}</strong><span>${escapeHTML(r.project)} · ${timeText(r.minutes)}</span></button>`).join('')}</div></section>`;
 }
 function dashboard(){
   // One compact operational home; detailed histories, charts and filters remain on their own pages.
   const today=localDate(),todayMinutes=activeRecords(data).filter(r=>r.date===today).reduce((sum,r)=>sum+r.minutes,0);
   const todayTime=todayMinutes?`${Math.floor(todayMinutes/60)?Math.floor(todayMinutes/60)+'時間':''}${todayMinutes%60?todayMinutes%60+'分':''}`:'0分';
   return `<div class="home-dashboard"><h1 class="visually-hidden">今日の作業と記録</h1>
-  <div class="home-stage-work">${workspace.linksHome(true)}${workspace.actionBoard(true)}</div>
+  <div class="home-stage-work">${workspace.focusHome()}${workspace.actionBoard(true)}${workspace.linksHome(true)}</div>
   <div class="home-dashboard-grid home-stage-life">
     ${workspace.quickHome(true)}${workspace.habitHome()}${lifeLog.home()}
     <section class="panel home-card home-time" aria-label="時間の記録"><div class="panel-heading"><h2>時間の記録</h2><a class="text-button" href="#records">記録を確認</a></div><div class="home-time-summary"><span>今日の合計</span><strong>${todayTime}</strong></div><button type="button" class="button primary home-time-add" data-action="add">${icon('plus')}時間を記録</button></section>
@@ -4193,12 +4248,20 @@ function dashboard(){
 </div>`;
 }
 function timeReport(){const range=periodRange(mode,anchor),records=inRange(byField(activeRecords(data),selectedField),range),total=records.reduce((s,r)=>s+r.minutes,0),days=new Set(records.map(r=>r.date)).size;let label=mode==='month'?`${anchor.slice(0,4)}年${Number(anchor.slice(5,7))}月`:mode==='day'?`${anchor.replaceAll('-','/')}（${['日','月','火','水','木','金','土'][new Date(anchor+'T12:00:00').getDay()]}）`:`${range.start.replaceAll('-','/')} – ${range.end.slice(5).replace('-','/')}`;
-  return `<section class="time-report"><div class="panel-heading"><h2>時間の集計・グラフ</h2><small>期間を切り替えて振り返る</small></div>`+fieldTabs()+quickRecordPanel()+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div></section>`;
+  return `<section class="time-report"><div class="panel-heading"><h2>時間の集計・グラフ</h2><small>期間を切り替えて振り返る</small></div>`+`<div class="toolbar"><div class="segmented" role="group" aria-label="集計期間">${[['day','日'],['week','週'],['month','月']].map(([id,name])=>`<button class="${mode===id?'active':''}" data-mode="${id}" aria-pressed="${mode===id}">${name}</button>`).join('')}</div><div class="date-control"><button class="icon-button" data-shift="-1" aria-label="前の期間">${icon('left')}</button><div class="date-input-wrap">${icon('calendar')}<span>${label}</span><input id="anchor-date" type="date" value="${anchor}" min="1900-01-01" max="2200-12-31" aria-label="表示する日付"></div><button class="icon-button" data-shift="1" aria-label="次の期間">${icon('right')}</button></div><button class="text-button" data-action="today">今日に戻る</button></div><section class="stats" aria-label="期間の集計">${[['clock','合計の時間',total/60,'時間'],['calendar','記録した日数',days,'日'],['grid','プロジェクト数',projectCount(records),'件']].map(([ic,l,v,u])=>`<div class="stat">${icon(ic)}<div><div class="stat-label">${l}</div><div class="stat-value"><strong>${v}</strong>${u}</div></div></div>`).join('')}</section><div class="charts"><section class="panel"><div class="panel-heading"><h2>時間の推移</h2><small>${mode==='day'?'活動別':'日別'}</small></div>${chart(records,range)}</section><section class="panel"><div class="panel-heading"><h2>${breakdownKey==='project'?'プロジェクト別':'活動の内訳'}</h2></div><div class="segmented breakdown-tabs" role="group" aria-label="内訳の種類">${[['project','プロジェクト別'],['activity','活動別']].map(([key,label])=>`<button data-breakdown="${key}" class="${breakdownKey===key?'active':''}" aria-pressed="${breakdownKey===key}">${label}</button>`).join('')}</div>${breakdown(records)}</section></div></section>`;
 }
 const sortRecords=records=>[...records].sort((a,b)=>b.date.localeCompare(a.date)||b.updatedAt.localeCompare(a.updatedAt)||a.id.localeCompare(b.id));
 function matchingRecords(){return sortRecords(byField(data.records,selectedField).filter(r=>r.deleted===showDeleted&&(!activityFilter||r.activity===activityFilter)&&(!query||`${r.field} ${r.project} ${r.activity} ${r.note} ${r.date}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()))));}
 function listResults(){const records=matchingRecords();const pages=Math.max(1,Math.ceil(records.length/25));page=Math.min(page,pages);return `<div class="panel-heading"><h2>${showDeleted?'削除済みの記録':'すべての記録'}</h2><small>${records.length}件 ・ ${timeText(records.reduce((s,r)=>s+r.minutes,0))}</small></div>${recordTable(records.slice((page-1)*25,page*25))}${!records.length?emptyTable(query||activityFilter?'条件に合う記録がありません':showDeleted?'削除済みの記録はありません':'まだ記録がありません'):''}${records.length>25?`<div class="pagination"><button class="button secondary" data-page="-1" ${page<=1?'disabled':''}>前へ</button><span>${page} / ${pages} ページ</span><button class="button secondary" data-page="1" ${page>=pages?'disabled':''}>次へ</button></div>`:''}`;}
-function recordsPage(){return heading('時間の記録','記録一覧と時間の集計を確認できます。')+timeReport()+`<div class="list-tools"><div class="search">${icon('search')}<input id="record-search" aria-label="記録を検索" type="search" placeholder="プロジェクト・活動・メモなどで検索" value="${escapeHTML(query)}"></div><select id="activity-filter" aria-label="活動で絞り込み"><option value="">すべての活動</option>${[...new Set(byField(data.records,selectedField).map(r=>r.activity))].sort().map(a=>`<option value="${escapeHTML(a)}" ${a===activityFilter?'selected':''}>${escapeHTML(a)}</option>`).join('')}</select><label><input id="deleted-filter" type="checkbox" ${showDeleted?'checked':''}>削除済みを表示</label></div><section class="panel" id="list-results">${listResults()}</section>`;}
+function recordsPage(){
+  const header=`<header class="record-heading"><h1>時間の記録</h1><button class="button primary" data-action="add">${icon('plus')}時間を記録</button></header>`;
+  const tabs=`<div class="segmented record-tabs" role="group" aria-label="時間記録の表示">${[['history','履歴'],['report','集計']].map(([id,label])=>`<button type="button" class="${recordTab===id?'active':''}" aria-pressed="${recordTab===id}" data-record-tab="${id}">${label}</button>`).join('')}</div>`;
+  const top=header+tabs+fieldTabs();
+  if(recordTab==='report')return top+timeReport();
+  const today=localDate();
+  const minutes=byField(activeRecords(data),selectedField).filter(record=>record.date===today).reduce((sum,record)=>sum+record.minutes,0);
+  return top+`<p class="record-total">今日の合計 <strong>${timeText(minutes)}</strong></p><div class="list-tools"><div class="search">${icon('search')}<input id="record-search" aria-label="記録を検索" type="search" placeholder="プロジェクト・活動・メモなどで検索" value="${escapeHTML(query)}"></div><select id="activity-filter" aria-label="活動で絞り込み"><option value="">すべての活動</option>${[...new Set(byField(data.records,selectedField).map(r=>r.activity))].sort().map(a=>`<option value="${escapeHTML(a)}" ${a===activityFilter?'selected':''}>${escapeHTML(a)}</option>`).join('')}</select><label><input id="deleted-filter" type="checkbox" ${showDeleted?'checked':''}>削除済みを表示</label></div><section class="panel" id="list-results">${listResults()}</section>`+quickRecordPanel();
+}
 function sharePage(){return heading('設定','データ共有・バックアップ・Notionの同期管理。',false)+notion.settingsPanel()+`<div id="cloud-panel-container">${cloud.panel()}</div><div class="share-grid"><section class="panel share-panel"><h2>全データの一括バックアップ</h2><p>時間・生活・歩数・睡眠設定・タスク・予定・メモ・習慣・プロンプトに加え、試合・全選手成績・観戦メモ・Notion連携履歴も1つのJSONへ保存します。試合管理にはログイン済みのCloudflare版が必要です。</p><button class="button primary" data-cloud="backup">${icon('download')}全データをバックアップ</button><button class="button secondary" data-action="cloud-import">一括バックアップを復元</button><p class="muted">復元前に試合記録の追加・重複・競合を確認し、既存の試合やメモは上書きしません。タスク・生活記録の置換は別途確認します。</p><p class="muted">JSONには個人情報が含まれるため、他人と共有しないでください。</p></section><section class="panel share-panel"><h2>時間記録だけの書き出し・統合</h2><p>従来の時間記録のJSON/CSV書き出しと、別のファイルとの競合確認つき統合も残しています。</p><div class="download-row"><button class="button secondary" data-action="export">時間記録JSON</button><button class="button secondary" data-action="csv">CSV</button><button class="button secondary" data-action="import">時間記録を統合</button></div></section></div><section class="panel help"><h2>同期で困ったら</h2><p>クラウドと端末の内容が違う場合、自動的に上書きしません。先に「全データをバックアップ」で退避してから、クラウドの内容を読み込んでください。</p><p>接続できない場合や競合した場合は、その時点の端末の記録を消さず、保存と同期状態を確認します。複数端末が同じデータを編集すると、後からの保存は競合として停止されます。</p><p>持ち運び用HTMLはオフライン時に端末保存だけで動作します。ログイン・クラウド同期を利用するときはCloudflare上のHTTPS URLを使ってください。</p><button class="button secondary" data-action="portable">持ち運び用サイトHTML</button>${storageError?'<button class="button secondary" data-action="rescue">保存データの救出</button>':''}</section>`;}
 
 const journalTabs=[['journal','記録トップ','grid'],['records','時間記録','clock'],['life-log','生活ログ','calendar'],['habits','習慣','list'],['quick-notes','ひとことメモ','file'],['notion-memos','Notionメモ','file']];
@@ -4216,7 +4279,11 @@ function syncSidebarGroups(nextView){
     if(current)group.open=true;
   });
 }
-function render(){view=['dashboard','records','share','life-log','tasks','projects','habits','calendar','prompts','templates','links','quick-notes','notion','baseball','journal','notion-memos','notion-backlog'].includes(location.hash.slice(1))?location.hash.slice(1):location.hash==='#notes'?'projects':'dashboard';const navView=parentRoutes[view]||view;document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===navView);if(el.dataset.nav===navView)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});syncSidebarGroups(navView);$('#main').innerHTML=(!['ready','local','dirty','loading'].includes(cloud.status())?'<div class="notice storage-alert" role="alert">同期の確認が必要です。<a href="#share">バックアップ・同期設定を確認</a></div>':'')+(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+subpageBack(view)+({dashboard,records:recordsPage,share:sharePage,journal:journalPage,'life-log':lifeLog.page,tasks:()=>workspace.tasks(notion.taskControls()),projects:workspace.projects,habits:workspace.habits,calendar:workspace.calendar,prompts:workspace.prompts,templates:workspace.templates,links:workspace.links,'quick-notes':workspace.quickNotesPage,notion:notion.page,'notion-memos':()=>notion.page('memos'),'notion-backlog':()=>notion.page('backlog'),baseball:baseball.page}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();}
+function render(){const previousView=view;view=['dashboard','records','share','life-log','tasks','projects','habits','calendar','prompts','templates','links','quick-notes','notion','baseball','journal','notion-memos','notion-backlog'].includes(location.hash.slice(1))?location.hash.slice(1):location.hash==='#notes'?'projects':'dashboard';
+  if(previousView!==view)routePositions.set(previousView,window.scrollY);
+  const navView=parentRoutes[view]||view;document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===navView);if(el.dataset.nav===navView)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current');});syncSidebarGroups(navView);$('#main').innerHTML=(!['ready','local','dirty','loading'].includes(cloud.status())?'<div class="notice storage-alert" role="alert">同期の確認が必要です。<a href="#share">バックアップ・同期設定を確認</a></div>':'')+(storageError?`<div class="notice storage-alert" role="alert">${escapeHTML(storageError)}</div>`:'')+subpageBack(view)+({dashboard,records:recordsPage,share:sharePage,journal:journalPage,'life-log':lifeLog.page,tasks:()=>workspace.tasks(notion.taskControls()),projects:workspace.projects,habits:workspace.habits,calendar:workspace.calendar,prompts:workspace.prompts,templates:workspace.templates,links:workspace.links,'quick-notes':workspace.quickNotesPage,notion:notion.page,'notion-memos':()=>notion.page('memos'),'notion-backlog':()=>notion.page('backlog'),baseball:baseball.page}[view])();const foot=document.querySelector('footer a');foot.href=view==='life-log'?'#life-log':'#share';foot.textContent=view==='life-log'?'生活ログのページ内でバックアップ':'ファイルでバックアップ・共有';hydrateIcons();
+  if(previousView!==view)window.scrollTo(0,routePositions.get(view)||0);
+}
 function openRecord(id='',defaults={}){editing=id?data.records.find(r=>r.id===id):null;const form=$('#record-form');form.reset();form.elements.date.value=editing?.date||localDate();form.elements.activity.value=editing?.activity||defaults.activity||'';form.elements.minutes.value=editing?.minutes||30;form.elements.note.value=editing?.note||'';$('#record-title').textContent=editing?'記録を編集':'時間を記録';$('#form-error').textContent='';const linked=defaults.project?data.records.find(r=>r.project===defaults.project&&!r.deleted):null;const field=editing?.field||linked?.field||inputDefaults.field;form.elements.field.innerHTML=[...new Set([...Object.keys(FIELD_PRESETS),field])].map(v=>`<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');form.elements.field.value=field;updateCandidates(editing?.project||defaults.project||(!workspace.get().hiddenProjects.includes(inputDefaults.projects[field])?inputDefaults.projects[field]:''));updateTaskCandidates(editing?.taskId||defaults.taskId||'');updateRecordAiHint();$('#record-dialog').showModal();}
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function exportJSON(){download(JSON.stringify({...data,exportedAt:new Date().toISOString()},null,2),`ときの記録_${localDate()}_${Date.now()}.json`,'application/json');toast('共有ファイルの保存を開始しました。');}
@@ -4257,6 +4324,12 @@ document.addEventListener('click',event=>{const button=event.target.closest('but
     if(baseball.click(button))return;
     if(workspace.click(button))return;
     if(button.dataset.cloud){cloud.act(button.dataset.cloud).catch(e=>toast(e.message));return;}
+    if(button.dataset.recordTab){
+      recordTab=button.dataset.recordTab;
+      render();
+      document.querySelector(`[data-record-tab="${recordTab}"]`)?.focus();
+      return;
+    }
     if(button.dataset.field){selectedField=button.dataset.field;activityFilter='';page=1;breakdownKey='project';render();return;}
     if(button.dataset.breakdown){breakdownKey=button.dataset.breakdown;render();return;}
     if(button.dataset.mode){mode=button.dataset.mode;render();return;}
@@ -4286,7 +4359,7 @@ $('#delete-apply').addEventListener('click',()=>{try{if(data.records.find(r=>r.i
 $('#import-file').addEventListener('change',event=>importFile(event.target.files[0]));
 $('#cloud-import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{if(file.size>16_000_000)throw Error('バックアップは16MBまでです。');const source=JSON.parse(await file.text());if(source?.format==='toki-complete-backup-v2')await restoreCompleteBackup(source);else await cloud.restore(source);}catch(e){toast(e.message);}finally{event.target.value='';}});
 $('#merge-apply').addEventListener('click',()=>{try{if(JSON.stringify(data)!==mergeSnapshot)throw Error('確認中に記録が変更されました。閉じて、ファイルを読み込み直してください。');const choices={};$('#merge-content').querySelectorAll('input:checked').forEach(input=>{choices[mergePlan.conflicts[Number(input.dataset.conflictIndex)].local.id]=input.value;});persist(resolveMerge(mergePlan,choices));$('#merge-dialog').close();toast('記録を統合して保存しました。');}catch(error){$('#merge-error').textContent=error.message;}});
-window.addEventListener('hashchange',()=>{const extra=document.querySelector('.mobile-more');if(extra)extra.open=false;render();if(location.hash==='#baseball')baseball.load();window.scrollTo(0,0);});
+window.addEventListener('hashchange',()=>{const extra=document.querySelector('.mobile-more');if(extra)extra.open=false;render();if(location.hash==='#baseball')baseball.load();});
 // CSS handles home resizing without destroying active inputs.
 window.addEventListener('storage',event=>{lifeLog.onStorage(event);if(event.key==='toki-workspace-v1'||event.key===null){workspace.reload();render();}if(event.key!==KEY&&event.key!==null)return;try{data=event.newValue&&event.key===KEY?validate(JSON.parse(event.newValue)):fresh();savedSnapshot=JSON.stringify(data);render();toast('別のタブの変更を反映しました。');}catch{storageError='別のタブの保存データを読み込めません。バックアップを確認してください。';render();}});
 $('#record-form').elements.minutes.innerHTML=Array.from({length:48},(_,i)=>`<option value="${(i+1)*30}">${timeText((i+1)*30)}${(i+1)*30<60?'（0.5時間）':''}</option>`).join('');

@@ -92,6 +92,6 @@ test('calendar, monthly habit grid, focus and event editor are connected in work
   form.elements.title.value='確認作業';form.elements.status.value='todo';form.elements.priority.value='normal';
   form.handlers.submit({preventDefault(){},currentTarget:form});
   assert.equal(ui.get().tasks.length,1);assert.equal(ui.get().tasks[0].due,'2026-11-02');
-  ui.click({dataset:{workspaceFocus:ui.get().tasks[0].id}});assert.match(ui.home(),/今日やる3件/);assert.equal(ui.get().focusDays['2026-11-02'].length,1);
+  ui.click({dataset:{workspaceFocus:ui.get().tasks[0].id}});assert.match(ui.home(),/今日の3件/);assert.equal(ui.get().focusDays['2026-11-02'].length,1);
  }finally{globalThis.document=oldDoc;globalThis.location=oldLoc;globalThis.window=oldWin;}
 });
