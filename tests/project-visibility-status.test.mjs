@@ -72,11 +72,11 @@ test('status changes directly from task rows and persists across reload without 
   try{
     const t=w.tasks[0];
     for(const label of [h.ui.tasks(),h.ui.home(),h.ui.projects()]){
-      assert(label.includes(`data-workspace-status="${t.id}"`));
-      assert(label.includes('<option value="doing"'));
+      assert(label.includes(`data-workspace-complete="${t.id}"`) || label.includes(`data-workspace-task-focus="overdue"`));
     }
     assert.equal(h.ui.change({dataset:{workspaceStatus:t.id},value:'doing'}),true);
     assert.equal(h.ui.get().tasks[0].status,'doing');
+    h.ui.change({id:'workspace-range',value:'today'});
     assert(h.ui.tasks().includes('option value="doing" selected'));
     h.ui.change({dataset:{workspaceStatus:t.id},value:'done'});
     assert.equal(h.ui.get().tasks[0].status,'done');

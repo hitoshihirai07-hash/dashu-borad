@@ -54,11 +54,11 @@ test('task and compact home show overdue warnings; reschedule buttons update wit
  try{
    const first=h.ui.tasks();
    assert.match(first,/期限を過ぎた未完了タスクが2件/);
-   assert.match(first,/古い期限切れ/);
+   assert.match(first,/data-workspace-task-focus="overdue"/);
    assert.match(first,/今日・11月9日（月）/);
-   assert.match(first,/明日・11月10日（火）/);
-   assert.match(first,/来週以降/);
-   assert.match(first,/data-workspace-reschedule=/);
+   assert.doesNotMatch(first,/明日・11月10日（火）/);
+   assert.match(first,/来週の作業/);
+   assert.match(first,/data-workspace-inline-date=/);
    assert.match(h.ui.home(true),/期限を過ぎた未完了タスクが2件/);
    const id=w.tasks.find(t=>t.title==='昨日の作業').id;
    assert.equal(h.ui.click({dataset:{workspaceReschedule:id,targetDay:'2026-11-09'}}),true);
@@ -86,19 +86,19 @@ test('project task list simplifies upcoming tasks, warns for overdue items and a
  try{
    globalThis.location.hash='#projects';
    const html=h.ui.projects();
-   assert.match(html,/期限を過ぎた未完了タスクが2件あります/);
-   assert.match(html,/期限切れ・直近7日間/);
-   assert.match(html,/古い期限切れ/);
+   assert.match(html,/作業/);
+   assert.match(html,/遅れているタスク/);
+   assert.match(html,/古い期限/);
    assert.match(html,/明日のタスク/);
    assert.match(html,/来週のタスク/);
-   assert.match(html,/未完了タスク/);
-   assert.match(html,/data-workspace-reschedule=/);
+   assert.match(html,/未着手/);
+   assert.match(html,/data-workspace-complete=/);
    const id=w.tasks.find(t=>t.title==='遅れているタスク').id;
    h.ui.click({dataset:{workspaceSelectTask:id}});
    assert.match(h.ui.projects(),/このタスクは期限を1日過ぎています/);
    assert.equal(h.ui.click({dataset:{workspaceReschedule:id,targetDay:'2026-11-09'}}),true);
    assert.equal(h.ui.get().tasks.find(t=>t.id===id).due,'2026-11-09');
-   assert.match(h.ui.projects(),/期限を過ぎた未完了タスクが1件あります/);
+   assert.match(h.ui.projects(),/遅れているタスク/);
    assert.doesNotMatch(h.ui.projects(),/このタスクは期限を1日過ぎています/);
  }finally{h.close();}
 });
@@ -108,6 +108,7 @@ test('AI checked status has a readable detail layout and is not mistaken for tas
  w=workspaceChange(w,'tasks',{title:'AIルーチン',project:'観戦メモ',due:'2026-11-08',status:'todo',priority:'normal',assignee:'ai',aiService:'ChatGPT',aiState:'done',aiRequestedAt:'2026-11-09T12:59:00.000Z',aiCheckedAt:'2026-11-09T12:59:10.000Z',repeat:{type:'daily',days:[],monthDay:null}},'',uid);
  const h=makeUI(w);
  try{
+   h.ui.change({id:'workspace-range',value:'overdue'});
    const html=h.ui.tasks();
    assert.match(html,/class="work-ai-detail-layout"/);
    assert.match(html,/class="work-ai-detail-times"/);

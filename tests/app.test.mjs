@@ -130,7 +130,7 @@ test('dashboard shows work and life controls together without a switch',()=>{
  assert.match(html,/href="#quick-notes"/);assert.match(html,/href="#records"/);
  assert.match(html,/data-workspace-quick-form/);assert.match(html,/data-workspace-habit/);
  assert.match(html,/data-action="add"/);assert.match(html,/data-life="home-today"/);
- assert.ok(html.indexOf('今日の3件')<html.indexOf('これからやること'));
+ assert.doesNotMatch(html,/今日の3件/);
  assert.ok(html.indexOf('これからやること')<html.indexOf('よく使うリンク'));
  for(const removed of ['最近のメモ','最近の記録','時間の推移','今日やる3件','今日の予定','期間の集計'])assert.doesNotMatch(html,new RegExp(removed));
 });

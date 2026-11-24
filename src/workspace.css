@@ -771,3 +771,45 @@ body:has(.home-dashboard){height:auto;min-height:100dvh;overflow:auto}body:has(.
   .home-stage-work .home-links-grid { display: flex; overflow-x: auto; }
   .home-stage-work .home-link-tile { flex: none; }
 }
+
+.compact-controls {
+  position: sticky; top: 0; z-index: 4; background: var(--surface);
+  display: flex; align-items: center; gap: 8px; padding: 8px 0;
+  margin-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.compact-controls h1 {font-size: 20px; margin-right: auto;}
+.compact-controls select,.task-options select,.task-options input {
+  min-width: 0; max-width: 100%; min-height: 40px; border: 1px solid var(--line);
+  border-radius: 6px; background: white; color: inherit; padding: 4px;
+}
+.task-options {display:flex; align-items:end; flex-wrap:wrap; gap:10px; margin-bottom:10px;}
+.task-options label {display:grid;}
+.work-task-row.slim-row {display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:5px; padding:4px;}
+.slim-row input {width:21px;height:21px;justify-self:center;accent-color:var(--green);}
+.slim-row .work-task-select {min-height:44px; display:grid; text-align:left;}
+.slim-row .work-task-select small,.slim-row>span {font-size:12px;color:var(--muted);}
+.task-management,.project-management {margin:14px 0;}
+.task-management summary {cursor:pointer;}
+.project-page .project-columns {display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,3fr);align-items:start;}
+.project-content {min-width:0;}
+.project-tabs {margin-bottom:10px;}
+.mobile-project-settings {display:none;}
+@media (min-width:951px) {
+  .home-stage-work > .action-board {grid-area:1 / 1;}
+  .home-stage-work > .home-links {grid-area:1 / 2;}
+}
+@media (max-width:600px) {
+  .project-page .project-columns {display:block;}
+  .project-page .work-project-nav:not(.settings-open),.project-page .work-project-choice {display:none;}
+  .mobile-project-settings {display:inline-flex;}
+  .project-page .compact-controls h1 {position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;}
+  #project-switch {flex:1;}
+  .compact-controls {gap:4px;}
+  .compact-controls h1 {font-size:16px;}
+  .compact-controls .button {padding:6px 10px;}
+  .work-tasks-page.mobile-detail-open .compact-controls,.work-tasks-page.mobile-detail-open .task-management {display:none;}
+}
+@media (min-width:951px) {
+  .work-tasks-detail-area,.project-page .work-project-nav {position:sticky;top:64px;max-height:calc(100dvh - 76px);overflow-y:auto;}
+}
+.work-detail,.work-task-select {scroll-margin-top:65px;}

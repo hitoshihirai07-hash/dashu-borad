@@ -149,11 +149,11 @@ test('compact home shows every today task irrespective of status, not unrelated 
    assert.equal((links.match(/class="home-link-tile"/g)||[]).length,6);
    assert.doesNotMatch(links,/リンク7|リンク8/);
    assert.match(links,/href="#links"/);
-   assert.equal((tasks.match(/class="home-doing-item /g)||[]).length,6);
-   assert.match(tasks,/今日のタスク <small>6件/);
-   for(const title of ['今日進行中','今日未着手','今日待機中','今日完了','今日いつかやる','今日やる3件に選択'])assert.match(tasks,new RegExp(title));
+   assert.equal((tasks.match(/class="home-doing-item /g)||[]).length,5);
+   assert.match(tasks,/今日のタスク <small>5件/);
+   for(const title of ['今日進行中','今日未着手','今日待機中','今日完了','今日いつかやる'])assert.match(tasks,new RegExp(title));
    for(const status of ['進行中','未着手','待機中','完了','いつかやる'])assert.match(tasks,new RegExp(`>${status}<`));
-   assert.doesNotMatch(tasks,/別日の進行中|今日の予定/);
+   assert.doesNotMatch(tasks,/別日の進行中|今日の予定|今日やる3件に選択/);
    assert.match(tasks,/data-workspace-new-dated-task="2026-11-03"/);
    assert.match(memo,/href="#quick-notes"/);
    assert.doesNotMatch(memo,/この本文は一覧だけで見る|最近のメモ/);

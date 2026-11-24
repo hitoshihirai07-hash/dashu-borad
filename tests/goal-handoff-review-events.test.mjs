@@ -70,7 +70,9 @@ test('UI renders project handoff and compact calendar event actions',()=>{
   try{
     const memory=new Map([['toki-workspace-v1',JSON.stringify(eventState)]]);
     const ui=createWorkspace({storage:{getItem:key=>memory.get(key)||null,setItem:(key,v)=>memory.set(key,v)},render(){},toast(){},escapeHTML:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),icon:()=>'',getTimeRecords:()=>[],uid,localDate:()=> '2026-11-03',startRecord(){}});
+    ui.click({dataset:{projectTab:"resources"}});
     assert.match(ui.projects(),/現在地・課題/);
+    ui.click({dataset:{projectTab:"history"}});
     assert.match(ui.projects(),/作業結果と次への引き継ぎ/);
     const home=ui.homeEvents();assert.match(home,/買い物/);assert.match(home,/data-workspace-event-status/);
     ui.click({dataset:{workspaceEventStatus:ui.get().events[0].id,status:'done'}});

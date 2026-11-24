@@ -39,12 +39,38 @@ test('task UI renders inline controls, filtering and time summary; handlers upda
  globalThis.document={querySelector:()=>({addEventListener(){}}),addEventListener(){}};globalThis.location={hash:'#tasks'};globalThis.window={innerWidth:1200};
  try{
  const ui=createWorkspace({storage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},render(){},toast:x=>logs.push(x),escapeHTML:String,icon:()=>'',getTimeRecords:()=>[],uid,localDate:()=>day,startRecord(){}});
- let page=ui.tasks();assert.match(page,/次：調査/);assert.match(page,/今日の見積もり/);assert.match(page,/workspace-task-sort/);
- ui.change({dataset:{workspaceStep:id,index:'0'},closest:()=>true});assert.match(ui.tasks(),/次：執筆/);
+ ui.click({dataset:{taskOptions:'1'}});let page=ui.tasks();assert.match(page,/調査/);assert.match(page,/今日の見積もり/);assert.match(page,/workspace-task-sort/);
+ ui.change({dataset:{workspaceStep:id,index:'0'},closest:()=>true});assert.match(ui.tasks(),/執筆/);
  ui.click({dataset:{workspaceInlineDate:id},closest:()=>({querySelector:()=>({value:'2026-11-25'})})});assert.equal(ui.get().tasks[0].due,'2026-11-25');
- ui.change({id:'workspace-status-filter',value:'doing'});assert.doesNotMatch(ui.tasks(),/次：執筆/);
- ui.click({dataset:{workspaceTaskClear:'1'}});assert.match(ui.tasks(),/次：執筆/);
+ ui.change({id:'workspace-status-filter',value:'doing'});assert.doesNotMatch(ui.tasks(),/執筆/);
+ ui.click({dataset:{workspaceTaskClear:'1'}});assert.match(ui.tasks(),/執筆/);
  }finally{[globalThis.document,globalThis.location,globalThis.window]=prev;}
 });
 
-test('compact tabs separate waiting and completed tasks and preserve manual dates',()=>{let w=workspaceFresh();w=add(w,{title:'今日のタスク',due:day});w=add(w,{title:'待機のタスク',status:'waiting',due:''});w=add(w,{title:'完了のタスク',status:'done',due:day});const store=new Map([[WORKSPACE_KEY,JSON.stringify(w)]]);const previous=globalThis.document;globalThis.document={querySelector:()=>({addEventListener(){},querySelectorAll(){return []}}),addEventListener(){}};try{const ui=createWorkspace({storage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},render(){},toast(){},escapeHTML:String,icon:()=>'',getTimeRecords:()=>[],uid,localDate:()=>day,startRecord(){}});ui.click({dataset:{workspaceTaskFocus:'waiting'}});assert.match(ui.tasks(),/待機のタスク/);assert.doesNotMatch(ui.tasks(),/完了のタスク/);ui.click({dataset:{workspaceTaskFocus:'done'}});assert.match(ui.tasks(),/完了のタスク/);assert.doesNotMatch(ui.tasks(),/待機のタスク/);assert.equal(ui.get().tasks.find(x=>x.title==='今日のタスク').due,day);}finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}});
+test('compact tabs separate waiting and completed tasks and preserve manual dates',()=>{let w=workspaceFresh();w=add(w,{title:'今日のタスク',due:day});w=add(w,{title:'待機のタスク',status:'waiting',due:''});w=add(w,{title:'完了のタスク',status:'done',due:day});const store=new Map([[WORKSPACE_KEY,JSON.stringify(w)]]);const previous=globalThis.document;globalThis.document={querySelector:()=>({addEventListener(){},querySelectorAll(){return []}}),addEventListener(){}};try{const ui=createWorkspace({storage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},render(){},toast(){},escapeHTML:String,icon:()=>'',getTimeRecords:()=>[],uid,localDate:()=>day,startRecord(){}});ui.change({id:'workspace-status-filter',value:'waiting'});assert.match(ui.tasks(),/待機のタスク/);assert.doesNotMatch(ui.tasks(),/完了のタスク/);ui.change({id:'workspace-status-filter',value:'done'});assert.match(ui.tasks(),/完了のタスク/);assert.doesNotMatch(ui.tasks(),/待機のタスク/);assert.equal(ui.get().tasks.find(x=>x.title==='今日のタスク').due,day);}finally{if(previous===undefined)delete globalThis.document;else globalThis.document=previous;}});
+
+test('date range and task status intersect in either selection order',()=>{
+  const statuses=['todo','doing','waiting','someday','done'];
+  const days={today:day,upcoming:'2026-12-01',undated:''};
+  let w=workspaceFresh();
+  for(const [range,due] of Object.entries(days)){
+    for(const status of statuses)w=add(w,{title:range+' '+status,status,due});
+  }
+  const previous=globalThis.document;
+  globalThis.document={querySelector:()=>({addEventListener(){}}),addEventListener(){}};
+  try{
+    const ui=createWorkspace({storage:{getItem:key=>key===WORKSPACE_KEY?JSON.stringify(w):null},render(){},toast(){},escapeHTML:String,icon:()=>'',getTimeRecords:()=>[],uid,localDate:()=>day});
+    for(const reverse of [true,false]){
+      for(const range of Object.keys(days)){
+        for(const status of ['pending','all',...statuses]){
+          const edits=[{id:'workspace-range',value:range},{id:'workspace-status-filter',value:status}];
+          for(const edit of reverse?edits.reverse():edits)ui.change(edit);
+          const html=ui.tasks();
+          const ids=[...html.matchAll(/data-workspace-select-task="([^"]+)"/g)].map(m=>m[1]).sort();
+          const expected=w.tasks.filter(t=>t.due===days[range]&&(status==='all'||(status==='pending'?t.status!=='done':t.status===status))).map(t=>t.id).sort();
+          assert.deepEqual(ids,expected,range+' × '+status);
+        }
+      }
+    }
+  }finally{globalThis.document=previous;}
+});

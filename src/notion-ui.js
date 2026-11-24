@@ -246,5 +246,6 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
   return true;
  }
 
- return {page,taskControls,settingsPanel,click,change,input,submit,load,sync};
+ const taskNotice=()=>conflicts.length?`<a class="text-button" href="#share">Notion同期の要確認 ${conflicts.length}件</a>`:'';
+ return {page,taskNotice,taskControls,settingsPanel,click,change,input,submit,load,sync};
 }
