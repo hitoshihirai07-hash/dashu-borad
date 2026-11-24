@@ -44,10 +44,12 @@ export function workspaceValidate(value){
         return {text:str(step.text,200,true),done:type==='tasks'?(step.done??false):false};
       });
       if(normalizedSteps.some(step=>typeof step.done!=='boolean'))throw Error('チェックリストの状態が不正です。');
+      const estimateMinutes=(type==='tasks'||type==='templates')?(item.estimateMinutes??null):null;
+      if(estimateMinutes!==null&&(!Number.isInteger(estimateMinutes)||estimateMinutes<1||estimateMinutes>1440))throw Error('見積もり時間は1〜1440分で入力してください。');
       if(type==='templates'){
         const priority=str(item.priority??'normal',15);
         if(!['high','normal','low'].includes(priority))throw Error('テンプレートの優先度が不正です。');
-        return {...base,detail:str(item.detail??'',4000),priority,steps:normalizedSteps};
+        return {...base,detail:str(item.detail??'',4000),priority,steps:normalizedSteps,estimateMinutes};
       }
       if(type==='links'){
         const url=str(item.url??'',2048,true);
@@ -108,7 +110,7 @@ export function workspaceValidate(value){
         if(sourceNotionPage&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sourceNotionPage))throw Error('元のNotionページIDが不正です。');
         if(sourceNotionUrl&&!validLinkUrl(sourceNotionUrl))throw Error('元のNotionリンクが不正です。');
         if(Boolean(sourceNotionPage)!==Boolean(sourceNotionUrl))throw Error('元のNotionページの情報が不完全です。');
-        return {...base,due,dueHistory,originalDue,startTime,endTime,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,workTools,workUrl,firstStep,taskDoneCriteria,aiRequest,sourceNotionPage,sourceNotionUrl,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
+        return {...base,due,dueHistory,originalDue,startTime,endTime,estimateMinutes,assignee,aiService,aiState,aiRequestedAt,aiCheckedAt,status,priority,detail,workTools,workUrl,firstStep,taskDoneCriteria,aiRequest,sourceNotionPage,sourceNotionUrl,memo:str(item.memo??'',10000),stage:str(item.stage??'',100),steps:normalizedSteps,repeat:rule,routineId,skipped:item.skipped??false,completedAt,reviewDate,waitingFor,startCondition};
       }
       if(type==='projects'){
         const stages=item.stages??[];
@@ -473,4 +475,27 @@ export function dailyPlanner(current,day,records=[],{today=day,showTasks=true,sh
   for(const lane of Object.values(lanes))lane.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||a.title.localeCompare(b.title,'ja'));
   const selfMinutes=records.filter(r=>!r.deleted&&r.date===day).reduce((sum,r)=>sum+(Number.isFinite(r.minutes)&&r.minutes>0?r.minutes:0),0);
   return {day,lanes,selfMinutes};
+}
+
+export function workspaceTaskProgress(task){
+  const steps=task.steps||[],done=steps.filter(s=>s.done).length;
+  return {done,total:steps.length,next:steps.find(s=>!s.done)?.text||(!steps.length?task.firstStep||'':'')};
+}
+export function workspaceTemplatePayload(template){
+  return {title:template.title,project:template.project,detail:template.detail,priority:template.priority,estimateMinutes:template.estimateMinutes??null,steps:(template.steps||[]).map(s=>({text:s.text,done:false}))};
+}
+export function workspaceEstimateSummary(tasks,records,day){
+  const selected=tasks.filter(t=>t.due===day&&!t.skipped&&!['waiting','someday'].includes(t.status));
+  const ids=new Set(selected.map(t=>t.id));
+  return {count:selected.length,estimatedCount:selected.filter(t=>t.estimateMinutes!=null).length,
+    estimated:selected.reduce((sum,t)=>sum+(t.estimateMinutes??0),0),
+    actual:records.filter(r=>!r.deleted&&r.date===day&&ids.has(r.taskId)&&Number.isFinite(r.minutes)).reduce((sum,r)=>sum+r.minutes,0)};
+}
+export function workspaceTaskSort(a,b,mode='default'){
+  const priority={high:0,normal:1,low:2},byName=()=>a.title.localeCompare(b.title,'ja');
+  if(mode==='name')return byName();
+  if(mode==='priority')return priority[a.priority]-priority[b.priority]||byName();
+  if(mode==='estimate')return (a.estimateMinutes??Infinity)-(b.estimateMinutes??Infinity)||byName();
+  return Number(a.status==='done')-Number(b.status==='done')||Number(b.status==='doing')-Number(a.status==='doing')||
+    Number(b.priority==='high')-Number(a.priority==='high')||Number(b.priority==='low')-Number(a.priority==='low')||byName();
 }

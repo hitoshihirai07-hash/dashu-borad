@@ -718,3 +718,23 @@ body:has(.home-dashboard) footer{display:none}
  .work-tasks-page.mobile-detail-open .work-mobile-back{display:inline-flex}
  .work-tasks-page .work-board .work-task-row{min-height:56px}
 }
+
+/* Compact task controls */
+.work-tasks-page .workspace-filter{gap:8px;align-items:end}
+.work-tasks-page .workspace-filter label{min-width:125px;flex:1 1 125px}
+.work-tasks-page .workspace-filter label:has(input[type=search]){flex:2 1 180px}
+.work-filter-clear{min-height:40px}
+.work-tasks-page .work-task-row{flex-wrap:wrap}
+.work-next-step{display:block;font-size:12px;color:#316c53;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.work-step-count{font-weight:700;color:#32654e}
+.work-inline-date,.work-inline-steps{font-size:12px;min-width:0;flex:0 1 auto;color:#32654e}
+.work-inline-date[open],.work-inline-steps[open]{flex:1 1 100%}
+.work-inline-date summary,.work-inline-steps summary{cursor:pointer;padding:5px 6px;border-radius:6px;background:#edf6ef;white-space:nowrap}
+.work-inline-date-fields{display:flex;gap:6px;align-items:center;padding:6px 0;flex-wrap:wrap}
+.work-inline-date-fields input{min-width:0;max-width:100%;flex:1 1 120px}
+.work-inline-steps .work-step-list{padding:5px 0 0}
+.work-estimate-summary{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;padding:8px 10px;border:1px solid #deebe2;border-radius:8px;background:#f5faf6;margin:8px 0;color:#32654e}
+.work-estimate-summary>span{display:flex;align-items:baseline;gap:5px}
+.work-estimate-summary>small{flex:1 1 100%;font-size:11px}
+#work-template-picker:not([hidden]){display:grid;gap:6px;background:#f5faf6;border:1px solid #dbe9df;padding:10px;border-radius:8px}
+@media(max-width:600px){.work-tasks-page .workspace-filter label{min-width:0;flex:1 1 42%}.work-tasks-page .workspace-filter label:has(input[type=search]){flex:1 1 100%}.work-inline-date summary,.work-inline-steps summary{padding:8px}.work-estimate-summary{gap:6px 12px}}

@@ -1,9 +1,10 @@
-import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceRescheduleTask,workspaceSetTaskDate,quickNoteTaskTitle,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceAiPatch,workspaceSetAiState,dailyPlanner,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,workspaceSetEventStatus,workspaceRecordReview,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest} from './workspace-model.js';
+import {WORKSPACE_KEY,HABITS,workspaceFresh,workspaceValidate,workspaceChange,workspaceDelete,workspaceRescheduleTask,workspaceSetTaskDate,quickNoteTaskTitle,workspaceSetProjectVisibility,workspaceToggleHabit,habitWeek,taskBuckets,firstRoutineDate,workspaceAdvanceTask,workspaceSetTaskStatus,workspaceAiPatch,workspaceSetAiState,dailyPlanner,workspaceToggleTaskStep,workspaceMoveLink,workspaceToggleFocus,workspaceSetEventStatus,workspaceRecordReview,calendarPeriod,calendarItems,projectTaskStats,buildWorkspaceRequest,workspaceTaskProgress,workspaceTemplatePayload,workspaceEstimateSummary,workspaceTaskSort} from './workspace-model.js';
 
 export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTimeRecords,uid,localDate,startRecord,onTaskCompleted}){
   let value=workspaceFresh(),error='',filter='',search='',taskView='pending',quickSearch='',quickEditId='',pendingQuickNoteId='',formType='tasks',formId='';
   const expandedTaskGroups=new Set(),expandedTaskRows=new Set(),expandedDetailTasks=new Set();
-  let taskFocus='overview',mobileTaskDetail=false;
+  let taskFocus='overview',mobileTaskDetail=false,taskSort='default';
+  const expandedInlineSteps=new Set();
   let actionView='today',actionDate=localDate();
   let selectedProject='',selectedTask='',reviewProject='',promptFilter='',projectSettingsOpen=false,habitDate=localDate(),calendarDate=localDate(),calendarView='month',calendarFlags={tasks:true,events:true,habits:true},savedSnapshot=JSON.stringify(workspaceFresh());
   const titles={projects:'プロジェクト',tasks:'タスク',notes:'以前のメモ',prompts:'プロンプト',templates:'タスクテンプレート',links:'毎日使うリンク',events:'個人予定'};
@@ -70,10 +71,14 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   const daySequence=(a,b)=>{const days=[];for(let day=a;day<=b;day=makeDay(day,1))days.push(day);return days;};
   function itemRow(t){
     const recordedMinutes=timeEntries('',t.id).reduce((sum,r)=>sum+Number(r.minutes||0),0);
+    const compactTask=typeof location!=='undefined'&&location.hash==='#tasks',progress=workspaceTaskProgress(t);
+    const actionable=!['done','waiting','someday'].includes(t.status);
     return `<div class="work-task-row ${selectedTask===t.id?'selected':''}">
       <button type="button" class="work-task-select" data-workspace-select-task="${esc(t.id)}" aria-pressed="${selectedTask===t.id}">
         <strong class="${t.status==='done'?'done':''}">${esc(t.title)}</strong>
         <span class="workspace-meta">${t.project?esc(t.project)+' ・ ':''}${dated(t)}${timeLabel(t)}</span>
+        ${compactTask&&t.status!=='done'&&(progress.next||progress.total)?`<span class="work-next-step" title="${esc(progress.next)}">${progress.total?`<span class="work-step-count">${progress.done}/${progress.total}件</span> `:''}${progress.next?`次：${esc(progress.next)}`:'全項目チェック済み'}</span>`:''}
+        ${compactTask&&t.estimateMinutes!=null?`<span class="work-time-tag">見積 ${t.estimateMinutes}分</span>`:''}
         ${recordedMinutes>0?`<span class="work-time-tag">記録済 ${timeText(recordedMinutes)}</span>`:''}
         ${['waiting','someday'].includes(t.status)?`<span class="work-note-marker">${esc(completedLabel(t))}</span>`:''}${t.reviewDate&&['waiting','someday'].includes(t.status)?`<span class="work-note-marker ${t.reviewDate<=localDate()&&['waiting','someday'].includes(t.status)?'work-review-due':''}">確認目安 ${esc(t.reviewDate)}</span>`:''}${t.memo?'<span class="work-note-marker">メモあり</span>':''}${t.dueHistory.length?`<span class="work-note-marker">初回期限 ${esc((t.originalDue||t.dueHistory[0].from))}</span>`:''}${t.repeat?`<span class="work-note-marker">↻ ${esc(repeatLabel(t.repeat))}</span>`:''}${t.skipped?'<span class="work-note-marker">スキップ済み</span>':''}${t.assignee==='ai'?`<span class="work-note-marker work-ai-marker">AI ${esc(t.aiService||'依頼先未設定')} ・ ${esc(aiNames[t.aiState])}</span>`:''}
       </button>
@@ -85,6 +90,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
         <option value="done" ${t.status==='done'?'selected':''}>完了</option>
       </select>
       ${t.assignee==='ai'?aiStatusControl(t):''}
+      ${compactTask&&actionable?`<details class="work-inline-date"><summary>日付変更</summary><div class="work-inline-date-fields"><input type="date" value="${esc(t.due||localDate())}" aria-label="${esc(t.title)}の予定日"><button type="button" class="button secondary" data-workspace-inline-date="${esc(t.id)}">変更</button></div></details>`:''}
+      ${compactTask&&t.status!=='done'&&progress.total?`<details class="work-inline-steps" data-workspace-inline-steps="${esc(t.id)}" ${expandedInlineSteps.has(t.id)?'open':''}><summary>チェックリスト ${progress.done}/${progress.total}</summary><div class="work-step-list">${t.steps.map((s,i)=>`<label class="work-step"><input type="checkbox" data-workspace-step="${esc(t.id)}" data-index="${i}" ${s.done?'checked':''}><span class="${s.done?'checked':''}">${esc(s.text)}</span></label>`).join('')}</div></details>`:''}
     </div>`;
   }
   const taskList=(arr,empty='タスクはありません。')=>arr.length?`<div class="work-task-list">${arr.map(itemRow).join('')}</div>`:`<p class="muted work-empty">${empty}</p>`;
@@ -122,11 +129,11 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     else fallback();
   }
   function detailTask(t,showProjectOverdue=false){
-    const records=timeEntries('',t.id),minutes=records.reduce((s,r)=>s+r.minutes,0);
+    const records=timeEntries('',t.id),minutes=records.reduce((s,r)=>s+r.minutes,0),progress=workspaceTaskProgress(t);
     const overdue=showProjectOverdue&&t.due&&t.due<localDate()&&!['done','waiting','someday'].includes(t.status);
     return `<section class="panel work-detail" aria-label="タスク詳細">
       <div class="work-detail-head"><div><span class="work-eyebrow">タスク詳細</span><h2>${esc(t.title)}</h2><p class="workspace-meta">${esc(t.project||'未分類')} ・ ${dated(t)}${timeLabel(t)} ・ ${completedLabel(t)}${t.stage?' ・ '+esc(t.stage):''}</p></div><div class="workspace-actions"><button type="button" class="button secondary work-edit" data-workspace-edit="tasks:${esc(t.id)}">編集</button><button type="button" class="button secondary" data-workspace-delete="tasks:${esc(t.id)}">削除</button></div></div>
-      <div class="work-task-quick"><div><strong>最初の一手</strong><p>${t.firstStep?clean(t.firstStep):'未設定'}</p></div><div class="work-task-quick-buttons"><button type="button" class="button secondary" data-workspace-task-copy="${esc(t.id)}">依頼文をコピー</button><button type="button" class="button primary" data-workspace-record="${esc(t.id)}">時間を記録</button>${minutes>0?`<span class="work-time-tag">記録済 ${timeText(minutes)}</span>`:''}</div></div>
+      <div class="work-task-quick"><div><strong>${progress.total?'次にやる作業':'最初の一手'}</strong><p>${progress.next?clean(progress.next):progress.total?'すべてチェック済み':'未設定'}${progress.total?` <small>（${progress.done}/${progress.total}件）</small>`:''}</p>${t.estimateMinutes!=null?`<p class="workspace-meta">見積 ${t.estimateMinutes}分 ・ 実績 ${minutes}分</p>`:''}</div><div class="work-task-quick-buttons"><button type="button" class="button secondary" data-workspace-task-copy="${esc(t.id)}">依頼文をコピー</button><button type="button" class="button primary" data-workspace-record="${esc(t.id)}">時間を記録</button>${minutes>0?`<span class="work-time-tag">記録済 ${timeText(minutes)}</span>`:''}</div></div>
       ${overdue?`<aside class="work-overdue-notice" role="status"><strong>このタスクは期限を${daysLate(t.due,localDate())}日過ぎています</strong><p>予定日は自動変更されません。必要なら変更してください。</p>${overdueActions(t)}</aside>`:''}
       ${t.sourceNotionPage?`<div class="work-task-origin">Notionの次回候補から登録：<a href="${esc(t.sourceNotionUrl)}" target="_blank" rel="noopener noreferrer">元ページを開く</a></div>`:''}
       <details class="work-detail-extra" data-workspace-detail-expanded="${esc(t.id)}" ${expandedDetailTasks.has(t.id)?'open':''}><summary>作業の内容・メモ・履歴を表示</summary><div class="work-detail-extra-body">
@@ -180,21 +187,22 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     </section>`;
   }
   function tasks(){
-    const today=localDate(),tomorrow=makeDay(today,1);
-    const all=value.tasks.filter(t=>(!filter||t.project===filter)&&(!search||`${t.title} ${t.detail} ${t.memo} ${t.project} ${t.waitingFor} ${t.startCondition}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
-    const matched=all.filter(t=>taskView==='all'||(taskView==='done'?t.status==='done':t.status!=='done'));
+    const today=localDate(),tomorrow=makeDay(today,1),order=(a,b)=>workspaceTaskSort(a,b,taskSort);
+    const all=value.tasks.filter(t=>(!filter||t.project===filter)&&(!search||`${t.title} ${t.detail} ${t.memo} ${t.project} ${t.waitingFor} ${t.startCondition} ${t.firstStep} ${t.steps.map(s=>s.text).join(' ')}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())));
+    const matched=all.filter(t=>taskView==='all'||(taskView==='pending'?t.status!=='done':t.status===taskView));
     if(selectedTask&&!matched.some(t=>t.id===selectedTask))selectedTask='';
     const recentCutoff=makeDay(today,-7),active=matched.filter(t=>!['done','waiting','someday'].includes(t.status));
-    const overdue=active.filter(t=>t.due&&t.due<today).sort((a,b)=>b.due.localeCompare(a.due)||taskOrder(a,b));
+    const overdue=active.filter(t=>t.due&&t.due<today).sort((a,b)=>b.due.localeCompare(a.due)||order(a,b));
     const overdueRecent=overdue.filter(t=>t.due>=recentCutoff),overdueOld=overdue.filter(t=>t.due<recentCutoff);
-    const todayRows=matched.filter(t=>t.due===today&&!['waiting','someday'].includes(t.status)).sort(taskOrder);
-    const tomorrowRows=matched.filter(t=>t.due===tomorrow&&!['waiting','someday'].includes(t.status)).sort(taskOrder);
+    const todayRows=matched.filter(t=>t.due===today&&!['waiting','someday'].includes(t.status)).sort(order);
+    const tomorrowRows=matched.filter(t=>t.due===tomorrow&&!['waiting','someday'].includes(t.status)).sort(order);
     const weekEnd=makeDay(today,6-(new Date(today+'T12:00:00').getDay()+6)%7);
     const later=active.filter(t=>t.due>tomorrow),weekRows=later.filter(t=>t.due<=weekEnd),futureRows=later.filter(t=>t.due>weekEnd);
-    const undated=active.filter(t=>!t.due).sort(taskOrder);
+    const undated=active.filter(t=>!t.due).sort(order);
     const review=matched.filter(t=>['waiting','someday'].includes(t.status)&&t.reviewDate&&t.reviewDate<=today).sort((a,b)=>a.reviewDate.localeCompare(b.reviewDate));
     const waiting=matched.filter(t=>t.status==='waiting'&&!review.includes(t)),someday=matched.filter(t=>t.status==='someday'&&!review.includes(t));
     const done=matched.filter(t=>t.status==='done'&&t.due!==today&&t.due!==tomorrow).sort((a,b)=>b.completedAt.localeCompare(a.completedAt)||b.updatedAt.localeCompare(a.updatedAt));
+    const estimate=workspaceEstimateSummary(all,getTimeRecords(),today);
     const preferred=[...overdueRecent,...todayRows,...tomorrowRows,...weekRows,...futureRows,...undated,...review,...waiting,...someday,...overdueOld,...done];
     const picked=matched.find(t=>t.id===selectedTask)||preferred[0];if(picked)selectedTask=picked.id;
     const maxVisible=8;
@@ -208,17 +216,17 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       return collapsed?`<details class="work-task-group work-task-fold" data-workspace-task-group="${esc(label)}" ${expandedTaskGroups.has(label)||search?'open':''} ${id?`id="${id}"`:''}><summary>${esc(label)} <small>${rows.length}件</small></summary>${body}</details>`:
         `<section class="work-task-group" ${id?`id="${id}"`:''}><h2>${esc(label)} <small>${rows.length}件</small></h2>${body}</section>`;
     };
-    const byDay=(rows)=>[...new Set(rows.map(t=>t.due))].sort().map(day=>`<section class="work-day-section"><h3>${displayDay(day)}</h3>${taskList(rows.filter(t=>t.due===day).sort(taskOrder))}</section>`).join('');
+    const byDay=(rows)=>[...new Set(rows.map(t=>t.due))].sort().map(day=>`<section class="work-day-section"><h3>${displayDay(day)}</h3>${taskList(rows.filter(t=>t.due===day).sort(order))}</section>`).join('');
     const period=(label,rows)=>rows.length?`<details class="work-task-group work-task-fold" data-workspace-task-group="${esc(label)}" ${expandedTaskGroups.has(label)||search?'open':''}><summary>${label} <small>${rows.length}件</small></summary>${byDay(displayed(label,rows))}${moreControl(label,rows.length)}</details>`:'';
     const sections=taskView==='done'?section('完了済みの履歴',matched.sort((a,b)=>b.completedAt.localeCompare(a.completedAt)),{collapsed:false}):
-      taskFocus==='today'?section(`今日・${displayDay(today)}`,todayRows):taskFocus==='doing'?section('進行中',active.filter(t=>t.status==='doing').sort(taskOrder)):taskFocus==='overdue'?[section('期限切れ・直近7日間',overdueRecent,{overdueActionsVisible:true,id:'overdue-tasks'}),section('古い期限切れ',overdueOld,{overdueActionsVisible:true})].join(''):[section('期限切れ・直近7日間',overdueRecent,{collapsed:true,overdueActionsVisible:true,id:'overdue-tasks'}),section('古い期限切れ',overdueOld,{collapsed:true,overdueActionsVisible:true}),section(`今日・${displayDay(today)}`,todayRows),section(`明日・${displayDay(tomorrow)}`,tomorrowRows,{collapsed:true}),period('今週の残り',weekRows),period('来週以降',futureRows),section('日付未定（着手可能）',undated,{collapsed:true}),section('確認目安が来た待機',review,{collapsed:true}),section('待機中',waiting,{collapsed:true}),section('いつかやる',someday,{collapsed:true}),section('完了済みの履歴',done,{collapsed:true})].join('');
+      taskFocus==='today'?section(`今日・${displayDay(today)}`,todayRows):taskFocus==='doing'?section('進行中',active.filter(t=>t.status==='doing').sort(order)):taskFocus==='overdue'?[section('期限切れ・直近7日間',overdueRecent,{overdueActionsVisible:true,id:'overdue-tasks'}),section('古い期限切れ',overdueOld,{overdueActionsVisible:true})].join(''):[section('期限切れ・直近7日間',overdueRecent,{collapsed:true,overdueActionsVisible:true,id:'overdue-tasks'}),section('古い期限切れ',overdueOld,{collapsed:true,overdueActionsVisible:true}),section(`今日・${displayDay(today)}`,todayRows),section(`明日・${displayDay(tomorrow)}`,tomorrowRows,{collapsed:true}),period('今週の残り',weekRows),period('来週以降',futureRows),section('日付未定（着手可能）',undated,{collapsed:true}),section('確認目安が来た待機',review,{collapsed:true}),section('待機中',waiting,{collapsed:true}),section('いつかやる',someday,{collapsed:true}),section('完了済みの履歴',done,{collapsed:true})].join('');
     return `<div class="work-tasks-page${mobileTaskDetail?' mobile-detail-open':''}"><header class="page-heading"><div><h1>タスク</h1><p>日付ごとに整理しています。選ぶと右側に詳細を表示します。</p></div><div class="workspace-actions"><a class="button secondary" href="#notion">Notionの次回候補</a><a class="button secondary" href="#templates">テンプレートから追加</a><button class="button primary" type="button" data-workspace-new="tasks">${icon('plus')}タスク追加</button></div></header>
       ${error?`<p class="notice" role="alert">${esc(error)}</p>`:''}
       <p class="muted work-help">期限切れは自動で繰り越しません。完了履歴や古い予定は折りたたんでいます。ルーチンは完了・スキップ後に次回分を作成します。</p>
-      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label><label>表示<select id="workspace-status-filter"><option value="pending" ${taskView==='pending'?'selected':''}>未完了中心</option><option value="all" ${taskView==='all'?'selected':''}>すべて</option><option value="done" ${taskView==='done'?'selected':''}>完了済みのみ</option></select></label></div>
+      <div class="workspace-filter"><label>プロジェクト<select id="workspace-project-filter"><option value="">すべて</option>${[...new Set([...names(),...(filter?[filter]:[])])].map(n=>`<option value="${esc(n)}" ${filter===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label><label>タスク検索<input id="workspace-search" type="search" value="${esc(search)}" placeholder="名前・メモで検索"></label><label>表示<select id="workspace-status-filter"><option value="pending" ${taskView==='pending'?'selected':''}>未完了中心</option><option value="all" ${taskView==='all'?'selected':''}>すべて</option><option value="done" ${taskView==='done'?'selected':''}>完了済みのみ</option>${[['todo','未着手'],['doing','進行中'],['waiting','待機中'],['someday','いつかやる']].map(([key,label])=>`<option value="${key}" ${taskView===key?'selected':''}>${label}</option>`).join('')}</select></label><label>グループ内の並び順<select id="workspace-task-sort">${[['default','標準（進行・優先度順）'],['name','タスク名順'],['priority','優先度順'],['estimate','見積もりが短い順']].map(([key,label])=>`<option value="${key}" ${taskSort===key?'selected':''}>${label}</option>`).join('')}</select></label><button type="button" class="button secondary work-filter-clear" data-workspace-task-clear="1">クリア</button></div>
       ${taskView!=='done'&&overdue.length?`<aside class="work-tasks-overdue-compact" role="status"><span>期限を過ぎた未完了タスクが${overdue.length}件あります</span><button type="button" class="button secondary" data-workspace-task-focus="overdue">確認する</button></aside>`:''}
       <div class="work-task-focus" role="group" aria-label="タスクの絞り込み">${[['overview','全体',matched.length],['today','今日',todayRows.filter(t=>t.status!=='done').length],['doing','進行中',active.filter(t=>t.status==='doing').length],['overdue','期限切れ',overdue.length]].map(([key,label,count])=>`<button type="button" class="${taskFocus===key?'active':''}" data-workspace-task-focus="${key}" aria-pressed="${taskFocus===key}">${label} <small>${count}</small></button>`).join('')}</div>
-      <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">表示中 <strong>${matched.length}件</strong>・未完了 ${matched.filter(t=>t.status!=='done').length}件</div>${sections||'<p class="muted work-empty">表示するタスクはありません。</p>'}</div><div class="work-tasks-detail-area">${picked?`<button type="button" class="button secondary work-mobile-back" data-workspace-task-back="1">一覧に戻る</button>`+detailTask(picked):'<section class="panel work-detail"><h2>タスクを選択してください</h2><p class="muted">一覧から選ぶか、新しいタスクを追加してください。</p></section>'}</div></div></div>`;
+      <div class="work-task-layout"><div class="work-board panel"><div class="work-board-total">表示中 <strong>${matched.length}件</strong>・未完了 ${matched.filter(t=>t.status!=='done').length}件</div><section class="work-estimate-summary" aria-label="今日の作業時間"><span><small>今日の見積もり</small><strong>${estimate.estimatedCount?estimate.estimated+'分':'未設定'}</strong></span><span><small>今日の実績</small><strong>${estimate.actual}分</strong></span><small>見積もり ${estimate.estimatedCount}/${estimate.count}件 ・ 今日予定のタスク分（AI待ち時間を除く）</small></section>${sections||'<p class="muted work-empty">表示するタスクはありません。</p>'}</div><div class="work-tasks-detail-area">${picked?`<button type="button" class="button secondary work-mobile-back" data-workspace-task-back="1">一覧に戻る</button>`+detailTask(picked):'<section class="panel work-detail"><h2>タスクを選択してください</h2><p class="muted">一覧から選ぶか、新しいタスクを追加してください。</p></section>'}</div></div></div>`;
   }
   function projects(){
     const projectNames=names();if(!projectNames.includes(selectedProject))selectedProject=projectNames[0]||'';
@@ -466,6 +474,9 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(f.elements.aiService)f.elements.aiService.value=item?.aiService||'';
     if(f.elements.aiState)f.elements.aiState.value=item?.aiState||'not_requested';f.elements.priority.value=item?.priority||'normal';f.elements.status.value=item?.status||'todo';f.elements.category.value=item?.category||'';
     f.elements.steps.value=(item?.steps||[]).map(s=>s.text).join('\n');
+    if(f.elements.estimateMinutes)f.elements.estimateMinutes.value=item?.estimateMinutes??'';
+    const templateField=document.querySelector('#work-template-picker');
+    if(templateField&&f.elements.taskTemplate){templateField.hidden=type!=='tasks'||!!id||!value.templates.length;const picker=f.elements.taskTemplate;picker.innerHTML='<option value="">選択しない</option>'+value.templates.map(t=>`<option value="${esc(t.id)}">${esc(t.project?`${t.project}：${t.title}`:t.title)}</option>`).join('');picker.value='';}
     f.elements.repeatType.value=item?.repeat?.type||'none';f.elements.monthDay.value=String(item?.repeat?.monthDay||1);
     f.querySelectorAll('[name="repeatDay"]').forEach(el=>el.checked=!!item?.repeat?.days.includes(Number(el.value)));
     f.elements.pinned.checked=item?.pinned||false;
@@ -639,6 +650,9 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(button.dataset.workspaceResume){save(workspaceSetTaskStatus(value,button.dataset.workspaceResume,'todo',localDate(),uid));toast('未着手に戻しました。');return true;}
       if(button.dataset.workspaceMoveLink){save(workspaceMoveLink(value,button.dataset.workspaceMoveLink,button.dataset.direction));return true;}
       if(button.dataset.workspaceSuggestLink!==undefined){const l=suggestedLinks[Number(button.dataset.workspaceSuggestLink)];if(!l)throw Error('リンク候補が見つかりません。');if(value.links.some(x=>x.url===l.url))throw Error('このURLは登録済みです。');save(workspaceChange(value,'links',l,'',uid));toast('リンクを追加しました。');return true;}
+      if(button.dataset.workspaceInlineDate!==undefined){const id=button.dataset.workspaceInlineDate,due=button.closest('.work-inline-date')?.querySelector('input[type="date"]')?.value;const task=visibleTask(id);if(task?.due===due)return true;save(workspaceSetTaskDate(value,id,due,uid));toast('予定日を変更しました。');return true;}
+      if(button.dataset.workspaceTaskClear!==undefined){filter='';search='';taskView='pending';taskFocus='overview';taskSort='default';selectedTask='';mobileTaskDetail=false;render();return true;}
+      if(button.dataset.workspaceApplyTemplate!==undefined){const f=document.querySelector('#workspace-form');if(formType!=='tasks'||formId)return true;const t=value.templates.find(x=>x.id===f.elements.taskTemplate.value);if(!t){toast('テンプレートを選択してください。');return true;}const p=workspaceTemplatePayload(t);f.elements.title.value=p.title;f.elements.project.innerHTML=projectOptions(p.project);f.elements.project.value=p.project;f.elements.detail.value=p.detail;f.elements.priority.value=p.priority;f.elements.steps.value=p.steps.map(s=>s.text).join('\n');if(f.elements.estimateMinutes)f.elements.estimateMinutes.value=p.estimateMinutes??'';updateStageOptions();toast('テンプレートを入力欄に反映しました。');return true;}
       if(button.dataset.workspaceNew){open(button.dataset.workspaceNew);return true;}
       if(button.dataset.workspaceNewPrompt!==undefined){open('prompts','',{project:button.dataset.workspaceNewPrompt});return true;}
       if(button.dataset.workspaceNewTask!==undefined){open('tasks','',{project:button.dataset.workspaceNewTask});return true;}
@@ -648,8 +662,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
         const container=button.closest?.('.work-copy-section'),promptId=container?.querySelector?.('[data-work-copy-prompt]')?.value||'',linkId=container?.querySelector?.('[data-work-copy-link]')?.value||'',taskId=button.dataset.taskId||container?.querySelector?.('[data-work-copy-task]')?.value||'',instruction=container?.querySelector?.('[data-work-copy-instruction]')?.value||'';
         copyText(buildWorkspaceRequest({workspace:value,project:button.dataset.workspaceCopyContext,taskId,promptId,linkId,instruction}));return true;
       }
-      if(button.dataset.workspaceUseTemplate){const t=value.templates.find(x=>x.id===button.dataset.workspaceUseTemplate);if(!t)throw Error('テンプレートがありません。');open('tasks','',{title:t.title,project:t.project,detail:t.detail,priority:t.priority,steps:t.steps});return true;}
-      if(button.dataset.workspaceSaveTemplate){const t=visibleTask(button.dataset.workspaceSaveTemplate);if(!t)throw Error('タスクがありません。');open('templates','',{title:t.title,project:t.project,detail:t.detail,priority:t.priority,steps:t.steps});return true;}
+      if(button.dataset.workspaceUseTemplate){const t=value.templates.find(x=>x.id===button.dataset.workspaceUseTemplate);if(!t)throw Error('テンプレートがありません。');open('tasks','',workspaceTemplatePayload(t));return true;}
+      if(button.dataset.workspaceSaveTemplate){const t=visibleTask(button.dataset.workspaceSaveTemplate);if(!t)throw Error('タスクがありません。');open('templates','',workspaceTemplatePayload(t));return true;}
       if(button.dataset.workspaceSkip){const t=visibleTask(button.dataset.workspaceSkip);if(!t?.repeat)throw Error('ルーチンがありません。');if(!confirm('今回分だけスキップして、次の予定を作成しますか？'))return true;const next=workspaceAdvanceTask(value,t.id,localDate(),uid,true);selectedTask=next.tasks.find(x=>x.routineId===(t.routineId||t.id)&&x.status!=='done')?.id||'';save(next);toast('次回分を作成しました。');return true;}
       if(button.dataset.workspaceStopRepeat){const t=visibleTask(button.dataset.workspaceStopRepeat);if(!t?.repeat)throw Error('ルーチンがありません。');if(!confirm('このタスクの繰り返しを解除しますか？タスク自体は残ります。'))return true;save(workspaceChange(value,'tasks',{repeat:null},t.id,uid));toast('繰り返しを解除しました。');return true;}
       if(button.dataset.workspacePin){const p=value.prompts.find(x=>x.id===button.dataset.workspacePin);if(!p)throw Error('プロンプトがありません。');save(workspaceChange(value,'prompts',{pinned:!p.pinned},p.id,uid));return true;}
@@ -703,7 +717,8 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     }
     if(target.name==='repeatType'){updateRepeatFields();return true;}
     if(target.name==='status'&&formType==='tasks'){updateWaitFields();return true;}
-    if(target.dataset?.workspaceStep!==undefined){try{save(workspaceToggleTaskStep(value,target.dataset.workspaceStep,Number(target.dataset.index),uid));}catch(e){toast(e.message);render();}return true;}
+    if(target.dataset?.workspaceStep!==undefined){try{if(target.closest?.('.work-inline-steps'))expandedInlineSteps.add(target.dataset.workspaceStep);save(workspaceToggleTaskStep(value,target.dataset.workspaceStep,Number(target.dataset.index),uid));}catch(e){toast(e.message);render();}return true;}
+    if(target.id==='workspace-task-sort'){if(['default','name','priority','estimate'].includes(target.value)){taskSort=target.value;render();}return true;}
     if(target.id==='workspace-project-filter'){filter=target.value;selectedTask='';mobileTaskDetail=false;render();return true;}
     if(target.id==='workspace-status-filter'){taskView=target.value;selectedTask='';mobileTaskDetail=false;render();return true;}
     if(target.dataset?.workspaceStatus!==undefined){
@@ -740,6 +755,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
         if(old?.due&&old.due!==payload.due){payload.dueHistory=[...old.dueHistory,{from:old.due,to:payload.due,at:new Date().toISOString()}].slice(-40);payload.originalDue=old.originalDue||old.due;}
         if(old?.status==='done'&&payload.repeat)throw Error('完了履歴にはルーチンを設定できません。新しいタスクを作成してください。');
       }
+      if(['tasks','templates'].includes(formType)){const raw=f.elements.estimateMinutes?.value??'';payload.estimateMinutes=raw===''?null:Number(raw);}
       if(formType==='templates')Object.assign(payload,{detail:f.elements.detail.value,priority:f.elements.priority.value,steps:makeSteps(f.elements.steps.value)});
       if(formType==='projects'){
         const stages=(f.elements.stages?.value||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
@@ -791,6 +807,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     if(!key)return;
     if(element.open)expandedTaskGroups.add(key);else expandedTaskGroups.delete(key);
   },true);
+  document.addEventListener('toggle',event=>{const id=event.target?.dataset?.workspaceInlineSteps;if(id&&event.target.isConnected!==false){if(event.target.open)expandedInlineSteps.add(id);else expandedInlineSteps.delete(id);}},true);
   document.addEventListener('toggle',event=>{const taskId=event.target?.dataset?.workspaceDetailExpanded;if(!taskId)return;if(event.target.open)expandedDetailTasks.add(taskId);else expandedDetailTasks.delete(taskId);},true);
   document.addEventListener('submit',event=>{
     const form=event.target;
