@@ -470,7 +470,7 @@ export function dailyPlanner(current,day,records=[],{today=day,showTasks=true,sh
     if(!due&&!requestedToday&&!focus&&!pendingToday&&!predicted)continue;
     const time=(due||predicted)&&t.startTime?t.startTime:(requestedToday?requested.time:'');
     const timeType=(due||predicted)&&t.startTime?'予定':requestedToday?'依頼':'未設定';
-    lanes[t.assignee].push({kind:'task',id:t.id,title:t.title,time,endTime:(due||predicted)?t.endTime:'',timeType,done:t.status==='done',virtual:predicted&&!due,assignee:t.assignee,aiState:predicted&&!due?'not_requested':t.aiState,aiService:t.aiService,aiRequestedAt:predicted&&!due?'':t.aiRequestedAt,aiCheckedAt:predicted&&!due?'':t.aiCheckedAt});
+    lanes[t.assignee].push({kind:'task',id:t.id,title:t.title,estimateMinutes:t.estimateMinutes,time,endTime:(due||predicted)?t.endTime:'',timeType,done:t.status==='done',virtual:predicted&&!due,assignee:t.assignee,aiState:predicted&&!due?'not_requested':t.aiState,aiService:t.aiService,aiRequestedAt:predicted&&!due?'':t.aiRequestedAt,aiCheckedAt:predicted&&!due?'':t.aiCheckedAt});
   }
   for(const lane of Object.values(lanes))lane.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')||a.title.localeCompare(b.title,'ja'));
   const selfMinutes=records.filter(r=>!r.deleted&&r.date===day).reduce((sum,r)=>sum+(Number.isFinite(r.minutes)&&r.minutes>0?r.minutes:0),0);

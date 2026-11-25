@@ -813,3 +813,8 @@ body:has(.home-dashboard){height:auto;min-height:100dvh;overflow:auto}body:has(.
   .work-tasks-detail-area,.project-page .work-project-nav {position:sticky;top:64px;max-height:calc(100dvh - 76px);overflow-y:auto;}
 }
 .work-detail,.work-task-select {scroll-margin-top:65px;}
+
+.home-stage-work .home-links .panel-heading {display:flex;flex-wrap:wrap}
+.home-stage-work .home-links-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr));gap:8px;overflow:visible}
+.home-stage-work .home-links .home-link-tile {min-height:44px;padding:8px 10px;font-size:14px;line-height:1.45}
+.home-links .home-link-label {white-space:normal;overflow-wrap:anywhere}

@@ -373,14 +373,28 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     const hours=timed.map(e=>Number(e.time.slice(0,2)));
     const minHour=Math.min(7,...hours),maxHour=Math.max(21,...hours);
     const range=Array.from({length:maxHour-minHour+1},(_,i)=>i+minHour);
+    const recordsByTask=new Map();
+    const dayRecords=getTimeRecords().filter(r=>!r.deleted&&r.date===day);
+    for(const record of dayRecords){
+      if(!recordsByTask.has(record.taskId))recordsByTask.set(record.taskId,[]);
+      recordsByTask.get(record.taskId).push(record);
+    }
+    const recordRows=rows=>rows.map(r=>`<li><button type="button" class="text-button" data-edit="${esc(r.id)}">${esc(r.activity||'時間記録')} ・ ${r.minutes}分を編集</button></li>`).join('');
+    const displayedTasks=new Set([...plan.lanes.self,...plan.lanes.ai].filter(t=>!t.virtual).map(t=>t.id));
+    const otherRecords=dayRecords.filter(r=>!displayedTasks.has(r.taskId));
     const card=item=>{
       if(item.kind==='event')return `<div class="work-planner-card is-event ${item.done?'is-done':''}"><button type="button" class="work-planner-open" data-workspace-edit="events:${esc(item.id)}"><strong>${esc(item.title)}</strong></button><small>${item.allDay?'終日':item.time?`${esc(item.time)}${item.endTime?'〜'+esc(item.endTime):''}`:'時刻未設定'} ・ ${item.done?'完了':'予定'}</small><button type="button" class="work-planner-action" data-workspace-event-status="${esc(item.id)}" data-status="${item.done?'todo':'done'}">${item.done?'戻す':'完了'}</button></div>`;
-      return `<div class="work-planner-card ${item.assignee==='ai'?'is-ai':'is-self'} ${item.done?'is-done':''}"><button type="button" class="work-planner-open" data-workspace-select-task="${esc(item.id)}"><strong>${esc(item.title)}</strong></button>${item.virtual?'<small>ルーチン予定（予測）</small>':''}${item.time?`<small>${item.timeType==='依頼'?'依頼時刻':'予定'} ${esc(item.time)}${item.endTime?'〜'+esc(item.endTime):''}</small>`:''}${item.assignee==='ai'?`<small>${esc(item.aiService||'AI')} ・ ${esc(aiNames[item.aiState])}</small>${!item.done?`<select class="work-planner-ai-select" data-workspace-ai-status="${esc(item.id)}" aria-label="${esc(item.title)}のAI状況">${aiOptions(item.aiState)}</select>`:''}`:`<small>${item.done?'完了':'自分の作業'}</small>`}</div>`;
+      const records=recordsByTask.get(item.id)||[];
+      const actual=records.reduce((sum,r)=>sum+r.minutes,0);
+      const actualLabel=`この日の実績 ${actual}分`;
+      const tracking=item.virtual?'':`${item.estimateMinutes!=null?`<small>見積もり ${item.estimateMinutes}分</small>`:''}${records.length?`<details><summary>${actualLabel}</summary><ul>${recordRows(records)}</ul></details>`:`<small>${actualLabel}</small>`}<button type="button" class="work-planner-action" data-planner-date="${day}" data-planner-task="${esc(item.id)}">実績を記録</button>`;
+      return `<div class="work-planner-card ${item.assignee==='ai'?'is-ai':'is-self'} ${item.done?'is-done':''}"><button type="button" class="work-planner-open" data-workspace-select-task="${esc(item.id)}"><strong>${esc(item.title)}</strong></button>${item.virtual?'<small>ルーチン予定（予測）</small>':''}${item.time?`<small>${item.timeType==='依頼'?'依頼時刻':'予定'} ${esc(item.time)}${item.endTime?'〜'+esc(item.endTime):''}</small>`:''}${item.assignee==='ai'?`<small>${esc(item.aiService||'AI')} ・ ${esc(aiNames[item.aiState])}</small>${!item.done?`<select class="work-planner-ai-select" data-workspace-ai-status="${esc(item.id)}" aria-label="${esc(item.title)}のAI状況">${aiOptions(item.aiState)}</select>`:''}`:`<small>${item.done?'完了':'自分の作業'}</small>`}${tracking}</div>`;
     };
     const cellsFor=(lane,hour)=>plan.lanes[lane].filter(item=>isTimed(item)&&Number(item.time.slice(0,2))===hour).map(card).join('');
     return `<div class="work-day-planner"><div class="work-day-summary"><span><strong>自分の作業記録：${esc(timeText(plan.selfMinutes))}</strong>（入力済みの合計）</span><span>AIタスク：${plan.lanes.ai.length}件</span><span>予定：${plan.lanes.events.length}件</span>${calendarFlags.habits&&day<=localDate()?`<span>習慣：${(value.habits[day]||[]).length}/${HABITS.length}件</span>`:''}</div><p class="muted">予定時間と実際の記録時間は別です。AIの依頼中・確認待ちの経過時間は作業時間に含めません。AI状況は手動で更新します。</p>
       <div class="work-planner-scroll" role="region" tabindex="0" aria-label="${esc(day)}の縦型手帳（横にスクロール可能）"><div class="work-planner-grid"><div class="work-planner-heading">時刻</div><div class="work-planner-heading">予定</div><div class="work-planner-heading">自分の作業</div><div class="work-planner-heading">AIに依頼</div>${range.map(h=>`<div class="work-planner-hour">${String(h).padStart(2,'0')}:00</div>${lanes.map(l=>`<div class="work-planner-cell" data-lane="${l}">${cellsFor(l,h)}</div>`).join('')}`).join('')}</div></div>
       <h3 class="work-planner-unscheduled-title">時間未設定・終日の項目</h3><div class="work-planner-unscheduled">${lanes.map((lane,i)=>`<section class="work-planner-unscheduled-lane"><h4>${['予定','自分の作業','AIに依頼'][i]}</h4>${plan.lanes[lane].filter(x=>!isTimed(x)).map(card).join('')||'<p class="muted">なし</p>'}</section>`).join('')}</div>
+      <section><h3>この日の作業記録</h3>${otherRecords.length?`<ul>${recordRows(otherRecords)}</ul>`:''}<button type="button" class="button secondary" data-planner-date="${day}">タスクなしで記録</button></section>
       <div class="workspace-actions work-planner-add"><button type="button" class="button secondary" data-workspace-new-event="${esc(day)}">＋予定</button><button type="button" class="button secondary" data-workspace-new-dated-task="${esc(day)}">＋タスク</button><button type="button" class="button secondary" data-workspace-new-ai-task="${esc(day)}">＋AIに依頼</button></div>
       <p class="muted">時刻未設定のタスクは下段に表示。AI依頼日時はその時刻の目印で、AIが作業していた時間帯ではありません。</p></div>`;
   }
@@ -470,6 +484,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     updateStageOptions(item?.stage||'');
     updateEventTime();
     updateAiFields();
+    updateEndSuggestion();
     document.querySelector('#workspace-form-error').textContent='';dialog.showModal();
   }
   function updateStageOptions(selected=''){
@@ -480,8 +495,21 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     f.elements.stage.innerHTML='<option value="">段階を指定しない</option>'+stages.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
     f.elements.stage.value=stages.includes(selected)?selected:'';
   }
+  function updateEndSuggestion(){
+    const button=document.querySelector('#suggest-end');
+    if(!button)return;
+    const fields=document.querySelector('#workspace-form').elements;
+    const start=fields.startTime?.value,minutes=Number(fields.estimateMinutes?.value);
+    const [hour,minute]=(start||'').split(':').map(Number);
+    const end=hour*60+minute+minutes;
+    button.hidden=formType!=='tasks'||!start||!Number.isInteger(minutes)||minutes<1||end>=1440;
+    if(button.hidden)return;
+    button.dataset.endTime=[Math.floor(end/60),end%60].map(v=>String(v).padStart(2,'0')).join(':');
+    button.textContent='終了を '+button.dataset.endTime+' に設定';
+  }
   function updateAiFields(){
     const form=document.querySelector('#workspace-form'),settings=document.querySelector('#workspace-ai-settings');
+    updateWaitFields();
     if(settings)settings.hidden=formType!=='tasks'||form?.elements.assignee?.value!=='ai';
   }
   function updateEventTime(){
@@ -498,7 +526,10 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function updateWaitFields(){
     const f=document.querySelector('#workspace-form'),field=document.querySelector('#workspace-wait-fields');
-    if(field)field.hidden=formType!=='tasks'||!['waiting','someday'].includes(f.elements.status.value);
+    const waiting=['waiting','someday'].includes(f.elements.status.value);
+    if(field)field.hidden=formType!=='tasks'||!waiting;
+    const review=document.querySelector('#workspace-review-date');
+    if(review)review.hidden=formType!=='tasks'||(!waiting&&f.elements.assignee?.value!=='ai');
   }
   function makeSteps(text,old=[]){
     const lines=text.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
@@ -558,6 +589,17 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
   }
   function click(button){
     try{
+      if(button.dataset.estimatePreset){
+        document.querySelector('#workspace-form').elements.estimateMinutes.value=button.dataset.estimatePreset;
+        updateEndSuggestion();return true;
+      }
+      if(button.id==='suggest-end'){
+        document.querySelector('#workspace-form').elements.endTime.value=button.dataset.endTime;return true;
+      }
+      if(button.dataset.plannerDate){
+        const task=value.tasks.find(t=>t.id===button.dataset.plannerTask);
+        startRecord({date:button.dataset.plannerDate,project:task?.project,taskId:task?.id,activity:task?.title.slice(0,80)});return true;
+      }
       if(button.dataset.workspaceActionView!==undefined){
         if(!['today','tomorrow','week','undated'].includes(button.dataset.workspaceActionView))throw Error('表示期間が不正です。');
         actionView=button.dataset.workspaceActionView;render();return true;
@@ -627,7 +669,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
       if(button.dataset.workspaceSuggestLink!==undefined){const l=suggestedLinks[Number(button.dataset.workspaceSuggestLink)];if(!l)throw Error('リンク候補が見つかりません。');if(value.links.some(x=>x.url===l.url))throw Error('このURLは登録済みです。');save(workspaceChange(value,'links',l,'',uid));toast('リンクを追加しました。');return true;}
       if(button.dataset.workspaceInlineDate!==undefined){const id=button.dataset.workspaceInlineDate,due=button.closest('.work-inline-date')?.querySelector('input[type="date"]')?.value;const task=visibleTask(id);if(task?.due===due)return true;save(workspaceSetTaskDate(value,id,due,uid));toast('予定日を変更しました。');return true;}
       if(button.dataset.workspaceTaskClear!==undefined){filter='';search='';taskView='pending';taskFocus='overview';taskSort='default';selectedTask='';mobileTaskDetail=false;render();return true;}
-      if(button.dataset.workspaceApplyTemplate!==undefined){const f=document.querySelector('#workspace-form');if(formType!=='tasks'||formId)return true;const t=value.templates.find(x=>x.id===f.elements.taskTemplate.value);if(!t){toast('テンプレートを選択してください。');return true;}const p=workspaceTemplatePayload(t);f.elements.title.value=p.title;f.elements.project.innerHTML=projectOptions(p.project);f.elements.project.value=p.project;f.elements.detail.value=p.detail;f.elements.priority.value=p.priority;f.elements.steps.value=p.steps.map(s=>s.text).join('\n');if(f.elements.estimateMinutes)f.elements.estimateMinutes.value=p.estimateMinutes??'';updateStageOptions();toast('テンプレートを入力欄に反映しました。');return true;}
+      if(button.dataset.workspaceApplyTemplate!==undefined){const f=document.querySelector('#workspace-form');if(formType!=='tasks'||formId)return true;const t=value.templates.find(x=>x.id===f.elements.taskTemplate.value);if(!t){toast('テンプレートを選択してください。');return true;}const p=workspaceTemplatePayload(t);f.elements.title.value=p.title;f.elements.project.innerHTML=projectOptions(p.project);f.elements.project.value=p.project;f.elements.detail.value=p.detail;f.elements.priority.value=p.priority;f.elements.steps.value=p.steps.map(s=>s.text).join('\n');if(f.elements.estimateMinutes)f.elements.estimateMinutes.value=p.estimateMinutes??'';updateEndSuggestion();updateStageOptions();toast('テンプレートを入力欄に反映しました。');return true;}
       if(button.dataset.workspaceNew){open(button.dataset.workspaceNew);return true;}
       if(button.dataset.workspaceNewPrompt!==undefined){open('prompts','',{project:button.dataset.workspaceNewPrompt});return true;}
       if(button.dataset.workspaceNewTask!==undefined){open('tasks','',{project:button.dataset.workspaceNewTask});return true;}
@@ -707,6 +749,7 @@ export function createWorkspace({storage,render,toast,escapeHTML:esc,icon,getTim
     }catch(e){toast(e.message);return true;}return false;
   }
   function change(target){
+    if(['estimateMinutes','startTime'].includes(target.name)){updateEndSuggestion();return true;}
     if(target.id==='workspace-action-date'){
       const date=target.value;
       if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||formatDay(new Date(date+'T12:00:00'))!==date||date<'1900-01-01'||date>'2200-12-31'){toast('正しい日付を指定してください。');return true;}

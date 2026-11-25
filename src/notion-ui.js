@@ -1,6 +1,7 @@
 // This component is intentionally independent of the existing task and quick-note stores.
 export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  let tab='tasks',memos=[],loaded=false,busy=false,message='',conflicts=[],changes=[],editing='__closed__',search='',category='all',formDraft=null,pageBodies=new Map(),openBodies=new Set();
+ let syncStatus='この画面ではまだ同期を確認していません。';
  let backlog=[],backlogLoaded=false,backlogBusy=false,backlogMessage='',backlogDates=new Map(),backlogProjects=new Map();
  const categories=['アイデア','サイト運営','野球','日常','その他'];
  const taskDB='https://app.notion.com/p/d311824e38d04162b2e92ae588bfa894';
@@ -21,7 +22,7 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  async function sync(resolutions={}){
   if(busy)return;
   if(cloud.status()!=='ready'){toast('先に「データ共有・同期」でクラウド保存を完了してください。');return;}
-  busy=true;message='タスクを照合しています。';render();
+  busy=true;syncStatus=message='タスクを照合しています。';render();
   try{
    const result=await api('/api/notion/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({resolutions})});
    let verified={updated:[],conflicts:[],changed:false};
@@ -29,8 +30,8 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
    changes=[...(result.updated||[]),...(verified.updated||[])];conflicts=[...(result.conflicts||[]),...(verified.conflicts||[])];
    message=`同期確認完了：反映 ${changes.length}件、要確認 ${conflicts.length}件`;
    await cloud.refresh();
-   toast(message);
-  }catch(e){message=e.message;toast(message);}
+   syncStatus=message;toast(message);
+  }catch(e){syncStatus=message=e.message;toast(message);}
   finally{busy=false;render();}
  }
 
@@ -247,5 +248,8 @@ export function createNotionUI({escapeHTML:esc,render,toast,cloud,workspace}){
  }
 
  const taskNotice=()=>conflicts.length?`<a class="text-button" href="#share">Notion同期の要確認 ${conflicts.length}件</a>`:'';
- return {page,taskNotice,taskControls,settingsPanel,click,change,input,submit,load,sync};
+ function homeSync(){
+  return `<section class="panel"><div class="panel-heading"><h2>Notionのタスク同期</h2><a class="text-button" href="#share">同期設定${conflicts.length?`（要確認 ${conflicts.length}件）`:''}</a></div><div class="workspace-actions"><button type="button" class="button secondary" data-notion-action="sync" ${busy?'disabled':''}>Notionと同期</button><span role="status">${esc(syncStatus)}</span></div></section>`;
+ }
+ return {page,homeSync,taskNotice,taskControls,settingsPanel,click,change,input,submit,load,sync};
 }
